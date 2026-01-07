@@ -123,7 +123,7 @@ model ResidentImportLog {
 }
 
 enum ComplaintStatus {
-  PENDING         // 접수됨
+  PENDING         // 접수
   IN_PROGRESS     // 처리중
   resolved        // 처리 완료
 }
