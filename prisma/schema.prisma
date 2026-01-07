@@ -129,7 +129,7 @@ enum ComplaintStatus {
 }
 
 enum PollStatus {
-  pending         // 투표 전
+  PENDING         // 투표 전
   IN_PROGRESS     // 투표 진행 중
   CLOSED          // 투표 종료
 }
