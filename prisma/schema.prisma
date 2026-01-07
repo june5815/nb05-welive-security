@@ -1,0 +1,309 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String    @id
+  email              String    @unique
+  password           String?
+  nickname           String    @unique
+  avatar             String?
+  role               String    @default("resident") // super-admin, admin, resident
+  status             String    @default("pending") // pending, approved, rejected
+  refreshToken       String?
+  refreshTokenExpiry DateTime?
+  isLoggedOut        Boolean   @default(false) // 로그아웃 상태 추적
+  lastLoginAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  version            Int       @default(1)
+
+  address            Address?
+  managedApartments  Apartment[]         @relation("ApartmentManager")
+  residentImportLogs ResidentImportLog[]
+  complaints         Complaint[]
+  polls              Poll[]
+  pollVotes          PollVote[]
+  notices            Notice[]
+  comments           Comment[]
+  notifications      Notification[]
+
+  @@index([email])
+  @@index([role])
+  @@index([status])
+  @@index([role, status])
+}
+
+model Address {
+  country    String
+  address1   String
+  address2   String?
+  postalCode String
+
+  // User 삭제 => Address 삭제 O
+  userId String @id
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Apartment {
+  id        String   @id
+  name      String
+  address   String
+  managerId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  version   Int      @default(1)
+
+  // User 삭제 => Apartment 삭제 X (관리자 삭제되어도 아파트는 유지)
+  manager User? @relation("ApartmentManager", fields: [managerId], references: [id], onDelete: SetNull)
+
+  // 1:n
+  residents          Resident[]
+  complaints         Complaint[]
+  polls              Poll[]
+  notices            Notice[]
+  events             Event[]
+  residentImportLogs ResidentImportLog[]
+
+  @@index([managerId])
+}
+
+model Resident {
+  id         String    @id
+  name       String
+  email      String?
+  phone      String?
+  unitNumber String
+  moveInDate DateTime?
+  status     String    @default("active") // active, inactive, moved-out
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  version    Int       @default(1)
+
+  apartmentId String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+
+  @@index([apartmentId])
+  @@index([apartmentId, status])
+}
+
+model ResidentImportLog {
+  id           String   @id
+  fileName     String
+  totalCount   Int
+  successCount Int
+  failCount    Int
+  status       String   @default("pending") // pending, success, failed
+  errorMessage String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  apartmentId String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([apartmentId])
+  @@index([userId])
+}
+
+model Complaint {
+  id        String   @id
+  title     String
+  content   String
+  status    String   @default("pending") // pending, in-progress, resolved, rejected
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  version   Int      @default(1)
+
+  // User 삭제 => Complaint 삭제 O (민원 작성자)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Apartment 삭제 => Complaint 삭제 O
+  apartmentId String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+
+  // 1:n 관계
+  notifications Notification[]
+
+  @@index([userId])
+  @@index([apartmentId])
+  @@index([apartmentId, status])
+  @@index([status])
+}
+
+model Poll {
+  id        String    @id
+  title     String
+  content   String
+  status    String    @default("active") // active, ended
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  endDate   DateTime?
+  version   Int       @default(1)
+
+  // User 삭제 => Poll 삭제 O (투표 작성자)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Apartment 삭제 => Poll 삭제 O
+  apartmentId String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+
+  // 1:n
+  options       PollOption[]
+  votes         PollVote[]
+  notifications Notification[]
+
+  @@index([userId])
+  @@index([apartmentId])
+  @@index([status])
+}
+
+model PollOption {
+  id        String @id
+  text      String
+  order     Int
+  voteCount Int    @default(0)
+
+  // Poll 삭제 => PollOption 삭제 O
+  pollId String
+  poll   Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
+
+  // 1:n
+  votes PollVote[]
+
+  @@unique([pollId, order])
+  @@index([pollId])
+}
+
+model PollVote {
+  createdAt DateTime @default(now())
+
+  // User 삭제 => PollVote 삭제 O
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Poll 삭제 => PollVote 삭제 O
+  pollId String
+  poll   Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
+
+  // PollOption 삭제 => PollVote 삭제 O
+  optionId String
+  option   PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, pollId])
+  @@index([userId])
+  @@index([pollId])
+  @@index([optionId])
+}
+
+model Notice {
+  id        String   @id
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  version   Int      @default(1)
+
+  // User 삭제 => Notice 삭제 O (공지사항 작성자)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Apartment 삭제 => Notice 삭제 O
+  apartmentId String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+
+  // 1:n 관계
+  notifications Notification[]
+
+  @@index([userId])
+  @@index([apartmentId])
+  @@index([createdAt])
+}
+
+model Event {
+  id        String    @id
+  title     String
+  content   String?
+  startDate DateTime
+  endDate   DateTime?
+  location  String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  version   Int       @default(1)
+
+  // Apartment 삭제 => Event 삭제 O
+  apartmentId String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+
+  @@index([apartmentId])
+  @@index([startDate])
+  @@index([apartmentId, startDate])
+}
+
+model Comment {
+  id        String   @id
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  version   Int      @default(1)
+
+  // User 삭제 => Comment 삭제 O (댓글 작성자)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 부모 댓글 (대댓글 지원)
+  parentCommentId String?
+  parentComment   Comment?  @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: Cascade)
+  replies         Comment[] @relation("CommentReplies")
+
+  // 1:n 관계
+  notifications Notification[]
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([parentCommentId])
+}
+
+model Notification {
+  id        String   @id
+  title     String
+  message   String
+  type      String // "complaint" | "poll" | "notice" | "comment" - type은 relatedId 타입을 결정
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // User 삭제 => Notification 삭제 O (수신자)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  complaintId String?
+  complaint   Complaint? @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  pollId String?
+  poll   Poll?   @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  noticeId String?
+  notice   Notice? @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+  commentId String?
+  comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  // 인덱스 최적화
+  @@index([userId])
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@index([isRead])
+  @@index([type])
+  @@index([userId, type])
+  // 각 타입별 최적화
+  @@index([complaintId])
+  @@index([pollId])
+  @@index([noticeId])
+  @@index([commentId])
+}
