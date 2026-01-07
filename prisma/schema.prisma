@@ -7,36 +7,45 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  SUPER_ADMIN	// 슈퍼 관리자
+  ADMIN			  // 관리자
+  RESIDENT		// 입주민
+}
+
+enum JoinStatus {
+  PENDING	  // 대기
+  APPROVED	// 승인
+  REJECTED	// 거절
+}
+
 model User {
-  id                 String    @id
-  email              String    @unique
-  password           String?
-  nickname           String    @unique
-  avatar             String?
-  role               String    @default("resident") // super-admin, admin, resident
-  status             String    @default("pending") // pending, approved, rejected
-  refreshToken       String?
-  refreshTokenExpiry DateTime?
-  isLoggedOut        Boolean   @default(false) // 로그아웃 상태 추적
-  lastLoginAt        DateTime?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-  version            Int       @default(1)
+  id           String     @id				@default(cuid())
+  username     String     @unique			    // 유저 아이디
+  password     String
+  email        String     @unique
+  contact      String	    @unique
+  name         String
+  role         UserRole   @default(RESIDENT)
+  avatar       String?						        // 프로필 이미지
+  joinStatus   JoinStatus @default(PENDING)
+  isActive     Boolean    @default(false)	// 로그인 여부로 추정
+  refreshToken String?
+  createdAt    DateTime	  @default(now())
+  updatedAt    DateTime   @updatedAt
+  version	     Int		    @default(1)
 
-  address            Address?
-  managedApartments  Apartment[]         @relation("ApartmentManager")
-  residentImportLogs ResidentImportLog[]
-  complaints         Complaint[]
-  polls              Poll[]
-  pollVotes          PollVote[]
-  notices            Notice[]
-  comments           Comment[]
-  notifications      Notification[]
+  adminOf      Apartment?
 
-  @@index([email])
-  @@index([role])
-  @@index([status])
-  @@index([role, status])
+  residentProfile Resident?
+
+  notices    Notice[]						    // 공지사항
+  complaints Complaint[]					  // 민원
+  polls      Poll[]							    // 투표
+  pollVotes  PollVote[]						  // 투표용
+  comments   Comment[]						  // 댓글
+
+  notifications Notification[]			// 알림
 }
 
 model Address {
