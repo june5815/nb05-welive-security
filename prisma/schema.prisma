@@ -214,72 +214,96 @@ model PollVote {
   @@index([optionId])
 }
 
+enum NoticeCategory {
+  REGULAR_CHECK   // 정기검진
+  EMERGENCY       // 긴급사항
+  COMMUNITY       // 커뮤니티
+  VOTE            // 주민투표
+  COMPLAINT       // 민원
+  ETC             // 기타
+}
+
+enum NoticeType {
+  NORMAL
+  IMPORTANT
+}
+
+enum EventResourceType {
+  NOTICE
+  POLL
+}
+
 model Notice {
-  id        String   @id
+  id        String   @id @default(cuid())
   title     String
   content   String
+  category  NoticeCategory
+  type      NoticeType @default(NORMAL)
+
+  viewCount Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   version   Int      @default(1)
 
-  // User 삭제 => Notice 삭제 O (공지사항 작성자)
+  // 작성자
   userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Apartment 삭제 => Notice 삭제 O
+  // 아파트
   apartmentId String
   apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
 
-  // 1:n 관계
-  notifications Notification[]
+  // 관계
+  comments       Comment[]
+  notifications  Notification[]
+  event          Event?        // 1:1 (공지 일정)
 
-  @@index([userId])
   @@index([apartmentId])
-  @@index([createdAt])
+  @@index([category])
 }
 
 model Event {
-  id        String    @id
+  id        String @id @default(cuid())
   title     String
-  content   String?
-  startDate DateTime
-  endDate   DateTime?
-  location  String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  version   Int       @default(1)
 
-  // Apartment 삭제 => Event 삭제 O
+  startDate DateTime
+  endDate   DateTime
+
+  // 공지와 1:1 관계
+  noticeId String  @unique
+  notice   Notice  @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+
+  resourceType EventResourceType @default(NOTICE)
+
+  // 아파트
   apartmentId String
   apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
 
-  @@index([apartmentId])
-  @@index([startDate])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  version   Int      @default(1)
+
   @@index([apartmentId, startDate])
 }
 
 model Comment {
-  id        String   @id
+  id        String   @id @default(cuid())
   content   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   version   Int      @default(1)
 
-  // User 삭제 => Comment 삭제 O (댓글 작성자)
+  // 작성자
   userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // 부모 댓글 (대댓글 지원)
-  parentCommentId String?
-  parentComment   Comment?  @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: Cascade)
-  replies         Comment[] @relation("CommentReplies")
+  // 공지 댓글
+  noticeId String?
+  notice   Notice? @relation(fields: [noticeId], references: [id], onDelete: Cascade)
 
-  // 1:n 관계
   notifications Notification[]
 
-  @@index([userId])
-  @@index([createdAt])
-  @@index([parentCommentId])
+  @@index([noticeId])
 }
 
 model Notification {
