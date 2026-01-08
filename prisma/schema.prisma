@@ -35,10 +35,13 @@ model User {
   updatedAt    DateTime   @updatedAt
   version	     Int		    @default(1)
 
-  adminOf      Apartment?
-
+  // 1:1 관계
+  address Address?
+  adminOf      Apartment? @relation("ApartmentManager")
   residentProfile Resident?
 
+  // 1:n 관계
+  residentImportLogs ResidentImportLog[]
   notices    Notice[]						    // 공지사항
   complaints Complaint[]					  // 민원
   polls      Poll[]							    // 투표
@@ -60,18 +63,22 @@ model Address {
 }
 
 model Apartment {
-  id        String   @id
-  name      String
-  address   String
-  managerId String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  version   Int      @default(1)
+  id            String   @id @default(cuid())
+  name          String
+  address       String
+  description   String?
+  officeNumber  String?
+  managerId     String?  @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  version       Int      @default(1)
 
   // User 삭제 => Apartment 삭제 X (관리자 삭제되어도 아파트는 유지)
   manager User? @relation("ApartmentManager", fields: [managerId], references: [id], onDelete: SetNull)
 
-  // 1:n
+  // 1:n 관계
+  buildings          Building[]
+  units              Unit[]
   residents          Resident[]
   complaints         Complaint[]
   polls              Poll[]
@@ -80,6 +87,45 @@ model Apartment {
   residentImportLogs ResidentImportLog[]
 
   @@index([managerId])
+}
+
+model Building {
+  id          String   @id @default(cuid())
+  buildingNo  String   // 동 번호 (예: "101동", "A동")
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Apartment 삭제 => Building 삭제 O
+  apartmentId String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+
+  // 1:n 관계
+  units Unit[]
+
+  @@unique([apartmentId, buildingNo])
+  @@index([apartmentId])
+}
+
+model Unit {
+  id        String   @id @default(cuid())
+  unitNo    String   // 호수 (예: "101호", "201호")
+  floor     Int?     // 층
+  area      Float?   // 전용면적
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Apartment 삭제 => Unit 삭제 O
+  apartmentId String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+
+  // Building 삭제 => Unit 삭제 O
+  buildingId String
+  building   Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+
+  @@unique([apartmentId, buildingId, unitNo])
+  @@index([apartmentId])
+  @@index([buildingId])
 }
 
 model Resident {
