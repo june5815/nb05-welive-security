@@ -38,30 +38,18 @@ model User {
   version	     Int		    @default(1)
 
   // 1:1 관계
-  address         Address?
-  adminOf         Apartment? @relation("ApartmentManager")
-  residentProfile Resident?  @relation("ResidentProfile")
+  adminOf    Apartment?   @relation("ApartmentManager")
+  resident   Resident?    @relation("ResidentProfile")
 
   // 1:n 관계
-  residentImportLogs ResidentImportLog[]
-  notices    Notice[]						    // 공지사항
-  complaints Complaint[]					  // 민원
-  polls      Poll[]							    // 투표
-  pollVotes  PollVote[]						  // 투표용
-  comments   Comment[]						  // 댓글
+  notices    Notice[]						          // 공지사항
+  complaints Complaint[]					        // 민원
+  polls      Poll[]							          // 투표
+  pollVotes  PollVote[]						        // 투표용
+  comments   Comment[]						        // 댓글
+  residentImportLogs ResidentImportLog[]  // 입주민 일괄등록 로그
 
-  notifications Notification[]			// 알림
-}
-
-model Address {
-  country    String
-  address1   String
-  address2   String?
-  postalCode String
-
-  // User 삭제 => Address 삭제 O
-  userId String @id
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notifications Notification[]			      // 알림
 }
 
 model Apartment {
