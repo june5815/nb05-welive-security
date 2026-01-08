@@ -1,49 +1,44 @@
 # nb05-welive-security
 
-{Security} 프로젝트 - 팀 협업 저장소
+WeLive Security 프로젝트
 
 ## 프로젝트 정보
 
-- **프로젝트명:** WeLive Security
 - **프로젝트 기간:** 2026.01.05 ~ 2026.02.06
-- **저장소:** https://github.com/june5815/nb05-welive-security
+- **기술 스택:** Express.js, PrismaORM, MongoDB
 
 ## 팀원 구성
 
-- 양다온 (개인 Github 링크)
-- 오창섭 (개인 Github 링크)
-- 정지원 (개인 Github 링크)
-- 최지혜 (개인 Github 링크)
+- 양다온
+- 오창섭
+- 정지원
+- 최지혜
 
-## 기술 스택
+## 빠른 시작
 
-- **Backend:** Express.js, PrismaORM
-- **Database:** MongoDB
-- **공통 Tool:** Git & Github, Discord
-
-## 개발 환경 설정
-
-### 필수 요구사항
-
-- Node.js 18+
-- npm 또는 yarn
-
-### 설치 및 실행
+### 설치
 
 ```bash
-# 의존성 설치
 npm install
-
-# 개발 서버 실행
-npm run dev
-
-# 코드 포매팅
-npm run format
-
-# 타입 검사
-npm run type:check
-
-# 테스트 실행
-npm run test:unit
-npm run test:e2e
 ```
+
+### 개발 서버 실행
+
+```bash
+npm run dev
+```
+
+## 주요 명령어
+
+```bash
+npm run format      # 코드 포매팅
+npm run type:check  # 타입 검사
+npm run test:unit   # 단위 테스트
+npm run test:e2e    # E2E 테스트
+```
+
+## Git 워크플로우
+
+- **main:** 배포 브랜치
+- **dev:** 개발 브랜치 (기본)
+- **feature/\*:** 기능 개발 브랜치
