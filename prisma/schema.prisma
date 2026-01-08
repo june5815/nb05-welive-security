@@ -335,11 +335,9 @@ model Comment {
 }
 
 model Notification {
-  id        String   @id
-  title     String
-  message   String
-  type      String // "complaint" | "poll" | "notice" | "comment" - type은 relatedId 타입을 결정
-  isRead    Boolean  @default(false)
+  id        String   @id @default(cuid())
+  content   String   // 알림 내용
+  isChecked Boolean  @default(false) // 확인 여부
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -357,11 +355,9 @@ model Notification {
 
   // 인덱스 최적화
   @@index([userId])
-  @@index([userId, isRead])
+  @@index([userId, isChecked])
   @@index([createdAt])
-  @@index([isRead])
-  @@index([type])
-  @@index([userId, type])
+  @@index([isChecked])
   // 각 타입별 최적화
   @@index([complaintId])
   @@index([pollId])
