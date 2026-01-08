@@ -122,34 +122,52 @@ model ResidentImportLog {
   @@index([userId])
 }
 
+enum ComplaintStatus {
+  PENDING         // 접수
+  IN_PROGRESS     // 처리중
+  RESOLVED       // 처리 완료
+}
+
+enum PollStatus {
+  PENDING         // 투표 전
+  IN_PROGRESS     // 투표 진행 중
+  CLOSED          // 투표 종료
+}
+
 model Complaint {
-  id        String   @id
+  id        String   @id		  @default(cuid())
   title     String
   content   String
-  status    String   @default("pending") // pending, in-progress, resolved, rejected
+
+  status    String   @default("pending")  // pending, in-progress, resolved, rejected
+  isPublic  Boolean  @default(true)       // 공개, 비공개 민원
+  viewsCount Int     @default(0)          // 조회수
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   version   Int      @default(1)
 
-  // User 삭제 => Complaint 삭제 O (민원 작성자)
+  // 작성자
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Apartment 삭제 => Complaint 삭제 O
+  // 아파트
   apartmentId String
   apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+
+  // 댓글 수 계산용 (Comment 재사용 or 전용 테이블 가능)
+  comments Comment[]
 
   // 1:n 관계
   notifications Notification[]
 
   @@index([userId])
   @@index([apartmentId])
-  @@index([apartmentId, status])
   @@index([status])
 }
 
 model Poll {
-  id        String    @id
+  id        String    @id		  @default(cuid())
   title     String
   content   String
   status    String    @default("active") // active, ended
@@ -177,10 +195,10 @@ model Poll {
 }
 
 model PollOption {
-  id        String @id
+  id        String  @id		  @default(cuid())
   text      String
   order     Int
-  voteCount Int    @default(0)
+  voteCount Int     @default(0)
 
   // Poll 삭제 => PollOption 삭제 O
   pollId String
