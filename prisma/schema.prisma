@@ -1,3 +1,5 @@
+// 개발 초기, 주석사용
+// 중급 프로젝트 전, 주석 제거예정
 generator client {
   provider = "prisma-client-js"
 }
@@ -36,9 +38,9 @@ model User {
   version	     Int		    @default(1)
 
   // 1:1 관계
-  address Address?
-  adminOf      Apartment? @relation("ApartmentManager")
-  residentProfile Resident?
+  address         Address?
+  adminOf         Apartment? @relation("ApartmentManager")
+  residentProfile Resident?  @relation("ResidentProfile")
 
   // 1:n 관계
   residentImportLogs ResidentImportLog[]
@@ -129,24 +131,28 @@ model Unit {
 }
 
 model Resident {
-  id         String    @id
-  name       String
-  email      String?
-  phone      String?
-  unitNumber String
-  moveInDate DateTime?
-  status     String    @default("active") // active, inactive, moved-out
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  version    Int       @default(1)
+  id            String   @id @default(cuid())
+  email         String?
+  contact       String?
+  name          String
+  building      Int
+  unit          Int
+  isHouseholder Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  version       Int      @default(1)
+
+  userId String @unique
+  user   User   @relation("ResidentProfile", fields: [userId], references: [id], onDelete: Cascade)
 
   apartmentId String
   apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
 
   @@index([apartmentId])
-  @@index([apartmentId, status])
+  @@index([userId])
+  @@index([apartmentId, isHouseholder])
 }
-
+// 엑셀/csv파일로 여러 입주민 데이터를 한번에 등록하기 위한 모델
 model ResidentImportLog {
   id           String   @id
   fileName     String
@@ -338,16 +344,16 @@ model Notification {
   updatedAt DateTime @updatedAt
 
   // User 삭제 => Notification 삭제 O (수신자)
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   complaintId String?
   complaint   Complaint? @relation(fields: [complaintId], references: [id], onDelete: Cascade)
-  pollId String?
-  poll   Poll?   @relation(fields: [pollId], references: [id], onDelete: Cascade)
-  noticeId String?
-  notice   Notice? @relation(fields: [noticeId], references: [id], onDelete: Cascade)
-  commentId String?
-  comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  pollId      String?
+  poll        Poll?      @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  noticeId    String?
+  notice      Notice?    @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+  commentId   String?
+  comment     Comment?   @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
   // 인덱스 최적화
   @@index([userId])
