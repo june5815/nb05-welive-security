@@ -1,3 +1,5 @@
+// 개발 초기, 주석사용
+// 중급 프로젝트 전, 주석 제거예정
 generator client {
   provider = "prisma-client-js"
 }
@@ -35,43 +37,38 @@ model User {
   updatedAt    DateTime   @updatedAt
   version	     Int		    @default(1)
 
-  adminOf      Apartment?
+  // 1:1 관계
+  adminOf    Apartment?   @relation("ApartmentManager")
+  resident   Resident?    @relation("ResidentProfile")
 
-  residentProfile Resident?
+  // 1:n 관계
+  notices    Notice[]						          // 공지사항
+  complaints Complaint[]					        // 민원
+  polls      Poll[]							          // 투표
+  pollVotes  PollVote[]						        // 투표용
+  comments   Comment[]						        // 댓글
+  residentImportLogs ResidentImportLog[]  // 입주민 일괄등록 로그
 
-  notices    Notice[]						    // 공지사항
-  complaints Complaint[]					  // 민원
-  polls      Poll[]							    // 투표
-  pollVotes  PollVote[]						  // 투표용
-  comments   Comment[]						  // 댓글
-
-  notifications Notification[]			// 알림
-}
-
-model Address {
-  country    String
-  address1   String
-  address2   String?
-  postalCode String
-
-  // User 삭제 => Address 삭제 O
-  userId String @id
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notifications Notification[]			      // 알림
 }
 
 model Apartment {
-  id        String   @id
-  name      String
-  address   String
-  managerId String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  version   Int      @default(1)
+  id            String   @id @default(cuid())
+  name          String
+  address       String
+  description   String?
+  officeNumber  String?
+  managerId     String?  @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  version       Int      @default(1)
 
   // User 삭제 => Apartment 삭제 X (관리자 삭제되어도 아파트는 유지)
   manager User? @relation("ApartmentManager", fields: [managerId], references: [id], onDelete: SetNull)
 
-  // 1:n
+  // 1:n 관계
+  buildings          Building[]
+  units              Unit[]
   residents          Resident[]
   complaints         Complaint[]
   polls              Poll[]
@@ -82,25 +79,68 @@ model Apartment {
   @@index([managerId])
 }
 
+model Building {
+  id          String   @id @default(cuid())
+  buildingNo  String   // 동 번호 (예: "101동", "A동")
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Apartment 삭제 => Building 삭제 O
+  apartmentId String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+
+  // 1:n 관계
+  units Unit[]
+
+  @@unique([apartmentId, buildingNo])
+  @@index([apartmentId])
+}
+
+model Unit {
+  id        String   @id @default(cuid())
+  unitNo    String   // 호수 (예: "101호", "201호")
+  floor     Int?     // 층
+  area      Float?   // 전용면적
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Apartment 삭제 => Unit 삭제 O
+  apartmentId String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+
+  // Building 삭제 => Unit 삭제 O
+  buildingId String
+  building   Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+
+  @@unique([apartmentId, buildingId, unitNo])
+  @@index([apartmentId])
+  @@index([buildingId])
+}
+
 model Resident {
-  id         String    @id
-  name       String
-  email      String?
-  phone      String?
-  unitNumber String
-  moveInDate DateTime?
-  status     String    @default("active") // active, inactive, moved-out
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  version    Int       @default(1)
+  id            String   @id @default(cuid())
+  email         String?
+  contact       String?
+  name          String
+  building      Int
+  unit          Int
+  isHouseholder Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  version       Int      @default(1)
+
+  userId String @unique
+  user   User   @relation("ResidentProfile", fields: [userId], references: [id], onDelete: Cascade)
 
   apartmentId String
   apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
 
   @@index([apartmentId])
-  @@index([apartmentId, status])
+  @@index([userId])
+  @@index([apartmentId, isHouseholder])
 }
-
+// 엑셀/csv파일로 여러 입주민 데이터를 한번에 등록하기 위한 모델
 model ResidentImportLog {
   id           String   @id
   fileName     String
@@ -139,7 +179,7 @@ model Complaint {
   title     String
   content   String
 
-  status    String   @default("pending")  // pending, in-progress, resolved, rejected
+  status    ComplaintStatus   @default(PENDING)  // enum 적용
   isPublic  Boolean  @default(true)       // 공개, 비공개 민원
   viewsCount Int     @default(0)          // 조회수
 
@@ -170,7 +210,7 @@ model Poll {
   id        String    @id		  @default(cuid())
   title     String
   content   String
-  status    String    @default("active") // active, ended
+  status    PollStatus  @default(PENDING) // enum 적용
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   endDate   DateTime?
@@ -319,39 +359,39 @@ model Comment {
   noticeId String?
   notice   Notice? @relation(fields: [noticeId], references: [id], onDelete: Cascade)
 
+  // 댓글 수 계산용
+  complaintId String?
+  complaint   Complaint? @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+
   notifications Notification[]
 
   @@index([noticeId])
 }
 
 model Notification {
-  id        String   @id
-  title     String
-  message   String
-  type      String // "complaint" | "poll" | "notice" | "comment" - type은 relatedId 타입을 결정
-  isRead    Boolean  @default(false)
+  id        String   @id @default(cuid())
+  content   String   // 알림 내용
+  isChecked Boolean  @default(false) // 확인 여부
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // User 삭제 => Notification 삭제 O (수신자)
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   complaintId String?
   complaint   Complaint? @relation(fields: [complaintId], references: [id], onDelete: Cascade)
-  pollId String?
-  poll   Poll?   @relation(fields: [pollId], references: [id], onDelete: Cascade)
-  noticeId String?
-  notice   Notice? @relation(fields: [noticeId], references: [id], onDelete: Cascade)
-  commentId String?
-  comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  pollId      String?
+  poll        Poll?      @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  noticeId    String?
+  notice      Notice?    @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+  commentId   String?
+  comment     Comment?   @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
   // 인덱스 최적화
   @@index([userId])
-  @@index([userId, isRead])
+  @@index([userId, isChecked])
   @@index([createdAt])
-  @@index([isRead])
-  @@index([type])
-  @@index([userId, type])
+  @@index([isChecked])
   // 각 타입별 최적화
   @@index([complaintId])
   @@index([pollId])
