@@ -179,7 +179,7 @@ model Complaint {
   title     String
   content   String
 
-  status    String   @default("pending")  // pending, in-progress, resolved, rejected
+  status    ComplaintStatus   @default(PENDING)  // enum 적용
   isPublic  Boolean  @default(true)       // 공개, 비공개 민원
   viewsCount Int     @default(0)          // 조회수
 
@@ -210,7 +210,7 @@ model Poll {
   id        String    @id		  @default(cuid())
   title     String
   content   String
-  status    String    @default("active") // active, ended
+  status    PollStatus  @default(PENDING) // enum 적용
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   endDate   DateTime?
@@ -359,7 +359,7 @@ model Comment {
   noticeId String?
   notice   Notice? @relation(fields: [noticeId], references: [id], onDelete: Cascade)
 
-  // 민원 댓글
+  // 댓글 수 계산용
   complaintId String?
   complaint   Complaint? @relation(fields: [complaintId], references: [id], onDelete: Cascade)
 
