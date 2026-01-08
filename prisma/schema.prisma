@@ -359,9 +359,14 @@ model Comment {
   noticeId String?
   notice   Notice? @relation(fields: [noticeId], references: [id], onDelete: Cascade)
 
+  // 민원 댓글
+  complaintId String?
+  complaint   Complaint? @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+
   notifications Notification[]
 
   @@index([noticeId])
+  @@index([complaintId])
 }
 
 model Notification {
