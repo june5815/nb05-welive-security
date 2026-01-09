@@ -75,7 +75,7 @@ bower_components
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
 
-# Dependency directories
+# Dependency directories.
 node_modules/
 jspm_packages/
 
@@ -115,6 +115,7 @@ web_modules/
 .env.test.local
 .env.production.local
 .env.local
+.env.*
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -337,3 +338,9 @@ $RECYCLE.BIN/
 # Custom
 /public
 .env.prod
+.env.dev
+
+# Prisma
+prisma/schema.sql
+prisma/migrations/
+
