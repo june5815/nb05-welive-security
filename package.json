@@ -2,8 +2,8 @@
   "name": "05-security-welive",
   "scripts": {
     "dev": "export NODE_ENV=development && nodemon --exec ts-node src/index.ts",
-    "migrate:dev": "export DATABASE_URL=postgresql://wiz:1234@localhost:5432/codeit-express?schema=public && npx prisma migrate dev",
-    "migrate:reset": "export DATABASE_URL=postgresql://wiz:1234@localhost:5432/codeit-express?schema=public && npx prisma migrate reset",
+    "migrate:dev": "export DATABASE_URL=postgresql://daonmac:8080@localhost:5432/welive?schema=public && npx prisma migrate dev",
+    "migrate:reset": "export DATABASE_URL=postgresql://daonmac:8080@localhost:5432/welive?schema=public && npx prisma migrate reset",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "type:check": "tsc --noEmit",

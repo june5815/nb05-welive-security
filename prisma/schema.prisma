@@ -366,6 +366,7 @@ model Comment {
   notifications Notification[]
 
   @@index([noticeId])
+  @@index([complaintId])
 }
 
 model Notification {
