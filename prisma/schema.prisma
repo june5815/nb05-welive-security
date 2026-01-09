@@ -257,6 +257,13 @@ enum NotificationType {
   COMMENT_ADDED
 }
 
+enum NotificationTargetType {
+  COMPLAINT
+  POLL
+  NOTICE
+  COMMENT
+}
+
 model Notice {
   id       String         @id @default(cuid())
   title    String
