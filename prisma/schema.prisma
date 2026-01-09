@@ -10,9 +10,9 @@ datasource db {
 }
 
 enum UserRole {
-  SUPER_ADMIN // 슈퍼 관리자
-  ADMIN // 관리자
-  RESIDENT // 입주민
+  SUPER_ADMIN	// 슈퍼 관리자
+  ADMIN			  // 관리자
+  USER		// 입주민
 }
 
 enum JoinStatus {
@@ -29,8 +29,8 @@ model User {
   email        String     @unique
   contact      String     @unique
   name         String
-  role         UserRole   @default(RESIDENT)
-  avatar       String? // 프로필 이미지
+  role         UserRole   
+  avatar       String?						        // 프로필 이미지
   joinStatus   JoinStatus @default(PENDING)
   isActive     Boolean    @default(false) // 로그인 여부
   refreshToken String?
@@ -140,9 +140,9 @@ model Complaint {
   title   String
   content String
 
-  status     String  @default("pending") // pending, in-progress, resolved, rejected
-  isPublic   Boolean @default(true) // 공개, 비공개 민원
-  viewsCount Int     @default(0) // 조회수
+  status    ComplaintStatus   @default(PENDING)  // enum 적용
+  isPublic  Boolean  @default(true)       // 공개, 비공개 민원
+  viewsCount Int     @default(0)          // 조회수
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -168,7 +168,7 @@ model Poll {
   id        String    @id @default(cuid())
   title     String
   content   String
-  status    String    @default("active") // active, ended
+  status    PollStatus  @default(PENDING) // enum 적용
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   endDate   DateTime?
@@ -331,7 +331,7 @@ model Comment {
   noticeId String?
   notice   Notice? @relation(fields: [noticeId], references: [id], onDelete: Cascade)
 
-  // 민원 댓글
+  // 댓글 수 계산용
   complaintId String?
   complaint   Complaint? @relation(fields: [complaintId], references: [id], onDelete: Cascade)
 
