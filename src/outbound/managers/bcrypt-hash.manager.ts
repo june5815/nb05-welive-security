@@ -3,7 +3,7 @@ import { IHashManager } from "../../application/ports/managers/hash.manager.inte
 
 const DEFAULT_SALT_ROUNDS = 10;
 
-export const createBcryptHashManager = (
+export const hashManager = (
   saltRounds: number = DEFAULT_SALT_ROUNDS,
 ): IHashManager => {
   const hash = async (plainString: string): Promise<string> => {
