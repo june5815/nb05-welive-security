@@ -1,4 +1,4 @@
-import { IHashManager } from "../../../../application/ports/managers/hash.manager.interface.js";
+import { IHashManager } from "../../../../application/ports/managers/hash.manager.interface";
 import {
   BusinessException,
   BusinessExceptionType,
