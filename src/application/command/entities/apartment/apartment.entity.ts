@@ -1,55 +1,103 @@
-export class ApartmentEntity {
-  private readonly _id: string;
-  private readonly _name: string;
-  private readonly _address: string;
-  private readonly _description?: string;
-  private readonly _officeNumber?: string;
-  private readonly _buildings: number[];
-  private readonly _units: number[];
+export type ApartmentEntity = {
+  readonly id: string;
+  readonly name: string;
+  readonly address: string;
+  readonly description?: string;
+  readonly officeNumber?: string;
+  readonly managerId?: string;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+  readonly version: number;
+};
 
-  constructor(attrs: {
+export const ApartmentEntity = {
+  create: (attrs: {
     id: string;
     name: string;
     address: string;
     description?: string;
     officeNumber?: string;
-    buildings: number[];
-    units: number[];
-  }) {
-    this._id = attrs.id;
-    this._name = attrs.name;
-    this._address = attrs.address;
-    this._description = attrs.description;
-    this._officeNumber = attrs.officeNumber;
-    this._buildings = attrs.buildings;
-    this._units = attrs.units;
-  }
+    managerId?: string;
+  }): ApartmentEntity => ({
+    id: attrs.id,
+    name: attrs.name,
+    address: attrs.address,
+    description: attrs.description,
+    officeNumber: attrs.officeNumber,
+    managerId: attrs.managerId,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    version: 1,
+  }),
 
-  get id(): string {
-    return this._id;
-  }
+  updateName: (
+    apartment: ApartmentEntity,
+    newName: string,
+  ): ApartmentEntity => ({
+    ...apartment,
+    name: newName,
+    updatedAt: new Date(),
+    version: apartment.version + 1,
+  }),
 
-  get name(): string {
-    return this._name;
-  }
+  updateAddress: (
+    apartment: ApartmentEntity,
+    newAddress: string,
+  ): ApartmentEntity => ({
+    ...apartment,
+    address: newAddress,
+    updatedAt: new Date(),
+    version: apartment.version + 1,
+  }),
 
-  get address(): string {
-    return this._address;
-  }
+  updateDescription: (
+    apartment: ApartmentEntity,
+    newDescription: string | undefined,
+  ): ApartmentEntity => ({
+    ...apartment,
+    description: newDescription,
+    updatedAt: new Date(),
+    version: apartment.version + 1,
+  }),
 
-  get description(): string | undefined {
-    return this._description;
-  }
+  updateOfficeNumber: (
+    apartment: ApartmentEntity,
+    newOfficeNumber: string | undefined,
+  ): ApartmentEntity => ({
+    ...apartment,
+    officeNumber: newOfficeNumber,
+    updatedAt: new Date(),
+    version: apartment.version + 1,
+  }),
 
-  get officeNumber(): string | undefined {
-    return this._officeNumber;
-  }
+  updateManager: (
+    apartment: ApartmentEntity,
+    managerId: string | undefined,
+  ): ApartmentEntity => ({
+    ...apartment,
+    managerId,
+    updatedAt: new Date(),
+    version: apartment.version + 1,
+  }),
 
-  get buildings(): number[] {
-    return this._buildings;
-  }
+  getId: (apartment: ApartmentEntity): string => apartment.id,
 
-  get units(): number[] {
-    return this._units;
-  }
-}
+  getName: (apartment: ApartmentEntity): string => apartment.name,
+
+  getAddress: (apartment: ApartmentEntity): string => apartment.address,
+
+  getDescription: (apartment: ApartmentEntity): string | undefined =>
+    apartment.description,
+
+  getOfficeNumber: (apartment: ApartmentEntity): string | undefined =>
+    apartment.officeNumber,
+
+  getManagerId: (apartment: ApartmentEntity): string | undefined =>
+    apartment.managerId,
+
+  getCreatedAt: (apartment: ApartmentEntity): Date => apartment.createdAt,
+
+  getUpdatedAt: (apartment: ApartmentEntity): Date => apartment.updatedAt,
+
+  getVersion: (apartment: ApartmentEntity): number => apartment.version,
+};
