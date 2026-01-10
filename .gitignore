@@ -344,3 +344,6 @@ $RECYCLE.BIN/
 prisma/schema.sql
 prisma/migrations/
 
+# Markdown files (except README)
+*.md
+!README.md
