@@ -57,8 +57,8 @@ model Apartment {
   id           String   @id @default(cuid())
   name         String
   address      String
-  description  String?
-  officeNumber String?
+  description  String
+  officeNumber String
   managerId    String?  @unique
   buildingNumberFrom Int
   buildingNumberTo Int
@@ -80,13 +80,14 @@ model Apartment {
   events             Event[]
   residentImportLogs ResidentImportLog[]
 
+  @@unique([name, address, officeNumber])
   @@index([managerId])
 }
 
 model Resident {
   id            String   @id @default(cuid())
-  email         String?
-  contact       String?
+  email         String
+  contact       String
   name          String
   building      Int
   unit          Int
