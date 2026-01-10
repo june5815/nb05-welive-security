@@ -22,6 +22,9 @@ export enum BusinessExceptionType {
 
   COMPLAINT_TITLE_REQUIRED,
   COMPLAINT_CONTENT_REQUIRED,
+  FORBIDDEN,
+  INVALID_EVENT_DATE,
+  NOTICE_NOT_FOUND,
 }
 
 const BusinessExceptionTable: Record<
@@ -108,7 +111,18 @@ const BusinessExceptionTable: Record<
     statusCode: 400,
     message: "잘못된 요청(필수사항 누락 또는 잘못된 입력값)입니다.",
   },
-
+  [BusinessExceptionType.FORBIDDEN]: {
+    statusCode: 401,
+    message: "권한과 관련된 오류입니다.",
+  },
+  [BusinessExceptionType.INVALID_EVENT_DATE]: {
+    statusCode: 401,
+    message: "잘못된 요청(필수사항 누락 또는 잘못된 입력값)입니다.",
+  },
+  [BusinessExceptionType.NOTICE_NOT_FOUND]: {
+    statusCode: 401,
+    message: "공지사항을 찾을 수 없습니다.",
+  },
   [BusinessExceptionType.COMPLAINT_TITLE_REQUIRED]: {
     statusCode: 400,
     message: "잘못된 요청(필수사항 누락 또는 잘못된 입력값)입니다.",
