@@ -19,6 +19,9 @@ export enum BusinessExceptionType {
   ALREADY_LIKED,
   NOTICE_CONTENT_REQUIRED,
   NOTICE_TITLE_REQUIRED,
+
+  COMPLAINT_TITLE_REQUIRED,
+  COMPLAINT_CONTENT_REQUIRED,
 }
 
 const BusinessExceptionTable: Record<
@@ -102,6 +105,15 @@ const BusinessExceptionTable: Record<
     message: "잘못된 요청(필수사항 누락 또는 잘못된 입력값)입니다.",
   },
   [BusinessExceptionType.NOTICE_TITLE_REQUIRED]: {
+    statusCode: 400,
+    message: "잘못된 요청(필수사항 누락 또는 잘못된 입력값)입니다.",
+  },
+
+  [BusinessExceptionType.COMPLAINT_TITLE_REQUIRED]: {
+    statusCode: 400,
+    message: "잘못된 요청(필수사항 누락 또는 잘못된 입력값)입니다.",
+  },
+  [BusinessExceptionType.COMPLAINT_CONTENT_REQUIRED]: {
     statusCode: 400,
     message: "잘못된 요청(필수사항 누락 또는 잘못된 입력값)입니다.",
   },
