@@ -73,8 +73,6 @@ export const UserEntity = {
       role: UserRole.SUPER_ADMIN,
       joinStatus: JoinStatus.APPROVED,
       isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     };
   },
 
@@ -96,8 +94,6 @@ export const UserEntity = {
       role: UserRole.ADMIN,
       joinStatus: JoinStatus.PENDING,
       isActive: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     };
   },
 
@@ -119,8 +115,6 @@ export const UserEntity = {
       role: UserRole.USER,
       joinStatus: JoinStatus.PENDING,
       isActive: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     };
   },
 
@@ -129,7 +123,6 @@ export const UserEntity = {
       ...user,
       joinStatus: JoinStatus.APPROVED,
       isActive: true,
-      updatedAt: new Date(),
     };
   },
 
@@ -138,7 +131,6 @@ export const UserEntity = {
       ...user,
       joinStatus: JoinStatus.REJECTED,
       isActive: false,
-      updatedAt: new Date(),
     };
   },
 
@@ -146,7 +138,6 @@ export const UserEntity = {
     return {
       ...user,
       avatar: avatar || undefined,
-      updatedAt: new Date(),
     };
   },
 
@@ -191,7 +182,6 @@ export const UserEntity = {
 
     return {
       ...updatedUser,
-      updatedAt: new Date(),
     };
   },
 
@@ -204,7 +194,6 @@ export const UserEntity = {
     return {
       ...user,
       password: hashedPassword,
-      updatedAt: new Date(),
     };
   },
 
@@ -217,7 +206,6 @@ export const UserEntity = {
     return {
       ...user,
       refreshToken: hashedToken,
-      updatedAt: new Date(),
     };
   },
 
@@ -225,7 +213,6 @@ export const UserEntity = {
     return {
       ...user,
       refreshToken: undefined,
-      updatedAt: new Date(),
     };
   },
 
