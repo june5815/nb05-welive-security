@@ -118,6 +118,50 @@ export const UserEntity = {
     };
   },
 
+  restoreSuperAdmin(props: User): User {
+    return { ...props };
+  },
+
+  restoreAdmin(props: {
+    id: string;
+    username: string;
+    password: string;
+    email: string;
+    contact: string;
+    name: string;
+    role: TUserRole;
+    avatar?: string;
+    joinStatus: TJoinStatus;
+    isActive: boolean;
+    refreshToken?: string;
+    createdAt: Date;
+    updatedAt: Date;
+    version: number;
+    adminOf: AdminOf;
+  }): User {
+    return { ...props };
+  },
+
+  restoreUser(props: {
+    id: string;
+    username: string;
+    password: string;
+    email: string;
+    contact: string;
+    name: string;
+    role: TUserRole;
+    avatar?: string;
+    joinStatus: TJoinStatus;
+    isActive: boolean;
+    refreshToken?: string;
+    createdAt: Date;
+    updatedAt: Date;
+    version: number;
+    resident: Resident;
+  }): User {
+    return { ...props };
+  },
+
   approveJoin(user: User): User {
     return {
       ...user,
@@ -150,38 +194,36 @@ export const UserEntity = {
       adminOf?: Partial<AdminOf>;
     },
   ): User {
-    let updatedUser = { ...user };
     if (props.email) {
-      updatedUser = {
-        ...updatedUser,
+      return {
+        ...user,
         email: props.email,
       };
     }
     if (props.contact) {
-      updatedUser = {
-        ...updatedUser,
+      return {
+        ...user,
         contact: props.contact,
       };
     }
     if (props.name) {
-      updatedUser = {
-        ...updatedUser,
+      return {
+        ...user,
         name: props.name,
       };
     }
 
+    let newAdminOf = user.adminOf;
     if (props.adminOf && user.adminOf) {
-      updatedUser = {
-        ...updatedUser,
-        adminOf: {
-          ...user.adminOf,
-          ...props.adminOf,
-        },
+      newAdminOf = {
+        ...user.adminOf,
+        ...props.adminOf,
       };
     }
 
     return {
-      ...updatedUser,
+      ...user,
+      adminOf: newAdminOf,
     };
   },
 
