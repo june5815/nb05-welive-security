@@ -2,8 +2,8 @@ export type ApartmentEntity = {
   readonly id: string;
   readonly name: string;
   readonly address: string;
-  readonly description?: string;
-  readonly officeNumber?: string;
+  readonly description: string;
+  readonly officeNumber: string;
   readonly managerId?: string;
   readonly buildingNumberFrom: number;
   readonly buildingNumberTo: number;
@@ -18,8 +18,8 @@ export type CreateApartmentInput = {
   readonly id: string;
   readonly name: string;
   readonly address: string;
-  readonly description?: string;
-  readonly officeNumber?: string;
+  readonly description: string;
+  readonly officeNumber: string;
   readonly managerId?: string;
   readonly buildingNumberFrom: number;
   readonly buildingNumberTo: number;
@@ -133,7 +133,7 @@ export const updateAddress = (
 
 export const updateDescription = (
   apartment: ApartmentEntity,
-  description: string | undefined,
+  description: string,
 ): ApartmentEntity => ({
   ...updateMetadata(apartment),
   description,
@@ -143,7 +143,7 @@ export const updateDescription = (
 
 export const updateOfficeNumber = (
   apartment: ApartmentEntity,
-  officeNumber: string | undefined,
+  officeNumber: string,
 ): ApartmentEntity => ({
   ...updateMetadata(apartment),
   officeNumber,

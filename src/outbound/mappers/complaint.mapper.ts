@@ -51,7 +51,7 @@ export interface ComplaintResponse {
 }
 
 export const ComplaintMapper = {
-   // 민원 생성
+  // 민원 생성
   toCreate(entity: CreateComplaintEntity): ComplaintCreateData {
     return {
       title: entity.title,
@@ -72,7 +72,7 @@ export const ComplaintMapper = {
     };
   },
 
-   // 민원 단건 응답
+  // 민원 단건 응답
   toResponse(complaint: {
     id: string;
     createdAt: Date;
