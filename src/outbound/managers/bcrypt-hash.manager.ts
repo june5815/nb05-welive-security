@@ -1,13 +1,10 @@
 import bcrypt from "bcrypt";
 import { IHashManager } from "../../application/ports/managers/hash.manager.interface.js";
+import { IConfigUtil } from "../../shared/utils/config.util";
 
-const DEFAULT_SALT_ROUNDS = 10;
-
-export const hashManager = (
-  saltRounds: number = DEFAULT_SALT_ROUNDS,
-): IHashManager => {
+export const hashManager = (config: IConfigUtil): IHashManager => {
   const hash = async (plainString: string): Promise<string> => {
-    return bcrypt.hash(plainString, saltRounds);
+    return bcrypt.hash(plainString, config.parsed().SALT_LEVEL);
   };
 
   const compare = async (params: {

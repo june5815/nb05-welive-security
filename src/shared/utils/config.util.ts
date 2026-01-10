@@ -8,17 +8,16 @@ export const configSchema = z.object({
   PORT: z.coerce.number(),
   PUBLIC_PATH: z.string().default("public"),
   DATABASE_URL: z.url(),
-  IMAGE_BASE_URL: z.url(),
+  SALT_LEVEL: z.coerce.number(),
   COOKIE_SECRET: z
     .string()
     .min(10, "세션 아이디 비밀번호는 최소 10자 이상입니다."),
-  TOKEN_SECRET: z.string().min(10, "토큰 시크릿은 최소 10자 이상입니다."),
-  GOOGLE_OAUTH_CLIENT_ID: z.string(),
-  GOOGLE_OAUTH_SECRET: z.string(),
-  GOOGLE_OAUTH_REDIRECT_URI: z.url(),
-  GOOGLE_SIGN_IN_SESSION_EXPIRED_URL: z.url(),
-  GOOGLE_SIGN_IN_SUCCESS_URL: z.url(),
-  GOOGLE_ACCOUNT_LINK_SUCCESS_URL: z.url(),
+  ACCESS_TOKEN_SECRET: z
+    .string()
+    .min(10, "토큰 시크릿은 최소 10자 이상입니다."),
+  REFRESH_TOKEN_SECRET: z
+    .string()
+    .min(10, "토큰 시크릿은 최소 10자 이상입니다."),
   ACCESS_TOKEN_EXPIRES_IN: z.enum(["15m", "1h"]).default("15m"),
   REFRESH_TOKEN_EXPIRES_IN: z.enum(["7d"]).default("7d"),
   CLIENT_DOMAIN: z.string(),
@@ -35,28 +34,30 @@ export interface IConfigUtil {
   parsed: () => ConfigType;
 }
 
-export class ConfigUtil implements IConfigUtil {
-  private _parsedConfig: ConfigType;
-
-  constructor() {
-    if (process.env.NODE_ENV !== "production") {
-      dotenv.config({
-        path: process.env.NODE_ENV === "development" ? ".env.dev" : ".env.test",
-      });
-    }
-
-    const result = configSchema.safeParse(process.env);
-    if (result.success) {
-      this._parsedConfig = result.data;
-    } else {
-      console.log(result.error.issues[0]);
-      throw new Error(
-        result.error.issues[0].path + ": " + result.error.issues[0].message,
-      );
-    }
+export const configUtil = (): IConfigUtil => {
+  if (process.env.NODE_ENV !== "production") {
+    dotenv.config({
+      path: process.env.NODE_ENV === "development" ? ".env" : ".env.test",
+    });
   }
 
-  public parsed() {
-    return this._parsedConfig;
+  const result = configSchema.safeParse(process.env);
+
+  let validatedConfig: ConfigType;
+
+  if (result.success) {
+    validatedConfig = result.data;
+  } else {
+    const issue = result.error.issues[0];
+    console.error(issue);
+    throw new Error(`${issue.path}: ${issue.message}`);
   }
-}
+
+  const parsed = (): ConfigType => {
+    return validatedConfig;
+  };
+
+  return {
+    parsed,
+  };
+};
