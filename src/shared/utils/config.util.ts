@@ -8,6 +8,7 @@ export const configSchema = z.object({
   PORT: z.coerce.number(),
   PUBLIC_PATH: z.string().default("public"),
   DATABASE_URL: z.url(),
+  SALT_LEVEL: z.coerce.number(),
   COOKIE_SECRET: z
     .string()
     .min(10, "세션 아이디 비밀번호는 최소 10자 이상입니다."),
