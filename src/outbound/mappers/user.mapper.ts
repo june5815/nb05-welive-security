@@ -124,7 +124,7 @@ export const UserMapper = {
     };
   },
 
-  async toSuperAdminEntity(user: SuperAdmin): Promise<IUser> {
+  toSuperAdminEntity(user: SuperAdmin): IUser {
     return UserEntity.restoreSuperAdmin({
       id: user.id,
       username: user.username,
@@ -145,7 +145,7 @@ export const UserMapper = {
     });
   },
 
-  async toAdminEntity(user: Admin): Promise<IUser> {
+  toAdminEntity(user: Admin): IUser {
     return UserEntity.restoreAdmin({
       id: user.id,
       username: user.username,
@@ -165,7 +165,7 @@ export const UserMapper = {
     });
   },
 
-  async toUserEntity(user: ResidentUser): Promise<IUser> {
+  toUserEntity(user: ResidentUser): IUser {
     return UserEntity.restoreUser({
       id: user.id,
       username: user.username,
