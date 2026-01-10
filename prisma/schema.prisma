@@ -64,7 +64,7 @@ model Apartment {
   buildingNumberTo Int
   floorCountPerBuilding Int
   unitCountPerFloor Int
-  
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   version      Int      @default(1)
@@ -101,6 +101,7 @@ model Resident {
   apartmentId String
   apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
 
+  @@unique([apartmentId, building, unit])
   @@index([apartmentId])
   @@index([userId])
   @@index([apartmentId, isHouseholder])
