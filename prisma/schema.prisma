@@ -102,7 +102,7 @@ model Resident {
   apartmentId String
   apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
 
-  @@unique([apartmentId, building, unit])
+  @@unique([email, name])
   @@index([apartmentId])
   @@index([userId])
   @@index([apartmentId, isHouseholder])

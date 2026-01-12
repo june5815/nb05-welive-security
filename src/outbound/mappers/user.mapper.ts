@@ -79,7 +79,15 @@ export const UserMapper = {
     };
   },
 
-  toCreateUser(entity: IUser): Prisma.UserCreateInput {
+  toCreateUser(
+    entity: IUser,
+    existingResidentId?: string,
+  ): Prisma.UserCreateInput {
+    const status = existingResidentId
+      ? JoinStatus.APPROVED
+      : JoinStatus.PENDING;
+    const isActive = existingResidentId ? true : false;
+
     return {
       username: entity.username,
       password: entity.password,
@@ -87,41 +95,53 @@ export const UserMapper = {
       contact: entity.contact,
       name: entity.name,
       role: UserRole.USER,
-      joinStatus: JoinStatus.PENDING,
-      isActive: false,
-      resident: {
-        connect: {
-          apartmentId_building_unit: {
-            apartmentId: entity.resident!.apartmentId,
-            building: entity.resident!.building,
-            unit: entity.resident!.unit,
+      joinStatus: status,
+      isActive: isActive,
+      resident: existingResidentId
+        ? {
+            connect: {
+              id: existingResidentId,
+            },
+          }
+        : {
+            create: {
+              email: entity.email,
+              contact: entity.contact,
+              name: entity.name,
+              building: entity.resident!.building,
+              unit: entity.resident!.unit,
+              apartment: {
+                connect: { id: entity.resident!.apartmentId },
+              },
+            },
           },
-        },
-      },
     };
   },
 
   toUpdate(entity: IUser): Prisma.UserUpdateInput {
-    return {
-      password: entity.password,
-      avatar: entity.avatar,
-      refreshToken: entity.refreshToken,
-    };
-  },
-
-  toUpdateAdminInfo(entity: Partial<IUser>): Prisma.UserUpdateInput {
-    return {
+    const updateData: Prisma.UserUpdateInput = {
       email: entity.email,
       contact: entity.contact,
       name: entity.name,
-      adminOf: {
-        update: {
-          name: entity.adminOf!.name,
-          address: entity.adminOf!.address,
-          description: entity.adminOf!.description,
-        },
-      },
+      password: entity.password,
+      avatar: entity.avatar,
+      joinStatus: entity.joinStatus,
+      isActive: entity.isActive,
+      refreshToken: entity.refreshToken,
     };
+
+    if (entity.role === UserRole.ADMIN && entity.adminOf) {
+      updateData.adminOf = {
+        update: {
+          name: entity.adminOf.name,
+          address: entity.adminOf.address,
+          officeNumber: entity.adminOf.officeNumber,
+          description: entity.adminOf.description,
+        },
+      };
+    }
+
+    return updateData;
   },
 
   toSuperAdminEntity(user: SuperAdmin): IUser {
