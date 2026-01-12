@@ -8,7 +8,7 @@ export enum BusinessExceptionType {
   NICKNAME_TOO_LONG,
   PASSWORD_TOO_SHORT,
   INVALID_AUTH,
-  UNAUTORIZED_REQUEST,
+  UNAUTHORIZED_REQUEST,
   TOO_MANY_POST,
   CONTENT_TOO_LONG,
   PARSE_BODY_ERROR,
@@ -79,7 +79,7 @@ const BusinessExceptionTable: Record<
     statusCode: 400,
     message: "이메일 또는 비밀번호가 일치하지 않아요.",
   },
-  [BusinessExceptionType.UNAUTORIZED_REQUEST]: {
+  [BusinessExceptionType.UNAUTHORIZED_REQUEST]: {
     statusCode: 400,
     message: "권한이 없어요.",
   },

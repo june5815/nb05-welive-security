@@ -19,6 +19,7 @@ export const JoinStatus = {
 export type TJoinStatus = (typeof JoinStatus)[keyof typeof JoinStatus];
 
 export interface AdminOf {
+  readonly id?: string;
   readonly name: string;
   readonly address: string;
   readonly description: string;
@@ -30,9 +31,11 @@ export interface AdminOf {
 }
 
 export interface Resident {
+  readonly id?: string;
   readonly apartmentId: string;
   readonly building: number;
   readonly unit: number;
+  readonly isHouseholder?: boolean;
 }
 
 export interface User {
@@ -194,25 +197,6 @@ export const UserEntity = {
       adminOf?: Partial<AdminOf>;
     },
   ): User {
-    if (props.email) {
-      return {
-        ...user,
-        email: props.email,
-      };
-    }
-    if (props.contact) {
-      return {
-        ...user,
-        contact: props.contact,
-      };
-    }
-    if (props.name) {
-      return {
-        ...user,
-        name: props.name,
-      };
-    }
-
     let newAdminOf = user.adminOf;
     if (props.adminOf && user.adminOf) {
       newAdminOf = {
@@ -223,6 +207,9 @@ export const UserEntity = {
 
     return {
       ...user,
+      email: props.email ?? user.email,
+      contact: props.contact ?? user.contact,
+      name: props.name ?? user.name,
       adminOf: newAdminOf,
     };
   },
@@ -280,7 +267,7 @@ export const UserEntity = {
   ): Promise<boolean> {
     if (!user.refreshToken) {
       throw new BusinessException({
-        type: BusinessExceptionType.UNAUTORIZED_REQUEST,
+        type: BusinessExceptionType.UNAUTHORIZED_REQUEST,
       });
     }
     return await hashManager.compare({
