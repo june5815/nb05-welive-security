@@ -1,4 +1,4 @@
-export interface INotificationRepo {
+export interface INontificationRepo {
   createForApartmentResidents(props: {
     apartmentId: string;
     noticeId: string;

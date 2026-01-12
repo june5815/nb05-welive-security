@@ -21,7 +21,7 @@ export const NoticeController = (deps: {
       {
         noticeRepo: deps.noticeRepo,
         eventRepo: deps.eventRepo,
-        notificationRepo: deps.nontificationRepo,
+        nontificationRepo: deps.nontificationRepo,
         unitOfWork: deps.unitOfWork,
       },
       {

@@ -8,7 +8,7 @@ import {
 import { INoticeRepo } from "../../../ports/repos/notice-repo.interface";
 import { IEventRepo } from "../../../ports/repos/event-repo.interface";
 import { IUnitOfWork } from "../../../ports/unit-of-work.interface";
-import { INotificationRepo } from "../../../ports/repos/notification-repo.interface";
+import { INontificationRepo } from "../../../ports/repos/notification-repo.interface";
 
 interface CreateNoticeInput {
   title: string;
@@ -31,7 +31,7 @@ export const createNotice = async (
   deps: {
     noticeRepo: INoticeRepo;
     eventRepo: IEventRepo;
-    notificationRepo: INotificationRepo;
+    nontificationRepo: INontificationRepo;
     unitOfWork: IUnitOfWork;
   },
   input: CreateNoticeInput,
@@ -76,7 +76,7 @@ export const createNotice = async (
     }
 
     // 알림
-    await deps.notificationRepo.createForApartmentResidents({
+    await deps.nontificationRepo.createForApartmentResidents({
       apartmentId: notice.apartmentId,
       noticeId: notice.id,
       content: "새 공지사항이 등록되었습니다.",
