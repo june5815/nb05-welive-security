@@ -1,73 +1,88 @@
-import { ComplaintStatus, UserRole, Complaint } from "@prisma/client";
+/* =========================
+ * Complaint Domain Entity
+ * ========================= */
 
-import {
-  BusinessException,
-  BusinessExceptionType,
-} from "../../../../shared/exceptions/business.exception";
+export enum ComplaintStatus {
+  PENDING = "PENDING",
+  IN_PROGRESS = "IN_PROGRESS",
+  COMPLETED = "COMPLETED",
+}
 
-// 민원 생성 입력
-export interface CreateComplaintInput {
+export type ComplaintEntity = {
+  readonly id: string;
+  readonly title: string;
+  readonly content: string;
+  readonly status: ComplaintStatus;
+  readonly isPublic: boolean;
+  readonly viewsCount: number;
+  readonly userId: string;
+  readonly apartmentId: string;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+};
+
+/* =========
+ * 생성
+ * ========= */
+
+export type CreateComplaintInput = {
   title: string;
   content: string;
   isPublic: boolean;
+  status: ComplaintStatus;
   userId: string;
   apartmentId: string;
-}
-
-// 민원 수정 입력
-export interface UpdateComplaintInput {
-  title?: string;
-  content?: string;
-  isPublic?: boolean;
-  status?: ComplaintStatus;
-}
-
-export const ComplaintEntity = {
-  // 관리자 권한 여부
-  canManage(role: UserRole): boolean {
-    return role === UserRole.ADMIN;
-  },
-
-  //민원 생성
-  create(input: CreateComplaintInput) {
-    if (!input.title?.trim()) {
-      throw new BusinessException({
-        type: BusinessExceptionType.COMPLAINT_TITLE_REQUIRED,
-      });
-    }
-
-    if (!input.content?.trim()) {
-      throw new BusinessException({
-        type: BusinessExceptionType.COMPLAINT_CONTENT_REQUIRED,
-      });
-    }
-
-    return {
-      title: input.title.trim(),
-      content: input.content,
-      status: ComplaintStatus.PENDING,
-      isPublic: input.isPublic,
-      viewsCount: 0,
-      userId: input.userId,
-      apartmentId: input.apartmentId,
-    };
-  },
-
-  // 민원 수정
-  update(
-    complaint: Pick<Complaint, "title" | "content" | "isPublic" | "status">,
-    input: UpdateComplaintInput,
-  ) {
-    return {
-      title: input.title?.trim() ?? complaint.title,
-      content: input.content ?? complaint.content,
-      isPublic: input.isPublic ?? complaint.isPublic,
-      status: input.status ?? complaint.status,
-    };
-  },
-
-  // 조회수 증가
-  increaseView(viewCount: number): number {
-    return viewCount + 1;
-  },
 };
+
+export const create = (input: CreateComplaintInput): ComplaintEntity => ({
+  id: crypto.randomUUID(),
+  title: input.title,
+  content: input.content,
+  status: input.status,
+  isPublic: input.isPublic,
+  viewsCount: 0,
+  userId: input.userId,
+  apartmentId: input.apartmentId,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+});
+
+/* =========
+ * 상태 판단
+ * ========= */
+
+export const canEdit = (complaint: ComplaintEntity): boolean =>
+  complaint.status === ComplaintStatus.PENDING;
+
+export const canDelete = (complaint: ComplaintEntity): boolean =>
+  complaint.status === ComplaintStatus.PENDING;
+
+/* =========
+ * 상태 변경
+ * ========= */
+
+export const updateStatus = (
+  complaint: ComplaintEntity,
+  status: ComplaintStatus,
+): ComplaintEntity => ({
+  ...complaint,
+  status,
+  updatedAt: new Date(),
+});
+
+/* =========
+ * 내용 수정
+ * ========= */
+
+export const updateContent = (
+  complaint: ComplaintEntity,
+  title: string,
+  content: string,
+  isPublic: boolean,
+): ComplaintEntity => ({
+  ...complaint,
+  title,
+  content,
+  isPublic,
+  updatedAt: new Date(),
+});
