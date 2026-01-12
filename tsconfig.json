@@ -37,9 +37,7 @@
 
     "outDir": "dist",
 
-    "sourceMap": true,
-
-    "typeRoots": ["src/shared/types", "node_modules/@types"]
+    "sourceMap": true
   },
   "include": ["src"],
   "exclude": []
