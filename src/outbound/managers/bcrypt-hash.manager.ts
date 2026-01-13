@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import { IHashManager } from "../../application/ports/managers/hash.manager.interface";
+import { IHashManager } from "../../application/ports/managers/bcrypt-hash-manager.interface";
 import { IConfigUtil } from "../../shared/utils/config.util";
 
 export const hashManager = (config: IConfigUtil): IHashManager => {

@@ -6,10 +6,13 @@ import {
   ResidentUserListReq,
   ResidentUserListResView,
 } from "../../../application/query/views/user.view";
+import { IUserQueryRepo } from "../../../application/ports/repos/query/user-query-repo.interface";
 import { IBaseQueryRepo } from "./base-query.repo";
 import { Prisma, UserRole } from "@prisma/client";
 
-export const UserQueryRepo = (baseQueryRepo: IBaseQueryRepo) => {
+export const UserQueryRepo = (
+  baseQueryRepo: IBaseQueryRepo,
+): IUserQueryRepo => {
   const findAdminById = async (userId: string): Promise<AdminView | null> => {
     try {
       const prismaClient = baseQueryRepo.getPrismaClient();
