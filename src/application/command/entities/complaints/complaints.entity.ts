@@ -1,73 +1,92 @@
-import { ComplaintStatus, UserRole, Complaint } from "@prisma/client";
-
 import {
   BusinessException,
   BusinessExceptionType,
 } from "../../../../shared/exceptions/business.exception";
 
-// 민원 생성 입력
-export interface CreateComplaintInput {
-  title: string;
-  content: string;
-  isPublic: boolean;
-  userId: string;
-  apartmentId: string;
-}
+export const ComplaintStatus = {
+  PENDING: "PENDING",
+  IN_PROGRESS: "IN_PROGRESS",
+  RESOLVED: "RESOLVED",
+} as const;
 
-// 민원 수정 입력
-export interface UpdateComplaintInput {
-  title?: string;
-  content?: string;
-  isPublic?: boolean;
-  status?: ComplaintStatus;
+export type TComplaintStatus =
+  (typeof ComplaintStatus)[keyof typeof ComplaintStatus];
+
+export interface Complaint {
+  readonly id?: string;
+  readonly title: string;
+  readonly content: string;
+  readonly status?: TComplaintStatus;
+  readonly isPublic: boolean;
+  readonly viewsCount?: number;
+
+  readonly userId: string;
+  readonly apartmentId: string;
+
+  readonly createdAt?: Date;
+  readonly updatedAt?: Date;
+  readonly version?: number;
 }
 
 export const ComplaintEntity = {
-  // 관리자 권한 여부
-  canManage(role: UserRole): boolean {
-    return role === UserRole.ADMIN;
-  },
-
-  //민원 생성
-  create(input: CreateComplaintInput) {
-    if (!input.title?.trim()) {
+  create(props: {
+    title: string;
+    content: string;
+    isPublic: boolean;
+    userId: string;
+    apartmentId: string;
+  }): Complaint {
+    if (!props.title) {
       throw new BusinessException({
         type: BusinessExceptionType.COMPLAINT_TITLE_REQUIRED,
       });
     }
 
-    if (!input.content?.trim()) {
+    if (!props.content) {
       throw new BusinessException({
         type: BusinessExceptionType.COMPLAINT_CONTENT_REQUIRED,
       });
     }
 
     return {
-      title: input.title.trim(),
-      content: input.content,
+      title: props.title,
+      content: props.content,
+      isPublic: props.isPublic,
       status: ComplaintStatus.PENDING,
-      isPublic: input.isPublic,
-      viewsCount: 0,
-      userId: input.userId,
-      apartmentId: input.apartmentId,
+      userId: props.userId,
+      apartmentId: props.apartmentId,
     };
   },
 
-  // 민원 수정
+  restore(props: Complaint): Complaint {
+    return { ...props };
+  },
+
   update(
-    complaint: Pick<Complaint, "title" | "content" | "isPublic" | "status">,
-    input: UpdateComplaintInput,
-  ) {
+    complaint: Complaint,
+    props: { title: string; content: string; isPublic: boolean },
+  ): Complaint {
+    if (complaint.status !== ComplaintStatus.PENDING) {
+      throw new BusinessException({
+        type: BusinessExceptionType.FORBIDDEN,
+      });
+    }
+
     return {
-      title: input.title?.trim() ?? complaint.title,
-      content: input.content ?? complaint.content,
-      isPublic: input.isPublic ?? complaint.isPublic,
-      status: input.status ?? complaint.status,
+      ...complaint,
+      title: props.title,
+      content: props.content,
+      isPublic: props.isPublic,
     };
   },
 
-  // 조회수 증가
-  increaseView(viewCount: number): number {
-    return viewCount + 1;
+  changeStatus(
+    complaint: Complaint,
+    status: TComplaintStatus,
+  ): Complaint {
+    return {
+      ...complaint,
+      status,
+    };
   },
 };

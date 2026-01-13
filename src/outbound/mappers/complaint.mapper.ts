@@ -1,111 +1,57 @@
-import { ComplaintStatus } from "@prisma/client";
+import { Prisma } from "@prisma/client";
+import {
+  Complaint,
+  ComplaintEntity,
+} from "../../application/command/entities/complaints/complaints.entity";
 
-// 민원 생성용 Entity 입력 타입
-export interface CreateComplaintEntity {
-  title: string;
-  content: string;
-  status: ComplaintStatus; // enum 적용
-  isPublic: boolean;
-  viewsCount: number;
-  userId: string;
-  apartmentId: string;
-}
+export const complaintInclude = Prisma.validator<Prisma.ComplaintInclude>()({
+  user: true,
+  apartment: true,
+});
 
-export interface ComplaintCreateData {
-  title: string;
-  content: string;
-  status: ComplaintStatus;
-  isPublic: boolean;
-  viewsCount: number;
-  user: {
-    connect: {
-      id: string;
-    };
-  };
-  apartment: {
-    connect: {
-      id: string;
-    };
-  };
-}
-
-// 프론트엔드 민원 작성자 타입
-export interface ComplaintWriter {
-  id: string;
-  name: string;
-}
-
-// 프론트엔드 민원 응답 타입
-export interface ComplaintResponse {
-  id: string;
-  createdAt: Date;
-  updatedAt: Date;
-  title: string;
-  content: string;
-  status: ComplaintStatus;
-  isPublic: boolean;
-  viewsCount: number;
-  apartmentId: string;
-  complainant: ComplaintWriter;
-  commentCount: number;
-}
+export type ComplaintModel = Prisma.ComplaintGetPayload<{
+  include: typeof complaintInclude;
+}>;
 
 export const ComplaintMapper = {
-  // 민원 생성
-  toCreate(entity: CreateComplaintEntity): ComplaintCreateData {
+  toCreate(entity: Complaint): Prisma.ComplaintCreateInput {
     return {
       title: entity.title,
       content: entity.content,
-      status: entity.status,
       isPublic: entity.isPublic,
-      viewsCount: entity.viewsCount,
+      status: entity.status!,
       user: {
-        connect: {
-          id: entity.userId,
-        },
+        connect: { id: entity.userId },
       },
       apartment: {
-        connect: {
-          id: entity.apartmentId,
-        },
+        connect: { id: entity.apartmentId },
       },
     };
   },
 
-  // 민원 단건 응답
-  toResponse(complaint: {
-    id: string;
-    createdAt: Date;
-    updatedAt: Date;
-    title: string;
-    content: string;
-    status: ComplaintStatus;
-    isPublic: boolean;
-    viewsCount: number;
-    apartmentId: string;
-    user: {
-      id: string;
-      name: string;
-    };
-    _count: {
-      comments: number;
-    };
-  }): ComplaintResponse {
+  toUpdate(entity: Complaint): Prisma.ComplaintUpdateInput {
     return {
-      id: complaint.id,
-      createdAt: complaint.createdAt,
-      updatedAt: complaint.updatedAt,
-      title: complaint.title,
-      content: complaint.content,
-      status: complaint.status,
-      isPublic: complaint.isPublic,
-      viewsCount: complaint.viewsCount,
-      apartmentId: complaint.apartmentId,
-      complainant: {
-        id: complaint.user.id,
-        name: complaint.user.name,
-      },
-      commentCount: complaint._count.comments,
+      title: entity.title,
+      content: entity.content,
+      isPublic: entity.isPublic,
+      status: entity.status,
+      version: { increment: 1 },
     };
+  },
+
+  toEntity(model: ComplaintModel): Complaint {
+    return ComplaintEntity.restore({
+      id: model.id,
+      title: model.title,
+      content: model.content,
+      status: model.status,
+      isPublic: model.isPublic,
+      viewsCount: model.viewsCount,
+      userId: model.userId,
+      apartmentId: model.apartmentId,
+      createdAt: model.createdAt,
+      updatedAt: model.updatedAt,
+      version: model.version,
+    });
   },
 };
