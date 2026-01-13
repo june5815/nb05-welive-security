@@ -1,4 +1,4 @@
-import { IHashManager } from "../../../../application/ports/managers/hash.manager.interface";
+import { IHashManager } from "../../../ports/managers/bcrypt-hash-manager.interface";
 import {
   BusinessException,
   BusinessExceptionType,

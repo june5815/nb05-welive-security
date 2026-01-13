@@ -5,14 +5,18 @@ import {
   adminInclude,
   residentInclude,
 } from "../../mappers/user.mapper";
+import { IUserCommandRepo } from "../../../application/ports/repos/command/user-command-repo.interface";
 import { IBaseCommandRepo } from "./base-command.repo";
+import { PessimisticLock } from "../../../shared/utils/pessimistic-lock.util";
 import { Prisma } from "@prisma/client";
 import {
   TechnicalException,
   TechnicalExceptionType,
 } from "../../../shared/exceptions/technical.exception";
 
-export const UserCommandRepo = (baseCommandRepo: IBaseCommandRepo) => {
+export const UserCommandRepo = (
+  baseCommandRepo: IBaseCommandRepo,
+): IUserCommandRepo => {
   /**
    * @error TechnicalExceptionType.UNIQUE_VIOLATION_USERNAME
    * @error TechnicalExceptionType.UNIQUE_VIOLATION_EMAIL
@@ -205,7 +209,7 @@ export const UserCommandRepo = (baseCommandRepo: IBaseCommandRepo) => {
    */
   const findById = async (
     userId: string,
-    pessimisticLock?: "share" | "update",
+    pessimisticLock?: PessimisticLock,
   ): Promise<IUser | null> => {
     try {
       const prisma = baseCommandRepo.getPrismaClient();
