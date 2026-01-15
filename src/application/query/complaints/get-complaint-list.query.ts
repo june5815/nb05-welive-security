@@ -26,7 +26,7 @@ export const GetComplaintList =
       props.requesterRole === UserRole.ADMIN ||
       props.requesterRole === UserRole.SUPER_ADMIN;
 
-    const complaints = await prisma.complaint.findMany({
+    return prisma.complaint.findMany({
       where: {
         apartmentId: props.apartmentId,
         ...(isAdmin
@@ -53,6 +53,4 @@ export const GetComplaintList =
         },
       },
     });
-
-    return complaints;
   };

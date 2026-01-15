@@ -67,13 +67,21 @@ export const GetComplaintDetail =
       });
     }
 
+    // 조회수 증가 (상세 조회 시)
+    await prisma.complaint.update({
+      where: { id: complaint.id },
+      data: {
+        viewsCount: { increment: 1 },
+      },
+    });
+
     return {
       id: complaint.id,
       title: complaint.title,
       content: complaint.content,
       status: complaint.status,
       isPublic: complaint.isPublic,
-      viewsCount: complaint.viewsCount,
+      viewsCount: complaint.viewsCount + 1,
       createdAt: complaint.createdAt,
       updatedAt: complaint.updatedAt,
       user: complaint.user,
