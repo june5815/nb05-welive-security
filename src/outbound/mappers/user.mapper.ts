@@ -186,7 +186,7 @@ export const UserMapper = {
   },
 
   toUserEntity(user: ResidentUser): IUser {
-    return UserEntity.restoreUser({
+    return UserEntity.restoreResidentUser({
       id: user.id,
       username: user.username,
       password: user.password,

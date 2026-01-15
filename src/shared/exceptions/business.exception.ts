@@ -27,6 +27,10 @@ export enum BusinessExceptionType {
   FORBIDDEN,
   INVALID_EVENT_DATE,
   NOTICE_NOT_FOUND,
+
+  DUPLICATE_USERNAME,
+  DUPLICATE_CONTACT,
+  DUPLICATE_APARTMENT,
 }
 
 const BusinessExceptionTable: Record<
@@ -39,15 +43,15 @@ const BusinessExceptionTable: Record<
   },
   [BusinessExceptionType.INVALID_PASSWORD]: {
     statusCode: 401,
-    message: "비밀 번호가 일치하지 않습니다",
+    message: "비밀번호가 일치하지 않습니다.",
   },
   [BusinessExceptionType.NICKNAME_DUPLICATE]: {
     statusCode: 401,
-    message: "토큰이 만료되었습니다",
+    message: "닉네임이 중복되었습니다.",
   },
   [BusinessExceptionType.TOKEN_EXPIRED]: {
     statusCode: 401,
-    message: "토큰이 만료되었습니다",
+    message: "토큰이 만료되었습니다.",
   },
   [BusinessExceptionType.UNKOWN_SERVER_ERROR]: {
     statusCode: 500,
@@ -99,7 +103,7 @@ const BusinessExceptionTable: Record<
   },
   [BusinessExceptionType.USER_NOT_FOUND]: {
     statusCode: 404,
-    message: "",
+    message: "해당되는 유저를 찾을 수 없습니다. 다시 확인해 주세요.",
   },
   [BusinessExceptionType.ARTICLE_NOT_FOUND]: {
     statusCode: 404,
@@ -140,6 +144,20 @@ const BusinessExceptionTable: Record<
   [BusinessExceptionType.COMPLAINT_CONTENT_REQUIRED]: {
     statusCode: 400,
     message: "잘못된 요청(필수사항 누락 또는 잘못된 입력값)입니다.",
+  },
+
+  // User
+  [BusinessExceptionType.DUPLICATE_USERNAME]: {
+    statusCode: 401,
+    message: "아이디가 중복되었습니다.",
+  },
+  [BusinessExceptionType.DUPLICATE_CONTACT]: {
+    statusCode: 401,
+    message: "연락처가 중복되었습니다.",
+  },
+  [BusinessExceptionType.DUPLICATE_APARTMENT]: {
+    statusCode: 401,
+    message: "아파트 정보가 중복되었습니다.",
   },
 };
 

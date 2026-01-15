@@ -258,6 +258,56 @@ export const UserCommandRepo = (
     }
   };
 
+  const lockManyAdmin = async (
+    pessimisticLock: PessimisticLock,
+  ): Promise<void> => {
+    try {
+      const prisma = baseCommandRepo.getPrismaClient();
+      if (pessimisticLock) {
+        let query: Prisma.Sql;
+
+        switch (pessimisticLock) {
+          case "share":
+            query = Prisma.sql`SELECT * FROM "User" WHERE role = 'ADMIN' FOR SHARE`;
+            break;
+          case "update":
+            query = Prisma.sql`SELECT * FROM "User" WHERE role = 'ADMIN' FOR UPDATE`;
+            break;
+          default:
+            throw new Error("유효하지 않은 잠금 타입입니다.");
+        }
+        await prisma.$queryRaw(query);
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const lockManyResidentUser = async (
+    pessimisticLock: PessimisticLock,
+  ): Promise<void> => {
+    try {
+      const prisma = baseCommandRepo.getPrismaClient();
+      if (pessimisticLock) {
+        let query: Prisma.Sql;
+
+        switch (pessimisticLock) {
+          case "share":
+            query = Prisma.sql`SELECT * FROM "User" WHERE role = 'USER' FOR SHARE`;
+            break;
+          case "update":
+            query = Prisma.sql`SELECT * FROM "User" WHERE role = 'USER' FOR UPDATE`;
+            break;
+          default:
+            throw new Error("유효하지 않은 잠금 타입입니다.");
+        }
+        await prisma.$queryRaw(query);
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
   /**
    * @error TechnicalExceptionType.UNIQUE_VIOLATION_EMAIL
    * @error TechnicalExceptionType.UNIQUE_VIOLATION_CONTACT
@@ -327,11 +377,11 @@ export const UserCommandRepo = (
     }
   };
 
-  const approveMany = async (): Promise<void> => {
+  const approveManyAdmin = async (): Promise<void> => {
     try {
       const prisma = baseCommandRepo.getPrismaClient();
       await prisma.user.updateMany({
-        where: { joinStatus: "PENDING" },
+        where: { joinStatus: "PENDING", role: "ADMIN" },
         data: {
           joinStatus: "APPROVED",
           isActive: true,
@@ -343,11 +393,11 @@ export const UserCommandRepo = (
     }
   };
 
-  const rejectMany = async (): Promise<void> => {
+  const rejectManyAdmin = async (): Promise<void> => {
     try {
       const prisma = baseCommandRepo.getPrismaClient();
       await prisma.user.updateMany({
-        where: { joinStatus: "PENDING" },
+        where: { joinStatus: "PENDING", role: "ADMIN" },
         data: {
           joinStatus: "REJECTED",
           isActive: false,
@@ -359,11 +409,79 @@ export const UserCommandRepo = (
     }
   };
 
-  const deleteUser = async (userId: string): Promise<void> => {
+  const approveManyResidentUser = async (): Promise<void> => {
+    try {
+      const prisma = baseCommandRepo.getPrismaClient();
+      await prisma.user.updateMany({
+        where: { joinStatus: "PENDING", role: "USER" },
+        data: {
+          joinStatus: "APPROVED",
+          isActive: true,
+          version: { increment: 1 },
+        },
+      });
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const rejectManyResidentUser = async (): Promise<void> => {
+    try {
+      const prisma = baseCommandRepo.getPrismaClient();
+      await prisma.user.updateMany({
+        where: { joinStatus: "PENDING", role: "USER" },
+        data: {
+          joinStatus: "REJECTED",
+          isActive: false,
+          version: { increment: 1 },
+        },
+      });
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const deleteAdmin = async (userId: string): Promise<void> => {
     try {
       const prisma = baseCommandRepo.getPrismaClient();
       await prisma.user.delete({
         where: { id: userId },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        return;
+      }
+
+      throw error;
+    }
+  };
+
+  const deleteManyAdmin = async (): Promise<void> => {
+    try {
+      const prisma = baseCommandRepo.getPrismaClient();
+      await prisma.user.deleteMany({
+        where: { role: "ADMIN", joinStatus: "REJECTED" },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        return;
+      }
+
+      throw error;
+    }
+  };
+
+  const deleteManyResidentUser = async (): Promise<void> => {
+    try {
+      const prisma = baseCommandRepo.getPrismaClient();
+      await prisma.user.deleteMany({
+        where: { role: "USER", joinStatus: "REJECTED" },
       });
     } catch (error) {
       if (
@@ -383,9 +501,15 @@ export const UserCommandRepo = (
     createResidentUser,
     findByUsername,
     findById,
+    lockManyAdmin,
+    lockManyResidentUser,
     update,
-    approveMany,
-    rejectMany,
-    deleteUser,
+    approveManyAdmin,
+    rejectManyAdmin,
+    approveManyResidentUser,
+    rejectManyResidentUser,
+    deleteAdmin,
+    deleteManyAdmin,
+    deleteManyResidentUser,
   };
 };
