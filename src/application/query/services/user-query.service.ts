@@ -2,7 +2,7 @@ import {
   getMyProfileReqDTO,
   getAdminListReqDTO,
   getResidentUserListReqDTO,
-} from "../../../shared/req-dto-validate/user.request";
+} from "../../../inbound/req-dto-validate/user.request";
 import {
   ProfileView,
   AdminView,

@@ -6,7 +6,7 @@ import {
   updateUserSignUpStatusReqDTO,
   updateUserListSignUpStatusReqDTO,
   deleteAdminReqDTO,
-} from "../../../shared/req-dto-validate/user.request";
+} from "../../../inbound/req-dto-validate/user.request";
 import {
   AdminOf,
   Resident,
