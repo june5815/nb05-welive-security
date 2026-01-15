@@ -80,10 +80,7 @@ export const ComplaintEntity = {
     };
   },
 
-  changeStatus(
-    complaint: Complaint,
-    status: TComplaintStatus,
-  ): Complaint {
+  changeStatus(complaint: Complaint, status: TComplaintStatus): Complaint {
     return {
       ...complaint,
       status,
