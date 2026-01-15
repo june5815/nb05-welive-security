@@ -462,6 +462,11 @@ export const UserCommandRepo = (
   const deleteManyAdmin = async (): Promise<void> => {
     try {
       const prisma = baseCommandRepo.getPrismaClient();
+      await prisma.apartment.deleteMany({
+        where: {
+          manager: { role: "ADMIN", joinStatus: "REJECTED" },
+        },
+      });
       await prisma.user.deleteMany({
         where: { role: "ADMIN", joinStatus: "REJECTED" },
       });
