@@ -1,4 +1,4 @@
-import { NoticeType } from "@prisma/client";
+import { NoticeCategory, NoticeType } from "@prisma/client";
 import { NoticeEntity } from "../../../command/entities/notice/notice.entity";
 
 export interface NoticeCommandRepository {
@@ -19,7 +19,7 @@ export interface NoticeCommandRepository {
     data: Partial<{
       title: string;
       content: string;
-      category: string;
+      category: NoticeCategory;
       type: NoticeType;
     }>,
   ): Promise<void>;

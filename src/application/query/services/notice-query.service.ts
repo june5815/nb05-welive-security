@@ -1,12 +1,5 @@
 import { noticeQueryRepository } from "../../../outbound/repos/query/notice-query.repo";
-
-export interface GetNoticeListQuery {
-  page: number;
-  limit: number;
-  category?: string;
-  searchKeyword?: string;
-  apartmentId: string;
-}
+import { GetNoticeListQuery } from "../views/notice.view";
 
 export const getNoticeListQuery =
   (repo: ReturnType<typeof noticeQueryRepository>) =>
