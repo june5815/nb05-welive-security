@@ -100,7 +100,7 @@ export const UserEntity = {
     };
   },
 
-  async createUser(props: {
+  async createResidentUser(props: {
     username: string;
     password: string;
     email: string;
@@ -145,7 +145,7 @@ export const UserEntity = {
     return { ...props };
   },
 
-  restoreUser(props: {
+  restoreResidentUser(props: {
     id: string;
     username: string;
     password: string;

@@ -1,12 +1,12 @@
 import {
-  JoinStatus,
+  getMyProfileReqDTO,
+  getAdminListReqDTO,
+  getResidentUserListReqDTO,
+} from "../../../inbound/req-dto-validate/user.request";
+import {
   ProfileView,
   AdminView,
-  AdminListReq,
-  AdminItemView,
   AdminListResView,
-  ResidentUserListReq,
-  ResidentItemView,
   ResidentUserListResView,
 } from "../views/user.view";
 import { IUserQueryRepo } from "../../ports/repos/query/user-query-repo.interface";
@@ -16,13 +16,52 @@ import {
 } from "../../../shared/exceptions/business.exception";
 
 export const UserQueryService = (userQueryRepo: IUserQueryRepo) => {
-  const getMyProfile = async () => {};
+  const findAdminById = async (dto: getMyProfileReqDTO): Promise<AdminView> => {
+    const admin = await userQueryRepo.findAdminById(dto.userId);
+    if (!admin) {
+      throw new BusinessException({
+        type: BusinessExceptionType.USER_NOT_FOUND,
+      });
+    }
 
-  const getAdminList = async () => {};
+    return admin;
+  };
 
-  const getResidentUserList = async () => {};
+  const getMyProfile = async (
+    dto: getMyProfileReqDTO,
+  ): Promise<ProfileView> => {
+    const profile = await userQueryRepo.getMyProfile(dto.userId);
+    if (!profile) {
+      throw new BusinessException({
+        type: BusinessExceptionType.USER_NOT_FOUND,
+      });
+    }
+
+    return profile;
+  };
+
+  const getAdminList = async (
+    dto: getAdminListReqDTO,
+  ): Promise<AdminListResView> => {
+    const { query } = dto;
+
+    const adminListRes = await userQueryRepo.findAdminList(query);
+
+    return adminListRes;
+  };
+
+  const getResidentUserList = async (
+    dto: getResidentUserListReqDTO,
+  ): Promise<ResidentUserListResView> => {
+    const { query } = dto;
+
+    const residentUserListRes = await userQueryRepo.findResidentUserList(query);
+
+    return residentUserListRes;
+  };
 
   return {
+    findAdminById,
     getMyProfile,
     getAdminList,
     getResidentUserList,

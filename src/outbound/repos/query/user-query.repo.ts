@@ -96,17 +96,20 @@ export const UserQueryRepo = (
         ];
       }
 
-      const totalCount = await prismaClient.user.count({
-        where: whereCondition,
-      });
-      const admins = await prismaClient.user.findMany({
-        skip: (page - 1) * limit,
-        take: limit,
-        where: whereCondition,
-        include: {
-          adminOf: true,
-        },
-      });
+      const [totalCount, admins] = await Promise.all([
+        prismaClient.user.count({
+          where: whereCondition,
+        }),
+
+        prismaClient.user.findMany({
+          skip: (page - 1) * limit,
+          take: limit,
+          where: whereCondition,
+          include: {
+            adminOf: true,
+          },
+        }),
+      ]);
 
       return {
         data: admins.map((admin) => ({
@@ -166,17 +169,20 @@ export const UserQueryRepo = (
         ];
       }
 
-      const totalCount = await prismaClient.user.count({
-        where: whereCondition,
-      });
-      const residentUsers = await prismaClient.user.findMany({
-        skip: (page - 1) * limit,
-        take: limit,
-        where: whereCondition,
-        include: {
-          resident: true,
-        },
-      });
+      const [totalCount, residentUsers] = await Promise.all([
+        prismaClient.user.count({
+          where: whereCondition,
+        }),
+
+        prismaClient.user.findMany({
+          skip: (page - 1) * limit,
+          take: limit,
+          where: whereCondition,
+          include: {
+            resident: true,
+          },
+        }),
+      ]);
 
       return {
         data: residentUsers.map((residentUser) => ({
