@@ -1,81 +1,153 @@
-import type { Request, Response } from "express";
-import { createNotice } from "../../application/command/entities/notice/create-notice";
-import { getNotices } from "../../application/query/notice/get-notice.query";
-import { getNoticeDetail } from "../../application/query/notice/get-notice-detail.query";
+import { NoticeType } from "@prisma/client";
+import { Request, Response, NextFunction } from "express";
 
-export const NoticeController = (deps: {
-  noticeRepo: any;
-  eventRepo: any;
-  notificationRepo: any;
-  unitOfWork: any;
-}) => ({
-  /**
-   * POST /api/v2/notices
-   * 관리자 공지 등록
-   */
-  async createNotice(req: Request, res: Response) {
-    const user = req.user!; // auth middleware에서 주입
-    const { title, content, category, isPinned, apartmentId, event } = req.body;
+import { CreateNoticeRequestSchema } from "../requests/create-notice.request";
+import { UpdateNoticeRequestSchema } from "../requests/update-notice.request";
 
-    const notice = await createNotice(
-      {
-        noticeRepo: deps.noticeRepo,
-        eventRepo: deps.eventRepo,
-        notificationRepo: deps.notificationRepo,
-        unitOfWork: deps.unitOfWork,
-      },
-      {
-        title,
-        content,
-        category,
-        isPinned,
-        apartmentId,
-        event,
-      },
-      user,
-    );
+import { createNoticeService } from "../../application/command/services/notice/create-notice.service";
+import { updateNoticeService } from "../../application/command/services/notice/update-notice.service";
+import { deleteNoticeService } from "../../application/command/services/notice/delete-notice.service";
 
-    return res.status(201).json(notice);
-  },
+import {
+  getNoticeDetailQuery,
+  getNoticeListQuery,
+} from "../../application/query/services/notice-query.service";
 
-  /**
-   * GET /api/v2/notices
-   * 공지 목록 조회
-   */
-  async getNotices(req: Request, res: Response) {
-    const user = req.user!;
-    const { category, isPinned, page, limit } = req.query;
+import { noticeCommandRepository } from "../../outbound/repos/command/notice-command.repo";
+import { noticeQueryRepository } from "../../outbound/repos/query/notice-query.repo";
 
-    const notices = await getNotices(
-      {
-        noticeRepo: deps.noticeRepo,
-      },
-      {
-        apartmentId: user.apartmentId,
-        category: category as any,
-        isPinned: isPinned === undefined ? undefined : isPinned === "true",
-        page: page ? Number(page) : undefined,
-        limit: limit ? Number(limit) : undefined,
-      },
-    );
+/**
+ * 공지 생성
+ */
+export const createNoticeController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const body = CreateNoticeRequestSchema.parse(req.body);
 
-    return res.status(200).json(notices);
-  },
+    const prismaClient = req.prismaClient;
+    const commandRepo = noticeCommandRepository(prismaClient);
 
-  /**
-   * GET /api/v2/notices/:noticeId
-   * 공지 상세 조회
-   */
-  async getNoticeDetail(req: Request, res: Response) {
-    const { noticeId } = req.params;
+    const result = await createNoticeService(commandRepo)({
+      title: body.title,
+      content: body.content,
+      category: body.category,
+      type: body.isPinned ? NoticeType.IMPORTANT : NoticeType.NORMAL,
+      apartmentId: body.apartmentId,
+      userId: req.user!.id,
+      event: body.event
+        ? {
+            startDate: new Date(body.event.startDate),
+            endDate: new Date(body.event.endDate),
+          }
+        : undefined,
+    });
 
-    const notice = await getNoticeDetail(
-      {
-        noticeRepo: deps.noticeRepo,
-      },
-      noticeId,
-    );
+    res.status(201).json(result);
+  } catch (e) {
+    next(e);
+  }
+};
 
-    return res.status(200).json(notice);
-  },
-});
+/**
+ * 공지 목록 조회
+ */
+export const getNoticeListController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const prismaClient = req.prismaClient;
+    const queryRepo = noticeQueryRepository(prismaClient);
+
+    const result = await getNoticeListQuery(queryRepo)({
+      page: Number(req.query.page ?? 1),
+      limit: Number(req.query.limit ?? 20),
+      apartmentId: req.user!.apartmentId,
+    });
+
+    res.json(result);
+  } catch (e) {
+    next(e);
+  }
+};
+
+/**
+ * 공지 상세 조회
+ */
+export const getNoticeDetailController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const prismaClient = req.prismaClient;
+    const queryRepo = noticeQueryRepository(prismaClient);
+
+    const result = await getNoticeDetailQuery(queryRepo)(req.params.noticeId);
+
+    res.json(result);
+  } catch (e) {
+    next(e);
+  }
+};
+
+/**
+ * 공지 수정
+ */
+export const updateNoticeController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const body = UpdateNoticeRequestSchema.parse(req.body);
+
+    const commandRepo = noticeCommandRepository(req.prismaClient);
+
+    await updateNoticeService(commandRepo)(req.params.noticeId, {
+      title: body.title,
+      content: body.content,
+      category: body.category,
+      type:
+        body.isPinned !== undefined
+          ? body.isPinned
+            ? NoticeType.IMPORTANT
+            : NoticeType.NORMAL
+          : undefined,
+      event: body.event
+        ? {
+            startDate: new Date(body.event.startDate),
+            endDate: new Date(body.event.endDate),
+          }
+        : undefined,
+    });
+
+    res.status(204).end();
+  } catch (e) {
+    next(e);
+  }
+};
+
+/**
+ * 공지 삭제
+ */
+export const deleteNoticeController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const prismaClient = req.prismaClient;
+    const commandRepo = noticeCommandRepository(prismaClient);
+
+    await deleteNoticeService(commandRepo)(req.params.noticeId);
+
+    res.status(204).end();
+  } catch (e) {
+    next(e);
+  }
+};

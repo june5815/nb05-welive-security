@@ -237,11 +237,11 @@ model PollVote {
 }
 
 enum NoticeCategory {
-  REGULAR_CHECK // 정기검진
+  MAINTENANCE // 정기검진
   EMERGENCY // 긴급사항
   COMMUNITY // 커뮤니티
-  VOTE // 주민투표
-  COMPLAINT // 민원
+  RESIDENT_VOTE // 주민투표
+  RESIDENT_COUNCIL // 민원
   ETC // 기타
 }
 
