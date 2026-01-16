@@ -2,13 +2,13 @@ import { PrismaClient } from "@prisma/client";
 import {
   IUnitOfWork,
   UnitOfWorkOptions,
-} from "../application/ports/u-o-w.interface";
+} from "../../application/ports/u-o-w.interface";
 import {
   TechnicalExceptionType,
   TechnicalException,
-} from "../shared/exceptions/technical.exception";
-import { IConfigUtil } from "../shared/utils/config.util";
-import { asyncContextStorage } from "../shared/utils/async-context-storage";
+} from "../../_common/exceptions/technical.exception";
+import { IConfigUtil } from "../../_common/utils/config.util";
+import { asyncContextStorage } from "../../_common/utils/async-context-storage";
 
 export const UOW = (
   prismaClient: PrismaClient,

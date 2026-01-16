@@ -7,12 +7,12 @@ import {
 } from "../../mappers/user.mapper";
 import { IUserCommandRepo } from "../../../application/ports/repos/command/user-command-repo.interface";
 import { IBaseCommandRepo } from "./base-command.repo";
-import { PessimisticLock } from "../../../shared/utils/pessimistic-lock.util";
+import { PessimisticLock } from "../../../_common/utils/pessimistic-lock.util";
 import { Prisma } from "@prisma/client";
 import {
   TechnicalException,
   TechnicalExceptionType,
-} from "../../../shared/exceptions/technical.exception";
+} from "../../../_common/exceptions/technical.exception";
 
 export const UserCommandRepo = (
   baseCommandRepo: IBaseCommandRepo,

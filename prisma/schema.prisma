@@ -59,7 +59,7 @@ model Apartment {
   address      String
   description  String
   officeNumber String
-  managerId    String?  @unique
+  adminId      String?  @unique
   buildingNumberFrom Int
   buildingNumberTo Int
   floorCountPerBuilding Int
@@ -70,7 +70,7 @@ model Apartment {
   version      Int      @default(1)
 
   // User 삭제 => Apartment 삭제 X (관리자 삭제되어도 아파트는 유지)
-  manager User? @relation("ApartmentManager", fields: [managerId], references: [id], onDelete: SetNull)
+  manager User? @relation("ApartmentManager", fields: [adminId], references: [id], onDelete: SetNull)
 
   // 1:n 관계
   residents          Resident[]
@@ -81,7 +81,7 @@ model Apartment {
   residentImportLogs ResidentImportLog[]
 
   @@unique([name, address, officeNumber])
-  @@index([managerId])
+  @@index([adminId])
 }
 
 model Resident {

@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import { IHashManager } from "../../application/ports/managers/bcrypt-hash-manager.interface";
-import { IConfigUtil } from "../../shared/utils/config.util";
+import { IConfigUtil } from "../../_common/utils/config.util";
 
 export const hashManager = (config: IConfigUtil): IHashManager => {
   const hash = async (plainString: string): Promise<string> => {

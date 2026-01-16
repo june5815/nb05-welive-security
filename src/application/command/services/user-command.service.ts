@@ -16,14 +16,16 @@ import {
 import { IUserCommandRepo } from "../../ports/repos/command/user-command-repo.interface";
 import { IUnitOfWork } from "../../ports/u-o-w.interface";
 import { IHashManager } from "../../ports/managers/bcrypt-hash-manager.interface";
+import { ITokenUtil } from "../../../_common/utils/token.util";
+import { PessimisticLock } from "../../../_common/utils/pessimistic-lock.util";
 import {
   BusinessException,
   BusinessExceptionType,
-} from "../../../shared/exceptions/business.exception";
+} from "../../../_common/exceptions/business.exception";
 import {
   TechnicalException,
   TechnicalExceptionType,
-} from "../../../shared/exceptions/technical.exception";
+} from "../../../_common/exceptions/technical.exception";
 
 export const UserCommandService = (
   unitOfWork: IUnitOfWork,

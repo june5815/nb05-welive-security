@@ -8,7 +8,7 @@ export enum BusinessExceptionType {
   NICKNAME_TOO_LONG,
   PASSWORD_TOO_SHORT,
   INVALID_AUTH,
-  UNAUTHORIZED_REQUEST,
+  UNAUTORIZED_REQUEST,
   TOO_MANY_POST,
   CONTENT_TOO_LONG,
   PARSE_BODY_ERROR,
@@ -19,8 +19,6 @@ export enum BusinessExceptionType {
   ALREADY_LIKED,
   NOTICE_CONTENT_REQUIRED,
   NOTICE_TITLE_REQUIRED,
-  COMMENT_CONTENT_REQUIRED,
-  COMMENT_NOT_FOUND,
 
   COMPLAINT_TITLE_REQUIRED,
   COMPLAINT_CONTENT_REQUIRED,
@@ -87,7 +85,7 @@ const BusinessExceptionTable: Record<
     statusCode: 400,
     message: "이메일 또는 비밀번호가 일치하지 않아요.",
   },
-  [BusinessExceptionType.UNAUTHORIZED_REQUEST]: {
+  [BusinessExceptionType.UNAUTORIZED_REQUEST]: {
     statusCode: 400,
     message: "권한이 없어요.",
   },
@@ -130,14 +128,6 @@ const BusinessExceptionTable: Record<
   [BusinessExceptionType.NOTICE_NOT_FOUND]: {
     statusCode: 401,
     message: "공지사항을 찾을 수 없습니다.",
-  },
-  [BusinessExceptionType.COMMENT_CONTENT_REQUIRED]: {
-    statusCode: 401,
-    message: "잘못된 요청(필수사항 누락 또는 잘못된 입력값)입니다.",
-  },
-  [BusinessExceptionType.COMMENT_NOT_FOUND]: {
-    statusCode: 401,
-    message: "댓글을 찾을 수 없습니다.",
   },
   [BusinessExceptionType.COMPLAINT_TITLE_REQUIRED]: {
     statusCode: 400,

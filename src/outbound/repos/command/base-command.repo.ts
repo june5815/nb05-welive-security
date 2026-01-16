@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
-import { asyncContextStorage } from "../../../shared/utils/async-context-storage";
-import { TxPrismaClient } from "../../../shared/utils/prisma-custom.types";
+import { asyncContextStorage } from "../../../_common/utils/async-context-storage";
+import { TxPrismaClient } from "../../../_common/utils/prisma-custom.types";
 
 export interface IBaseCommandRepo {
   getPrismaClient: () => PrismaClient | TxPrismaClient;
