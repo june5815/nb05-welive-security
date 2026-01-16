@@ -31,6 +31,8 @@ export enum BusinessExceptionType {
   DUPLICATE_USERNAME,
   DUPLICATE_CONTACT,
   DUPLICATE_APARTMENT,
+  STATUS_IS_PENDING,
+  REJECTED_USER,
 }
 
 const BusinessExceptionTable: Record<
@@ -158,6 +160,14 @@ const BusinessExceptionTable: Record<
   [BusinessExceptionType.DUPLICATE_APARTMENT]: {
     statusCode: 401,
     message: "아파트 정보가 중복되었습니다.",
+  },
+  [BusinessExceptionType.STATUS_IS_PENDING]: {
+    statusCode: 401,
+    message: "계정 승인 대기 중입니다.\n승인 후 서비스 이용이 가능합니다.",
+  },
+  [BusinessExceptionType.REJECTED_USER]: {
+    statusCode: 401,
+    message: "비활성화된 계정입니다.",
   },
 };
 
