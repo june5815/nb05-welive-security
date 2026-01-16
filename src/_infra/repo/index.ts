@@ -3,4 +3,4 @@
 모든 repo export
  */
 
-export { ApartmentRepo, IApartmentRepo } from "./apartment.repo";
+export { ApartmentRepo, IApartmentRepo } from "./apartment/apartment.repo";

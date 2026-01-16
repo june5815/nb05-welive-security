@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import {
   IUnitOfWork,
   UnitOfWorkOptions,
-} from "../../application/ports/u-o-w.interface";
+} from "../../_common/ports/db/u-o-w.interface";
 import {
   TechnicalExceptionType,
   TechnicalException,
