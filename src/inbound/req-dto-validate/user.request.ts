@@ -256,7 +256,7 @@ export type updateUserListSignUpStatusReqDTO = z.infer<
   typeof updateUserListSignUpStatusReqSchema
 >;
 
-// 관리자 삭제 및 거절된 사용자 삭제
+// 관리자 삭제
 export const deleteAdminReqSchema = z.object({
   userId: z.string().trim().nonempty(),
 });
