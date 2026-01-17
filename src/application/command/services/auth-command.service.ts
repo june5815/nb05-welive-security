@@ -21,12 +21,20 @@ import {
   TechnicalExceptionType,
 } from "../../../shared/exceptions/technical.exception";
 
+export interface IAuthCommandService {
+  login: (
+    dto: LoginReqDto,
+  ) => Promise<{ loginResDto: LoginResDto; tokenResDto: TokenResDto }>;
+  logout: (refreshToken: string) => Promise<void> | void;
+  refreshToken: (dto: RefreshTokenReqDto) => Promise<NewTokenResDto>;
+}
+
 export const AuthCommandService = (
   unitOfWork: IUnitOfWork,
   hashManager: IHashManager,
   tokenUtil: ITokenUtil,
   userCommandRepo: IUserCommandRepo,
-) => {
+): IAuthCommandService => {
   const login = async (
     dto: LoginReqDto,
   ): Promise<{ loginResDto: LoginResDto; tokenResDto: TokenResDto }> => {

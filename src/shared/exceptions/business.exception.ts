@@ -33,6 +33,10 @@ export enum BusinessExceptionType {
   DUPLICATE_APARTMENT,
   STATUS_IS_PENDING,
   REJECTED_USER,
+  INVALID_INPUT_IMAGE,
+
+  NOT_FOUND,
+  VALIDATION_ERROR,
 }
 
 const BusinessExceptionTable: Record<
@@ -168,6 +172,22 @@ const BusinessExceptionTable: Record<
   [BusinessExceptionType.REJECTED_USER]: {
     statusCode: 401,
     message: "비활성화된 계정입니다.",
+  },
+  [BusinessExceptionType.INVALID_INPUT_IMAGE]: {
+    statusCode: 400,
+    message: "이미지 파일만 업로드 가능합니다.",
+  },
+
+  // Not Found
+  [BusinessExceptionType.NOT_FOUND]: {
+    statusCode: 404,
+    message: "해당되는 요청을 찾을 수 없습니다.",
+  },
+
+  // Validation Error
+  [BusinessExceptionType.VALIDATION_ERROR]: {
+    statusCode: 400,
+    message: "요청 데이터 형식이 올바르지 않습니다.",
   },
 };
 

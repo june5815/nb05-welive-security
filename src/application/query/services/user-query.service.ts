@@ -15,7 +15,18 @@ import {
   BusinessExceptionType,
 } from "../../../shared/exceptions/business.exception";
 
-export const UserQueryService = (userQueryRepo: IUserQueryRepo) => {
+export interface IUserQueryService {
+  getMyProfile: (dto: getMyProfileReqDTO) => Promise<ProfileView>;
+  findAdminById: (dto: getMyProfileReqDTO) => Promise<AdminView>;
+  getAdminList: (dto: getAdminListReqDTO) => Promise<AdminListResView>;
+  getResidentUserList: (
+    dto: getResidentUserListReqDTO,
+  ) => Promise<ResidentUserListResView>;
+}
+
+export const UserQueryService = (
+  userQueryRepo: IUserQueryRepo,
+): IUserQueryService => {
   const findAdminById = async (dto: getMyProfileReqDTO): Promise<AdminView> => {
     const admin = await userQueryRepo.findAdminById(dto.userId);
     if (!admin) {

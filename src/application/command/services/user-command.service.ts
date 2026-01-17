@@ -25,11 +25,35 @@ import {
   TechnicalExceptionType,
 } from "../../../shared/exceptions/technical.exception";
 
+export interface IUserCommandService {
+  signUpSuperAdmin: (dto: createUserReqDTO) => Promise<IUser>;
+  signUpAdmin: (dto: createUserReqDTO) => Promise<IUser>;
+  signUpResidentUser: (dto: createUserReqDTO) => Promise<IUser>;
+  updateMyAvatar: (dto: updateAvatarReqDTO) => Promise<IUser>;
+  updateMyPassword: (dto: updatePasswordReqDTO) => Promise<IUser>;
+  updateAdminData: (dto: updateAdminDataReqDTO) => Promise<IUser>;
+  updateAdminSignUpStatus: (
+    dto: updateUserSignUpStatusReqDTO,
+  ) => Promise<IUser>;
+  updateAdminListSignUpStatus: (
+    dto: updateUserListSignUpStatusReqDTO,
+  ) => Promise<void>;
+  updateResidentUserSignUpStatus: (
+    dto: updateUserSignUpStatusReqDTO,
+  ) => Promise<IUser>;
+  updateResidentUserListSignUpStatus: (
+    dto: updateUserListSignUpStatusReqDTO,
+  ) => Promise<void>;
+  deleteAdmin: (dto: deleteAdminReqDTO) => Promise<void>;
+  deleteRejectedAdmins: () => Promise<void>;
+  deleteRejectedResidentUsers: () => Promise<void>;
+}
+
 export const UserCommandService = (
   unitOfWork: IUnitOfWork,
   hashManager: IHashManager,
   userCommandRepo: IUserCommandRepo,
-) => {
+): IUserCommandService => {
   const handleError = (error: unknown) => {
     if (error instanceof TechnicalException) {
       if (error.type === TechnicalExceptionType.UNIQUE_VIOLATION_USERNAME) {
