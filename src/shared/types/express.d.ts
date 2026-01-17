@@ -4,6 +4,7 @@ import { PrismaClient } from "@prisma/client";
 declare global {
   namespace Express {
     interface User {
+      [x: string]: any;
       id: string;
       apartmentId: string;
     }

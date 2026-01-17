@@ -338,6 +338,7 @@ model Comment {
   resourceId   String
   resourceType CommentResourceType
 
+  @@index(userId)
   @@index([resourceType, resourceId])
 }
 
