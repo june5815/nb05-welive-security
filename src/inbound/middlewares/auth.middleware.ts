@@ -28,28 +28,31 @@ export const AuthMiddleware = (tokenUtil: ITokenUtil): IAuthMiddleware => {
   };
 
   const checkAuth = (req: Request, res: Response, next: NextFunction) => {
-    const authHeader = req.headers.authorization;
-    if (
-      !authHeader ||
-      authHeader.split(" ").length !== 2 ||
-      authHeader.split(" ")[0] !== "Bearer"
-    ) {
+    const accessToken = req.signedCookies.access_token;
+    if (!accessToken) {
       throw new BusinessException({
         type: BusinessExceptionType.UNAUTHORIZED_REQUEST,
       });
     }
 
-    const accessToken = authHeader.split(" ")[1];
     const payload = tokenUtil.verifyToken({
       token: accessToken,
       type: "ACCESS",
     });
+
     req.userId = payload.userId;
+    req.userRole = payload.role;
     if (!req.userId) {
       throw new BusinessException({
         type: BusinessExceptionType.USER_NOT_FOUND,
       });
     }
+    if (!req.userRole) {
+      throw new BusinessException({
+        type: BusinessExceptionType.FORBIDDEN,
+      });
+    }
+
     return next();
   };
 

@@ -129,6 +129,14 @@ export const getMyProfileReqSchema = z.object({
 });
 export type getMyProfileReqDTO = z.infer<typeof getMyProfileReqSchema>;
 
+// 관리자 조회
+export const getAdminReqSchema = z.object({
+  params: z.object({
+    adminId: z.string().trim().nonempty(),
+  }),
+});
+export type getAdminReqDTO = z.infer<typeof getAdminReqSchema>;
+
 // 관리자 목록 조회
 export const getAdminListReqSchema = z.object({
   query: z.object({

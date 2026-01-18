@@ -35,6 +35,7 @@ export enum BusinessExceptionType {
   REJECTED_USER,
   INVALID_INPUT_IMAGE,
 
+  INVALID_TOKEN,
   NOT_FOUND,
   VALIDATION_ERROR,
 }
@@ -176,6 +177,12 @@ const BusinessExceptionTable: Record<
   [BusinessExceptionType.INVALID_INPUT_IMAGE]: {
     statusCode: 400,
     message: "이미지 파일만 업로드 가능합니다.",
+  },
+
+  // Token Error
+  [BusinessExceptionType.INVALID_TOKEN]: {
+    statusCode: 401,
+    message: "유효하지 않은 토큰입니다.",
   },
 
   // Not Found

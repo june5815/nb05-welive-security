@@ -5,6 +5,7 @@ import { Request, Response } from "express";
 import {
   createUserReqSchema,
   getMyProfileReqSchema,
+  getAdminReqSchema,
   getAdminListReqSchema,
   getResidentUserListReqSchema,
   updateAvatarReqSchema,
@@ -48,7 +49,7 @@ export const UserController = (
 ): IUserController => {
   const validate = baseController.validate;
 
-  // getMyProfile은 토큰에서 userId를 추출하여 사용하는 걸로 생각됨
+  // 조회
   const getMyProfile = async (req: Request, res: Response) => {
     const reqDto = validate(getMyProfileReqSchema, { userId: req.userId });
 
@@ -57,7 +58,7 @@ export const UserController = (
     res.status(200).json({ userProfile });
   };
   const getAdmin = async (req: Request, res: Response) => {
-    const reqDto = validate(getMyProfileReqSchema, { userId: req.userId });
+    const reqDto = validate(getAdminReqSchema, { params: req.params });
 
     const adminData = await userQueryService.findAdminById(reqDto);
 
@@ -100,7 +101,6 @@ export const UserController = (
     res.status(201).json({ newUser });
   };
 
-  // getMyProfile 작동 이후 토큰에서 userId를 추출하여 사용하는 걸로 생각됨
   const updateMyAvatar = async (req: Request, res: Response) => {
     const reqDto = validate(updateAvatarReqSchema, {
       userId: req.userId,
@@ -111,7 +111,6 @@ export const UserController = (
 
     res.status(200).json({ updatedUser });
   };
-  // getMyProfile 작동 이후 토큰에서 userId를 추출하여 사용하는 걸로 생각됨
   const updateMyPassword = async (req: Request, res: Response) => {
     const reqDto = validate(updatePasswordReqSchema, {
       userId: req.userId,
@@ -124,7 +123,7 @@ export const UserController = (
   };
   const updateAdminData = async (req: Request, res: Response) => {
     const reqDto = validate(updateAdminDataReqSchema, {
-      userId: req.userId,
+      userId: req.params.adminId,
       body: req.body,
     });
 
@@ -135,7 +134,7 @@ export const UserController = (
 
   const updateAdminSignUpStatus = async (req: Request, res: Response) => {
     const reqDto = validate(updateUserSignUpStatusReqSchema, {
-      userId: req.userId,
+      userId: req.params.adminId,
       body: req.body,
     });
 
@@ -158,7 +157,7 @@ export const UserController = (
     res: Response,
   ) => {
     const reqDto = validate(updateUserSignUpStatusReqSchema, {
-      userId: req.userId,
+      userId: req.params.residentId,
       body: req.body,
     });
 
@@ -182,7 +181,7 @@ export const UserController = (
 
   const deleteAdmin = async (req: Request, res: Response) => {
     const reqDto = validate(deleteAdminReqSchema, {
-      userId: req.userId,
+      userId: req.params.adminId,
     });
 
     await userCommandService.deleteAdmin(reqDto);

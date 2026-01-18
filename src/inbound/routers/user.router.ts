@@ -1,12 +1,14 @@
 import { IBaseRouter } from "./base.router";
 import { IUserController } from "../controllers/user.controller";
 import { IAuthMiddleware } from "../middlewares/auth.middleware";
+import { IRoleMiddleware } from "../middlewares/role.middleware";
 import { IMulterMiddleware } from "../middlewares/multer.middleware";
 
 export const UserRouter = (
   baseRouter: IBaseRouter,
   userController: IUserController,
   authMiddleware: IAuthMiddleware,
+  roleMiddleware: IRoleMiddleware,
   multerMiddleware: IMulterMiddleware,
 ) => {
   const router = baseRouter.router;
@@ -17,47 +19,45 @@ export const UserRouter = (
   router.get(
     "/me",
     authMiddleware.checkAuth,
+    roleMiddleware.hasRole(["ADMIN", "USER"]),
     catchError(userController.getMyProfile),
   );
   router.get(
     "/admins",
     authMiddleware.checkAuth,
+    roleMiddleware.hasRole(["SUPER_ADMIN"]),
     catchError(userController.getAdminList),
   );
   router.get(
     "/admins/:adminId",
     authMiddleware.checkAuth,
+    roleMiddleware.hasRole(["SUPER_ADMIN"]),
     catchError(userController.getAdmin),
   );
   router.get(
     "/residents",
     authMiddleware.checkAuth,
+    roleMiddleware.hasRole(["ADMIN"]),
     catchError(userController.getResidentUserList),
   );
 
   // 생성
   router.post("/super-admins", catchError(userController.signUpSuperAdmin));
-  router.post(
-    "/admins",
-    authMiddleware.checkAuth,
-    catchError(userController.signUpAdmin),
-  );
-  router.post(
-    "/residents",
-    authMiddleware.checkAuth,
-    catchError(userController.signUpResidentUser),
-  );
+  router.post("/admins", catchError(userController.signUpAdmin));
+  router.post("/residents", catchError(userController.signUpResidentUser));
 
   // 수정
   router.patch(
     "/me/avatar",
     authMiddleware.checkAuth,
+    roleMiddleware.hasRole(["ADMIN", "USER"]),
     multerMiddleware.uploadSingle(),
     catchError(userController.updateMyAvatar),
   );
   router.patch(
     "/me/password",
     authMiddleware.checkAuth,
+    roleMiddleware.hasRole(["ADMIN", "USER"]),
     catchError(userController.updateMyPassword),
   );
 
@@ -65,21 +65,25 @@ export const UserRouter = (
   router.patch(
     "/admins/join-status",
     authMiddleware.checkAuth,
+    roleMiddleware.hasRole(["SUPER_ADMIN"]),
     catchError(userController.updateAdminListSignUpStatus),
   );
   router.patch(
     "/admins/:adminId/join-status",
     authMiddleware.checkAuth,
+    roleMiddleware.hasRole(["SUPER_ADMIN"]),
     catchError(userController.updateAdminSignUpStatus),
   );
   router.patch(
     "/residents/join-status",
     authMiddleware.checkAuth,
+    roleMiddleware.hasRole(["ADMIN"]),
     catchError(userController.updateResidentUserListSignUpStatus),
   );
   router.patch(
     "/residents/:residentId/join-status",
     authMiddleware.checkAuth,
+    roleMiddleware.hasRole(["ADMIN"]),
     catchError(userController.updateResidentUserSignUpStatus),
   );
 
@@ -87,6 +91,7 @@ export const UserRouter = (
   router.patch(
     "/admins/:adminId",
     authMiddleware.checkAuth,
+    roleMiddleware.hasRole(["SUPER_ADMIN"]),
     catchError(userController.updateAdminData),
   );
 
@@ -94,16 +99,19 @@ export const UserRouter = (
   router.delete(
     "/admins/rejected",
     authMiddleware.checkAuth,
+    roleMiddleware.hasRole(["SUPER_ADMIN"]),
     catchError(userController.deleteRejectedAdmins),
   );
   router.delete(
     "/admins/:adminId",
     authMiddleware.checkAuth,
+    roleMiddleware.hasRole(["SUPER_ADMIN"]),
     catchError(userController.deleteAdmin),
   );
   router.delete(
     "/residents/rejected",
     authMiddleware.checkAuth,
+    roleMiddleware.hasRole(["ADMIN"]),
     catchError(userController.deleteRejectedResidentUsers),
   );
 
