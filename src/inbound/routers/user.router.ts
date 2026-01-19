@@ -1,8 +1,14 @@
+import { Router } from "express";
 import { IBaseRouter } from "./base.router";
 import { IUserController } from "../controllers/user.controller";
 import { IAuthMiddleware } from "../middlewares/auth.middleware";
 import { IRoleMiddleware } from "../middlewares/role.middleware";
 import { IMulterMiddleware } from "../middlewares/multer.middleware";
+
+export interface IUserRouter {
+  router: Router;
+  PATH: string;
+}
 
 export const UserRouter = (
   baseRouter: IBaseRouter,
@@ -10,7 +16,7 @@ export const UserRouter = (
   authMiddleware: IAuthMiddleware,
   roleMiddleware: IRoleMiddleware,
   multerMiddleware: IMulterMiddleware,
-) => {
+): IUserRouter => {
   const router = baseRouter.router;
   const catchError = baseRouter.catchError;
   const PATH = "/api/v2/users";

@@ -53,12 +53,7 @@ export const AuthController = (
 
     setCookie(res, tokenResDto.accessToken, tokenResDto.refreshToken);
 
-    return res.status(200).json({
-      data: {
-        user: loginResDto,
-        csrfValue: tokenResDto.csrfValue,
-      },
-    });
+    return res.status(200).json(loginResDto);
   };
 
   const logout = async (req: Request, res: Response): Promise<Response> => {
@@ -81,7 +76,7 @@ export const AuthController = (
     res.clearCookie("access_token", clearOptions);
     res.clearCookie("refresh_token", clearOptions);
 
-    return res.status(200).json({ message: "로그아웃에 성공했습니다." });
+    return res.status(204).json();
   };
 
   const refreshToken = async (
@@ -102,11 +97,7 @@ export const AuthController = (
       newTokenResDto.newRefreshToken,
     );
 
-    return res.status(200).json({
-      data: {
-        csrfValue: newTokenResDto.newCsrfValue,
-      },
-    });
+    return res.status(204).json();
   };
 
   return {

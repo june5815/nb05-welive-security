@@ -1,4 +1,5 @@
 import cors from "cors";
+import { RequestHandler } from "express";
 import { IConfigUtil } from "../../shared/utils/config.util";
 import {
   BusinessException,
@@ -6,7 +7,7 @@ import {
 } from "../../shared/exceptions/business.exception";
 
 export interface ICorsMiddleware {
-  corsHandler: () => void;
+  corsHandler: () => RequestHandler;
 }
 
 export const CorsMiddleware = (configUtil: IConfigUtil): ICorsMiddleware => {
