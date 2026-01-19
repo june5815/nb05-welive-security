@@ -129,6 +129,14 @@ export const getMyProfileReqSchema = z.object({
 });
 export type getMyProfileReqDTO = z.infer<typeof getMyProfileReqSchema>;
 
+// 관리자 조회
+export const getAdminReqSchema = z.object({
+  params: z.object({
+    adminId: z.string().trim().nonempty(),
+  }),
+});
+export type getAdminReqDTO = z.infer<typeof getAdminReqSchema>;
+
 // 관리자 목록 조회
 export const getAdminListReqSchema = z.object({
   query: z.object({
@@ -256,7 +264,7 @@ export type updateUserListSignUpStatusReqDTO = z.infer<
   typeof updateUserListSignUpStatusReqSchema
 >;
 
-// 관리자 삭제 및 거절된 사용자 삭제
+// 관리자 삭제
 export const deleteAdminReqSchema = z.object({
   userId: z.string().trim().nonempty(),
 });

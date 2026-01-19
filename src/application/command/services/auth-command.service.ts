@@ -21,19 +21,27 @@ import {
   TechnicalExceptionType,
 } from "../../../shared/exceptions/technical.exception";
 
+export interface IAuthCommandService {
+  login: (
+    dto: LoginReqDto,
+  ) => Promise<{ loginResDto: LoginResDto; tokenResDto: TokenResDto }>;
+  logout: (refreshToken: string) => Promise<void> | void;
+  refreshToken: (dto: RefreshTokenReqDto) => Promise<NewTokenResDto>;
+}
+
 export const AuthCommandService = (
   unitOfWork: IUnitOfWork,
   hashManager: IHashManager,
   tokenUtil: ITokenUtil,
   userCommandRepo: IUserCommandRepo,
-) => {
+): IAuthCommandService => {
   const login = async (
     dto: LoginReqDto,
   ): Promise<{ loginResDto: LoginResDto; tokenResDto: TokenResDto }> => {
     const { username, password } = dto.body;
 
     try {
-      const { updatedUser, userId, refreshToken } = await unitOfWork.doTx(
+      const { updatedUser, userId, role, refreshToken } = await unitOfWork.doTx(
         async () => {
           const foundUser = await userCommandRepo.findByUsername(username);
           if (
@@ -68,6 +76,7 @@ export const AuthCommandService = (
 
           const refreshToken = tokenUtil.generateRefreshToken({
             userId: foundUser.id!,
+            role: foundUser.role!,
           });
           const updatedUser = await UserEntity.updateRefreshToken(
             foundUser,
@@ -76,7 +85,12 @@ export const AuthCommandService = (
           );
           await userCommandRepo.update(updatedUser);
 
-          return { refreshToken, userId: updatedUser.id!, updatedUser };
+          return {
+            refreshToken,
+            userId: updatedUser.id!,
+            role: updatedUser.role!,
+            updatedUser,
+          };
         },
         {
           transactionOptions: {
@@ -86,7 +100,7 @@ export const AuthCommandService = (
         },
       );
 
-      const accessToken = tokenUtil.generateAccessToken({ userId });
+      const accessToken = tokenUtil.generateAccessToken({ userId, role });
       const csrfValue = tokenUtil.generateCsrfValue();
 
       const tokenResDto: TokenResDto = { accessToken, refreshToken, csrfValue };
@@ -178,7 +192,7 @@ export const AuthCommandService = (
     dto: RefreshTokenReqDto,
   ): Promise<NewTokenResDto> => {
     const { refreshToken: oldRefreshToken } = dto.cookie;
-    const { userId } = tokenUtil.verifyToken({
+    const { userId, role } = tokenUtil.verifyToken({
       token: oldRefreshToken,
       type: "REFRESH",
     });
@@ -219,6 +233,7 @@ export const AuthCommandService = (
 
           const newRefreshToken = tokenUtil.generateRefreshToken({
             userId: foundUser.id!,
+            role: foundUser.role!,
           });
           const updatedUser = await UserEntity.updateRefreshToken(
             foundUser,
@@ -237,7 +252,7 @@ export const AuthCommandService = (
         },
       );
 
-      const newAccessToken = tokenUtil.generateAccessToken({ userId });
+      const newAccessToken = tokenUtil.generateAccessToken({ userId, role });
       const newCsrfValue = tokenUtil.generateCsrfValue();
 
       return {

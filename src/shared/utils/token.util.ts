@@ -6,8 +6,16 @@ import {
 } from "../exceptions/business.exception";
 import { IConfigUtil } from "./config.util";
 
+export const UserRole = {
+  SUPER_ADMIN: "SUPER_ADMIN",
+  ADMIN: "ADMIN",
+  USER: "USER",
+} as const;
+export type TUserRole = (typeof UserRole)[keyof typeof UserRole];
+
 export type TokenPayload = {
   userId: string;
+  role: TUserRole;
   exp?: number;
 };
 
@@ -64,6 +72,11 @@ export const TokenUtil = (config: IConfigUtil): ITokenUtil => {
       if (error instanceof TokenExpiredError) {
         throw new BusinessException({
           type: BusinessExceptionType.TOKEN_EXPIRED,
+        });
+      }
+      if (error instanceof jwt.JsonWebTokenError) {
+        throw new BusinessException({
+          type: BusinessExceptionType.INVALID_TOKEN,
         });
       }
 

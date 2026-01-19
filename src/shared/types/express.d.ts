@@ -12,8 +12,8 @@ declare global {
     interface Request {
       prismaClient: PrismaClient;
       user?: User;
+      userId?: string;
+      userRole?: UserRole;
     }
   }
 }
-
-export {};

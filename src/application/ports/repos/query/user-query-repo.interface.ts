@@ -8,7 +8,7 @@ import {
 } from "../../../query/views/user.view";
 
 export interface IUserQueryRepo {
-  findAdminById: (userId: string) => Promise<AdminView | null>;
+  findAdminById: (adminId: string) => Promise<AdminView | null>;
   /**
    * @todo 현재는 SuperAdmin의 프로필을 조회하지 않는다.
    */

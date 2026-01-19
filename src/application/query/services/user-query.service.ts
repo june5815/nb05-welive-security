@@ -1,5 +1,6 @@
 import {
   getMyProfileReqDTO,
+  getAdminReqDTO,
   getAdminListReqDTO,
   getResidentUserListReqDTO,
 } from "../../../inbound/req-dto-validate/user.request";
@@ -15,9 +16,20 @@ import {
   BusinessExceptionType,
 } from "../../../shared/exceptions/business.exception";
 
-export const UserQueryService = (userQueryRepo: IUserQueryRepo) => {
-  const findAdminById = async (dto: getMyProfileReqDTO): Promise<AdminView> => {
-    const admin = await userQueryRepo.findAdminById(dto.userId);
+export interface IUserQueryService {
+  getMyProfile: (dto: getMyProfileReqDTO) => Promise<ProfileView>;
+  findAdminById: (dto: getAdminReqDTO) => Promise<AdminView>;
+  getAdminList: (dto: getAdminListReqDTO) => Promise<AdminListResView>;
+  getResidentUserList: (
+    dto: getResidentUserListReqDTO,
+  ) => Promise<ResidentUserListResView>;
+}
+
+export const UserQueryService = (
+  userQueryRepo: IUserQueryRepo,
+): IUserQueryService => {
+  const findAdminById = async (dto: getAdminReqDTO): Promise<AdminView> => {
+    const admin = await userQueryRepo.findAdminById(dto.params.adminId);
     if (!admin) {
       throw new BusinessException({
         type: BusinessExceptionType.USER_NOT_FOUND,
