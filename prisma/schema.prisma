@@ -163,9 +163,6 @@ model Complaint {
   apartmentId String
   apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
 
-  // 댓글 수 계산용 (Comment 재사용 or 전용 테이블 가능)
-  comments Comment[]
-
   @@index([userId])
   @@index([apartmentId])
   @@index([status])
@@ -255,6 +252,11 @@ enum EventResourceType {
   POLL
 }
 
+enum CommentResourceType {
+  NOTICE
+  COMPLAINT
+}
+
 enum NotificationType {
   COMPLAINT_CREATED
   COMPLAINT_UPDATED
@@ -291,8 +293,6 @@ model Notice {
   apartmentId String
   apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
 
-  // 관계
-  comments Comment[]
   event    Event? // 1:1 (공지 일정)
 
   @@index([apartmentId])
@@ -332,18 +332,14 @@ model Comment {
 
   // 작성자
   userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // 공지 댓글
-  noticeId String?
-  notice   Notice? @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+  // 리소스 추상화
+  resourceId   String
+  resourceType CommentResourceType
 
-  // 댓글 수 계산용
-  complaintId String?
-  complaint   Complaint? @relation(fields: [complaintId], references: [id], onDelete: Cascade)
-
-  @@index([noticeId])
-  @@index([complaintId])
+  @@index(userId)
+  @@index([resourceType, resourceId])
 }
 
 

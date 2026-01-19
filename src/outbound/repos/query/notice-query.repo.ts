@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { CommentResourceType, PrismaClient } from "@prisma/client";
 import { BaseQueryRepo } from "./base-query.repo";
 
 export const noticeQueryRepository = (prismaClient: PrismaClient) => {
@@ -15,28 +15,40 @@ export const noticeQueryRepository = (prismaClient: PrismaClient) => {
   }) => {
     const prisma = base.getPrismaClient();
 
-    const [items, total] = await Promise.all([
+    // 공지 목록
+    const [notices, total] = await Promise.all([
       prisma.notice.findMany({
         where: { apartmentId },
-        orderBy: [
-          { type: "desc" }, // IMPORTANT 먼저
-          { createdAt: "desc" }, // 최신순
-        ],
+        orderBy: [{ type: "desc" }, { createdAt: "desc" }],
         skip: (page - 1) * limit,
         take: limit,
-        select: {
-          id: true,
-          title: true,
-          category: true,
-          type: true,
-          viewCount: true,
-          createdAt: true,
-        },
       }),
-      prisma.notice.count({
-        where: { apartmentId },
-      }),
+      prisma.notice.count({ where: { apartmentId } }),
     ]);
+
+    // 댓글 수 집계
+    const noticeIds = notices.map((n) => n.id);
+
+    const commentCounts = await prisma.comment.groupBy({
+      by: ["resourceId"],
+      where: {
+        resourceType: CommentResourceType.NOTICE,
+        resourceId: { in: noticeIds },
+      },
+      _count: {
+        _all: true,
+      },
+    });
+
+    const countMap = Object.fromEntries(
+      commentCounts.map((c) => [c.resourceId, c._count._all]),
+    );
+
+    // 합치기
+    const items = notices.map((notice) => ({
+      ...notice,
+      commentCount: countMap[notice.id] ?? 0,
+    }));
 
     return {
       items,
@@ -49,18 +61,33 @@ export const noticeQueryRepository = (prismaClient: PrismaClient) => {
   const findDetail = async (noticeId: string) => {
     const prisma = base.getPrismaClient();
 
-    return prisma.notice.findUnique({
-      where: { id: noticeId },
-      include: {
-        event: true,
-        user: {
-          select: {
-            id: true,
-            name: true,
+    const [notice, commentCount] = await Promise.all([
+      prisma.notice.findUnique({
+        where: { id: noticeId },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+            },
           },
+          event: true,
         },
-      },
-    });
+      }),
+      prisma.comment.count({
+        where: {
+          resourceType: CommentResourceType.NOTICE,
+          resourceId: noticeId,
+        },
+      }),
+    ]);
+
+    if (!notice) return null;
+
+    return {
+      ...notice,
+      commentCount,
+    };
   };
 
   return {
