@@ -90,7 +90,7 @@ export const MulterMiddleware = (configUtil: IConfigUtil) => {
   });
 
   const uploadSingle = () => {
-    return upload.single("file");
+    return upload.single("avatarImage");
   };
 
   return {

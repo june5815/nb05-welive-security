@@ -11,7 +11,7 @@ export interface IBaseRouter {
   catchError: (handler: RequestHandler) => RequestHandler;
 }
 
-export const baseRouter = (): IBaseRouter => {
+export const BaseRouter = (): IBaseRouter => {
   const router: Router = express.Router();
 
   const catchError = (handler: RequestHandler) => {

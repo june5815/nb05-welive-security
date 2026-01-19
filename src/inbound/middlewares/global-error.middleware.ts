@@ -47,9 +47,8 @@ export const GlobalErrorMiddleware = (
       return;
     }
 
-    console.error("[UnknownError]: ", error);
     res.status(500).json({ message: "알 수 없는 에러가 발생했습니다." });
-    console.error(error);
+    console.error("[UnknownError]: ", error);
     return;
   };
 

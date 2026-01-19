@@ -14,6 +14,7 @@ import {
   updateUserSignUpStatusReqSchema,
   updateUserListSignUpStatusReqSchema,
   deleteAdminReqSchema,
+  deleteRejectedUsersReqSchema,
 } from "../req-dto-validate/user.request";
 
 export interface IUserController {
@@ -51,152 +52,189 @@ export const UserController = (
 
   // 조회
   const getMyProfile = async (req: Request, res: Response) => {
-    const reqDto = validate(getMyProfileReqSchema, { userId: req.userId });
+    const reqDto = validate(getMyProfileReqSchema, {
+      userId: req.userId,
+      role: req.userRole,
+    });
 
     const userProfile = await userQueryService.getMyProfile(reqDto);
 
-    res.status(200).json({ userProfile });
+    res.status(200).json(userProfile);
   };
   const getAdmin = async (req: Request, res: Response) => {
-    const reqDto = validate(getAdminReqSchema, { params: req.params });
+    const reqDto = validate(getAdminReqSchema, {
+      userId: req.userId,
+      role: req.userRole,
+      params: req.params,
+    });
 
     const adminData = await userQueryService.findAdminById(reqDto);
 
-    res.status(200).json({ adminData });
+    res.status(200).json(adminData);
   };
   const getAdminList = async (req: Request, res: Response) => {
-    const reqDto = validate(getAdminListReqSchema, { query: req.query });
+    const reqDto = validate(getAdminListReqSchema, {
+      userId: req.userId,
+      role: req.userRole,
+      query: req.query,
+    });
 
     const adminList = await userQueryService.getAdminList(reqDto);
 
-    res.status(200).json({ adminList });
+    res.status(200).json(adminList);
   };
   const getResidentUserList = async (req: Request, res: Response) => {
-    const reqDto = validate(getResidentUserListReqSchema, { query: req.query });
+    const reqDto = validate(getResidentUserListReqSchema, {
+      userId: req.userId,
+      role: req.userRole,
+      query: req.query,
+    });
 
     const residentUserList = await userQueryService.getResidentUserList(reqDto);
 
-    res.status(200).json({ residentUserList });
+    res.status(200).json(residentUserList);
   };
 
   const signUpSuperAdmin = async (req: Request, res: Response) => {
     const reqDto = validate(createUserReqSchema, { body: req.body });
 
-    const newUser = await userCommandService.signUpSuperAdmin(reqDto);
+    await userCommandService.signUpSuperAdmin(reqDto);
 
-    res.status(201).json({ newUser });
+    res.status(204).json();
   };
   const signUpAdmin = async (req: Request, res: Response) => {
     const reqDto = validate(createUserReqSchema, { body: req.body });
 
-    const newUser = await userCommandService.signUpAdmin(reqDto);
+    await userCommandService.signUpAdmin(reqDto);
 
-    res.status(201).json({ newUser });
+    res.status(204).json();
   };
   const signUpResidentUser = async (req: Request, res: Response) => {
     const reqDto = validate(createUserReqSchema, { body: req.body });
 
-    const newUser = await userCommandService.signUpResidentUser(reqDto);
+    await userCommandService.signUpResidentUser(reqDto);
 
-    res.status(201).json({ newUser });
+    res.status(204).json();
   };
 
   const updateMyAvatar = async (req: Request, res: Response) => {
     const reqDto = validate(updateAvatarReqSchema, {
       userId: req.userId,
-      file: req.file,
+      role: req.userRole,
+      body: { avatarImage: req.file },
     });
 
-    const updatedUser = await userCommandService.updateMyAvatar(reqDto);
+    await userCommandService.updateMyAvatar(reqDto);
 
-    res.status(200).json({ updatedUser });
+    res.status(204).json();
   };
   const updateMyPassword = async (req: Request, res: Response) => {
     const reqDto = validate(updatePasswordReqSchema, {
       userId: req.userId,
+      role: req.userRole,
       body: req.body,
     });
 
-    const updatedUser = await userCommandService.updateMyPassword(reqDto);
+    await userCommandService.updateMyPassword(reqDto);
 
-    res.status(200).json({ updatedUser });
+    res.status(204).json();
   };
   const updateAdminData = async (req: Request, res: Response) => {
     const reqDto = validate(updateAdminDataReqSchema, {
-      userId: req.params.adminId,
+      userId: req.userId,
+      role: req.userRole,
       body: req.body,
+      params: req.params,
     });
 
-    const updatedUser = await userCommandService.updateAdminData(reqDto);
+    await userCommandService.updateAdminData(reqDto);
 
-    res.status(200).json({ updatedUser });
+    res.status(204).json();
   };
 
   const updateAdminSignUpStatus = async (req: Request, res: Response) => {
     const reqDto = validate(updateUserSignUpStatusReqSchema, {
-      userId: req.params.adminId,
+      userId: req.userId,
+      role: req.userRole,
       body: req.body,
+      params: req.params,
     });
 
-    const updatedUser =
-      await userCommandService.updateAdminSignUpStatus(reqDto);
+    await userCommandService.updateAdminSignUpStatus(reqDto);
 
-    res.status(200).json({ updatedUser });
+    res.status(204).json();
   };
   const updateAdminListSignUpStatus = async (req: Request, res: Response) => {
     const reqDto = validate(updateUserListSignUpStatusReqSchema, {
+      userId: req.userId,
+      role: req.userRole,
       body: req.body,
     });
 
     await userCommandService.updateAdminListSignUpStatus(reqDto);
 
-    res.status(200).json();
+    res.status(204).json();
   };
   const updateResidentUserSignUpStatus = async (
     req: Request,
     res: Response,
   ) => {
     const reqDto = validate(updateUserSignUpStatusReqSchema, {
-      userId: req.params.residentId,
+      userId: req.userId,
+      role: req.userRole,
       body: req.body,
+      params: req.params,
     });
 
-    const updatedUser =
-      await userCommandService.updateResidentUserSignUpStatus(reqDto);
+    await userCommandService.updateResidentUserSignUpStatus(reqDto);
 
-    res.status(200).json({ updatedUser });
+    res.status(204).json();
   };
   const updateResidentUserListSignUpStatus = async (
     req: Request,
     res: Response,
   ) => {
     const reqDto = validate(updateUserListSignUpStatusReqSchema, {
+      userId: req.userId,
+      role: req.userRole,
       body: req.body,
     });
 
     await userCommandService.updateResidentUserListSignUpStatus(reqDto);
 
-    res.status(200).json();
+    res.status(204).json();
   };
 
   const deleteAdmin = async (req: Request, res: Response) => {
     const reqDto = validate(deleteAdminReqSchema, {
-      userId: req.params.adminId,
+      userId: req.userId,
+      role: req.userRole,
+      params: req.params,
     });
 
     await userCommandService.deleteAdmin(reqDto);
 
-    res.status(200).json();
+    res.status(204).json();
   };
   const deleteRejectedAdmins = async (req: Request, res: Response) => {
-    await userCommandService.deleteRejectedAdmins();
+    const reqDto = validate(deleteRejectedUsersReqSchema, {
+      userId: req.userId,
+      role: req.userRole,
+    });
 
-    res.status(200).json();
+    await userCommandService.deleteRejectedAdmins(reqDto);
+
+    res.status(204).json();
   };
   const deleteRejectedResidentUsers = async (req: Request, res: Response) => {
-    await userCommandService.deleteRejectedResidentUsers();
+    const reqDto = validate(deleteRejectedUsersReqSchema, {
+      userId: req.userId,
+      role: req.userRole,
+    });
 
-    res.status(200).json();
+    await userCommandService.deleteRejectedResidentUsers(reqDto);
+
+    res.status(204).json();
   };
 
   return {

@@ -29,7 +29,20 @@ export const UserQueryService = (
   userQueryRepo: IUserQueryRepo,
 ): IUserQueryService => {
   const findAdminById = async (dto: getAdminReqDTO): Promise<AdminView> => {
-    const admin = await userQueryRepo.findAdminById(dto.params.adminId);
+    const { userId, role, params } = dto;
+
+    if (!userId || !role) {
+      throw new BusinessException({
+        type: BusinessExceptionType.FORBIDDEN,
+      });
+    }
+    if (role !== "SUPER_ADMIN") {
+      throw new BusinessException({
+        type: BusinessExceptionType.FORBIDDEN,
+      });
+    }
+
+    const admin = await userQueryRepo.findAdminById(params.adminId);
     if (!admin) {
       throw new BusinessException({
         type: BusinessExceptionType.USER_NOT_FOUND,
@@ -42,7 +55,17 @@ export const UserQueryService = (
   const getMyProfile = async (
     dto: getMyProfileReqDTO,
   ): Promise<ProfileView> => {
-    const profile = await userQueryRepo.getMyProfile(dto.userId);
+    const { userId, role } = dto;
+
+    let profile: ProfileView | null;
+    if (role === "ADMIN" || role === "USER") {
+      profile = await userQueryRepo.getMyProfile(userId);
+    } else {
+      throw new BusinessException({
+        type: BusinessExceptionType.FORBIDDEN,
+      });
+    }
+
     if (!profile) {
       throw new BusinessException({
         type: BusinessExceptionType.USER_NOT_FOUND,
@@ -55,7 +78,18 @@ export const UserQueryService = (
   const getAdminList = async (
     dto: getAdminListReqDTO,
   ): Promise<AdminListResView> => {
-    const { query } = dto;
+    const { userId, role, query } = dto;
+
+    if (!userId || !role) {
+      throw new BusinessException({
+        type: BusinessExceptionType.FORBIDDEN,
+      });
+    }
+    if (role !== "SUPER_ADMIN") {
+      throw new BusinessException({
+        type: BusinessExceptionType.FORBIDDEN,
+      });
+    }
 
     const adminListRes = await userQueryRepo.findAdminList(query);
 
@@ -65,7 +99,18 @@ export const UserQueryService = (
   const getResidentUserList = async (
     dto: getResidentUserListReqDTO,
   ): Promise<ResidentUserListResView> => {
-    const { query } = dto;
+    const { userId, role, query } = dto;
+
+    if (!userId || !role) {
+      throw new BusinessException({
+        type: BusinessExceptionType.FORBIDDEN,
+      });
+    }
+    if (role !== "ADMIN") {
+      throw new BusinessException({
+        type: BusinessExceptionType.FORBIDDEN,
+      });
+    }
 
     const residentUserListRes = await userQueryRepo.findResidentUserList(query);
 

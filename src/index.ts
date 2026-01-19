@@ -2,10 +2,10 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import { PrismaClient } from "@prisma/client";
-import { configUtil } from "./shared/utils/config.util";
+import { ConfigUtil } from "./shared/utils/config.util";
 import { createApartmentRouter } from "./outbound/routes/apartment.router";
 
-const config = configUtil();
+const config = ConfigUtil();
 const db = new PrismaClient();
 
 const app = express();

@@ -39,7 +39,7 @@ export interface IConfigUtil {
   parsed: () => ConfigType;
 }
 
-export const configUtil = (): IConfigUtil => {
+export const ConfigUtil = (): IConfigUtil => {
   if (process.env.NODE_ENV !== "production") {
     dotenv.config({
       path: process.env.NODE_ENV === "development" ? ".env" : ".env.test",
