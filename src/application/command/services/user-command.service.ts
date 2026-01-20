@@ -202,8 +202,9 @@ export const UserCommandService = (
             });
           }
 
-          const newAvatar = body.avatarImage.originalname;
-          const updatedUser = UserEntity.updateAvatar(foundUser, newAvatar);
+          const newAvatar =
+            body.avatarImage.location ?? body.avatarImage.filename;
+          const updatedUser = UserEntity.updateAvatar(foundUser, newAvatar!);
 
           const savedUser = await userCommandRepo.update(updatedUser);
           return savedUser;
