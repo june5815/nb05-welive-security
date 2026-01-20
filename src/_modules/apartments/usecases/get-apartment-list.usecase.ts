@@ -1,3 +1,4 @@
+import { ApartmentQueryRepository } from "../../../_common/ports/repos/apartment/apartment-query-repo.interface";
 import { Apartment } from "../domain/apartment.entity";
 
 /**
@@ -69,7 +70,6 @@ export const getApartmentList = async (
 ): Promise<ApartmentListResponseDto> => {
   const result = await apartmentRepo.findWithPagination(page, limit);
 
-  // 검색 쿼리가 있으면 필터링
   let apartments = result.data;
   if (search) {
     const searchResults = await apartmentRepo.search(search);

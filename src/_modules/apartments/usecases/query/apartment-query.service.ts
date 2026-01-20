@@ -1,13 +1,9 @@
-import {
-  Apartment,
-  ApartmentEntity,
-} from "../../../../application/command/entities/apartment/apartment.entity";
-import { ApartmentQueryRepository } from "../../../../_common/ports/repos/apartment/apartment-query-repo.interface";
-import { ApartmentQueryView } from "../../../../application/query/apartment/apartment.view";
+import { ApartmentQueryRepository } from "../../../../_common/ports/repos/apartment";
+import { Apartment, ApartmentEntity } from "../../domain/apartment.entity";
 import {
   ApartmentListResponse,
   ApartmentDetailResponse,
-} from "../../../../application/dto/apartment/apartment.dto";
+} from "../../dtos/apartment.dto";
 
 export class ApartmentQueryService {
   constructor(private readonly apartmentQueryRepo: ApartmentQueryRepository) {}
