@@ -42,7 +42,6 @@ export const noticeCommandRepository = (prismaClient: PrismaClient) => {
           type: command.type,
           apartmentId: command.apartmentId,
           userId: command.userId,
-
           event: command.event
             ? {
                 create: {
@@ -61,11 +60,6 @@ export const noticeCommandRepository = (prismaClient: PrismaClient) => {
               name: true,
             },
           },
-          _count: {
-            select: {
-              comments: true,
-            },
-          },
         },
       });
     },
@@ -74,7 +68,7 @@ export const noticeCommandRepository = (prismaClient: PrismaClient) => {
      * 공지 수정
      */
     async update(noticeId: string, command: UpdateNoticeCommand) {
-      // 🔥 1. apartmentId 먼저 조회 (비동기 로직 분리)
+      // 1. apartmentId 먼저 조회 (비동기 로직 분리)
       const notice = await prisma.notice.findUnique({
         where: { id: noticeId },
         select: { apartmentId: true },
@@ -103,7 +97,7 @@ export const noticeCommandRepository = (prismaClient: PrismaClient) => {
                         title: command.title ?? "",
                         startDate: command.event.startDate,
                         endDate: command.event.endDate,
-                        apartmentId: notice.apartmentId, // ✅ string
+                        apartmentId: notice.apartmentId,
                       },
                       update: {
                         startDate: command.event.startDate,

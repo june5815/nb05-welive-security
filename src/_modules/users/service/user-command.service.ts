@@ -6,7 +6,8 @@ import {
   updateUserSignUpStatusReqDTO,
   updateUserListSignUpStatusReqDTO,
   deleteAdminReqDTO,
-} from "../dtos/user.request";
+  deleteRejectedUsersReqDTO,
+} from "../../../inbound/req-dto-validate/user.request";
 import {
   AdminOf,
   Resident,
@@ -27,11 +28,37 @@ import {
   TechnicalExceptionType,
 } from "../../../_common/exceptions/technical.exception";
 
+export interface IUserCommandService {
+  signUpSuperAdmin: (dto: createUserReqDTO) => Promise<IUser>;
+  signUpAdmin: (dto: createUserReqDTO) => Promise<IUser>;
+  signUpResidentUser: (dto: createUserReqDTO) => Promise<IUser>;
+  updateMyAvatar: (dto: updateAvatarReqDTO) => Promise<IUser>;
+  updateMyPassword: (dto: updatePasswordReqDTO) => Promise<IUser>;
+  updateAdminData: (dto: updateAdminDataReqDTO) => Promise<IUser>;
+  updateAdminSignUpStatus: (
+    dto: updateUserSignUpStatusReqDTO,
+  ) => Promise<IUser>;
+  updateAdminListSignUpStatus: (
+    dto: updateUserListSignUpStatusReqDTO,
+  ) => Promise<void>;
+  updateResidentUserSignUpStatus: (
+    dto: updateUserSignUpStatusReqDTO,
+  ) => Promise<IUser>;
+  updateResidentUserListSignUpStatus: (
+    dto: updateUserListSignUpStatusReqDTO,
+  ) => Promise<void>;
+  deleteAdmin: (dto: deleteAdminReqDTO) => Promise<void>;
+  deleteRejectedAdmins: (dto: deleteRejectedUsersReqDTO) => Promise<void>;
+  deleteRejectedResidentUsers: (
+    dto: deleteRejectedUsersReqDTO,
+  ) => Promise<void>;
+}
+
 export const UserCommandService = (
   unitOfWork: IUnitOfWork,
   hashManager: IHashManager,
   userCommandRepo: IUserCommandRepo,
-) => {
+): IUserCommandService => {
   const handleError = (error: unknown) => {
     if (error instanceof TechnicalException) {
       if (error.type === TechnicalExceptionType.UNIQUE_VIOLATION_USERNAME) {
@@ -154,19 +181,32 @@ export const UserCommandService = (
     try {
       return await unitOfWork.doTx<IUser>(
         async () => {
-          const { userId, body } = dto;
+          const { userId, role, body } = dto;
 
-          const foundUser = await userCommandRepo.findById(userId);
+          if (!userId || !role) {
+            throw new BusinessException({
+              type: BusinessExceptionType.FORBIDDEN,
+            });
+          }
+
+          let foundUser: IUser | null;
+          if (role === "ADMIN" || role === "USER") {
+            foundUser = await userCommandRepo.findById(userId);
+          } else {
+            throw new BusinessException({
+              type: BusinessExceptionType.FORBIDDEN,
+            });
+          }
+
           if (!foundUser) {
             throw new BusinessException({
               type: BusinessExceptionType.USER_NOT_FOUND,
             });
           }
 
-          const newAvatar = body.avatarImage
-            ? body.avatarImage.file.originalname
-            : null;
-          const updatedUser = UserEntity.updateAvatar(foundUser, newAvatar);
+          const newAvatar =
+            body.avatarImage.location ?? body.avatarImage.filename;
+          const updatedUser = UserEntity.updateAvatar(foundUser, newAvatar!);
 
           const savedUser = await userCommandRepo.update(updatedUser);
           return savedUser;
@@ -190,9 +230,23 @@ export const UserCommandService = (
     try {
       return await unitOfWork.doTx<IUser>(
         async () => {
-          const { userId, body } = dto;
+          const { userId, role, body } = dto;
 
-          const foundUser = await userCommandRepo.findById(userId);
+          if (!userId || !role) {
+            throw new BusinessException({
+              type: BusinessExceptionType.FORBIDDEN,
+            });
+          }
+
+          let foundUser: IUser | null;
+          if (role === "ADMIN" || role === "USER") {
+            foundUser = await userCommandRepo.findById(userId);
+          } else {
+            throw new BusinessException({
+              type: BusinessExceptionType.FORBIDDEN,
+            });
+          }
+
           if (!foundUser) {
             throw new BusinessException({
               type: BusinessExceptionType.USER_NOT_FOUND,
@@ -239,9 +293,23 @@ export const UserCommandService = (
     try {
       return await unitOfWork.doTx<IUser>(
         async () => {
-          const { userId, body } = dto;
+          const { userId, role, body, params } = dto;
 
-          const foundUser = await userCommandRepo.findById(userId, "update");
+          if (!userId || !role) {
+            throw new BusinessException({
+              type: BusinessExceptionType.FORBIDDEN,
+            });
+          }
+          if (role !== "SUPER_ADMIN") {
+            throw new BusinessException({
+              type: BusinessExceptionType.FORBIDDEN,
+            });
+          }
+
+          const foundUser = await userCommandRepo.findById(
+            params.adminId,
+            "update",
+          );
           if (!foundUser) {
             throw new BusinessException({
               type: BusinessExceptionType.USER_NOT_FOUND,
@@ -278,9 +346,23 @@ export const UserCommandService = (
     try {
       return await unitOfWork.doTx<IUser>(
         async () => {
-          const { userId, body } = dto;
+          const { userId, role, body, params } = dto;
 
-          const foundUser = await userCommandRepo.findById(userId, "update");
+          if (!userId || !role) {
+            throw new BusinessException({
+              type: BusinessExceptionType.FORBIDDEN,
+            });
+          }
+          if (role !== "SUPER_ADMIN") {
+            throw new BusinessException({
+              type: BusinessExceptionType.FORBIDDEN,
+            });
+          }
+
+          const foundUser = await userCommandRepo.findById(
+            params.adminId!,
+            "update",
+          );
           if (!foundUser) {
             throw new BusinessException({
               type: BusinessExceptionType.USER_NOT_FOUND,
@@ -320,7 +402,18 @@ export const UserCommandService = (
     try {
       return await unitOfWork.doTx(
         async () => {
-          const { body } = dto;
+          const { userId, role, body } = dto;
+
+          if (!userId || !role) {
+            throw new BusinessException({
+              type: BusinessExceptionType.FORBIDDEN,
+            });
+          }
+          if (role !== "SUPER_ADMIN") {
+            throw new BusinessException({
+              type: BusinessExceptionType.FORBIDDEN,
+            });
+          }
 
           await userCommandRepo.lockManyAdmin("update");
 
@@ -348,9 +441,23 @@ export const UserCommandService = (
     try {
       return await unitOfWork.doTx<IUser>(
         async () => {
-          const { userId, body } = dto;
+          const { userId, role, body, params } = dto;
 
-          const foundUser = await userCommandRepo.findById(userId, "update");
+          if (!userId || !role) {
+            throw new BusinessException({
+              type: BusinessExceptionType.FORBIDDEN,
+            });
+          }
+          if (role !== "ADMIN") {
+            throw new BusinessException({
+              type: BusinessExceptionType.FORBIDDEN,
+            });
+          }
+
+          const foundUser = await userCommandRepo.findById(
+            params.residentId!,
+            "update",
+          );
           if (!foundUser) {
             throw new BusinessException({
               type: BusinessExceptionType.USER_NOT_FOUND,
@@ -390,7 +497,18 @@ export const UserCommandService = (
     try {
       return await unitOfWork.doTx(
         async () => {
-          const { body } = dto;
+          const { userId, role, body } = dto;
+
+          if (!userId || !role) {
+            throw new BusinessException({
+              type: BusinessExceptionType.FORBIDDEN,
+            });
+          }
+          if (role !== "ADMIN") {
+            throw new BusinessException({
+              type: BusinessExceptionType.FORBIDDEN,
+            });
+          }
 
           await userCommandRepo.lockManyResidentUser("update");
 
@@ -416,9 +534,20 @@ export const UserCommandService = (
     try {
       return await unitOfWork.doTx(
         async () => {
-          const { userId } = dto;
+          const { userId, role, params } = dto;
 
-          const foundUser = await userCommandRepo.findById(userId);
+          if (!userId || !role) {
+            throw new BusinessException({
+              type: BusinessExceptionType.FORBIDDEN,
+            });
+          }
+          if (role !== "SUPER_ADMIN") {
+            throw new BusinessException({
+              type: BusinessExceptionType.FORBIDDEN,
+            });
+          }
+
+          const foundUser = await userCommandRepo.findById(params.adminId);
           if (!foundUser) {
             return;
           }
@@ -428,7 +557,7 @@ export const UserCommandService = (
             });
           }
 
-          await userCommandRepo.deleteAdmin(userId);
+          await userCommandRepo.deleteAdmin(params.adminId);
         },
         {
           transactionOptions: {
@@ -444,10 +573,25 @@ export const UserCommandService = (
     }
   };
 
-  const deleteRejectedAdmins = async (): Promise<void> => {
+  const deleteRejectedAdmins = async (
+    dto: deleteRejectedUsersReqDTO,
+  ): Promise<void> => {
     try {
       return await unitOfWork.doTx(
         async () => {
+          const { userId, role } = dto;
+
+          if (!userId || !role) {
+            throw new BusinessException({
+              type: BusinessExceptionType.FORBIDDEN,
+            });
+          }
+          if (role !== "SUPER_ADMIN") {
+            throw new BusinessException({
+              type: BusinessExceptionType.FORBIDDEN,
+            });
+          }
+
           await userCommandRepo.lockManyAdmin("update");
           await userCommandRepo.deleteManyAdmin();
         },
@@ -465,10 +609,25 @@ export const UserCommandService = (
     }
   };
 
-  const deleteRejectedResidentUsers = async (): Promise<void> => {
+  const deleteRejectedResidentUsers = async (
+    dto: deleteRejectedUsersReqDTO,
+  ): Promise<void> => {
     try {
       return await unitOfWork.doTx(
         async () => {
+          const { userId, role } = dto;
+
+          if (!userId || !role) {
+            throw new BusinessException({
+              type: BusinessExceptionType.FORBIDDEN,
+            });
+          }
+          if (role !== "ADMIN") {
+            throw new BusinessException({
+              type: BusinessExceptionType.FORBIDDEN,
+            });
+          }
+
           await userCommandRepo.lockManyResidentUser("update");
           await userCommandRepo.deleteManyResidentUser();
         },

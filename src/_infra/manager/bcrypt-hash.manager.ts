@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import { IHashManager } from "../../_common/ports/managers/bcrypt-hash-manager.interface";
 import { IConfigUtil } from "../../_common/utils/config.util";
 
-export const hashManager = (config: IConfigUtil): IHashManager => {
+export const HashManager = (config: IConfigUtil): IHashManager => {
   const hash = async (plainString: string): Promise<string> => {
     return bcrypt.hash(plainString, config.parsed().SALT_LEVEL);
   };

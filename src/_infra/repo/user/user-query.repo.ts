@@ -13,11 +13,11 @@ import { Prisma, UserRole } from "@prisma/client";
 export const UserQueryRepo = (
   baseQueryRepo: IBaseQueryRepo,
 ): IUserQueryRepo => {
-  const findAdminById = async (userId: string): Promise<AdminView | null> => {
+  const findAdminById = async (adminId: string): Promise<AdminView | null> => {
     try {
       const prismaClient = baseQueryRepo.getPrismaClient();
       const user = await prismaClient.user.findUnique({
-        where: { id: userId, role: "ADMIN" },
+        where: { id: adminId, role: "ADMIN" },
         include: {
           adminOf: true,
         },

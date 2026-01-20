@@ -6,6 +6,7 @@ export const configSchema = z.object({
     .enum(["development", "test", "production"])
     .default("development"),
   PORT: z.coerce.number(),
+  FE_PORT: z.coerce.number(),
   PUBLIC_PATH: z.string().default("public"),
   DATABASE_URL: z.url(),
   SALT_LEVEL: z.coerce.number(),
@@ -26,6 +27,10 @@ export const configSchema = z.object({
   OPTIMISTIC_LOCK_RETRY_DELAY_MS: z.coerce.number(),
   REDIS_HOST: z.string(),
   REDIS_PORT: z.coerce.number(),
+  S3_BUCKET_NAME: z.string(),
+  S3_REGION: z.string(),
+  S3_ACCESS_KEY_ID: z.string(),
+  S3_SECRET_ACCESS_KEY: z.string(),
 });
 
 export type ConfigType = z.infer<typeof configSchema>;
@@ -34,7 +39,7 @@ export interface IConfigUtil {
   parsed: () => ConfigType;
 }
 
-export const configUtil = (): IConfigUtil => {
+export const ConfigUtil = (): IConfigUtil => {
   if (process.env.NODE_ENV !== "production") {
     dotenv.config({
       path: process.env.NODE_ENV === "development" ? ".env" : ".env.test",

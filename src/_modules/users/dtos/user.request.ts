@@ -1,4 +1,5 @@
-import { z } from "zod";
+import path from "path";
+import { file, z } from "zod";
 
 const PHONE_REGEX = /^(?=.*\d)[\d]/;
 const PASSWORD_REGEX =
@@ -126,11 +127,24 @@ export type createUserReqDTO = z.infer<typeof createUserReqSchema>;
 // 내 프로필 조회
 export const getMyProfileReqSchema = z.object({
   userId: z.string().trim().nonempty(),
+  role: z.enum(["ADMIN", "USER"]),
 });
 export type getMyProfileReqDTO = z.infer<typeof getMyProfileReqSchema>;
 
+// 관리자 조회
+export const getAdminReqSchema = z.object({
+  userId: z.string().trim().nonempty(),
+  role: z.enum(["SUPER_ADMIN"]),
+  params: z.object({
+    adminId: z.string().trim().nonempty(),
+  }),
+});
+export type getAdminReqDTO = z.infer<typeof getAdminReqSchema>;
+
 // 관리자 목록 조회
 export const getAdminListReqSchema = z.object({
+  userId: z.string().trim().nonempty(),
+  role: z.enum(["SUPER_ADMIN"]),
   query: z.object({
     page: z.coerce.number().int().min(1).default(1),
     limit: z.coerce.number().int().min(1).default(11),
@@ -142,6 +156,8 @@ export type getAdminListReqDTO = z.infer<typeof getAdminListReqSchema>;
 
 // 주민 목록 조회
 export const getResidentUserListReqSchema = z.object({
+  userId: z.string().trim().nonempty(),
+  role: z.enum(["ADMIN"]),
   query: z.object({
     page: z.coerce.number().int().min(1).default(1),
     limit: z.coerce.number().int().min(1).default(11),
@@ -157,21 +173,22 @@ export type getResidentUserListReqDTO = z.infer<
 
 // 프로필 이미지 변경
 export const avatarUploadSchema = z.object({
-  file: z.object({
-    originalname: z.string(),
-    mimetype: z.string(),
-    size: z.coerce
-      .number()
-      .min(1)
-      .max(5 * 1024 * 1024, "파일 크기는 최대 5MB까지 가능합니다."),
-    buffer: z.instanceof(Buffer),
-  }),
+  originalname: z.string(),
+  mimetype: z.string(),
+  size: z.coerce
+    .number()
+    .min(1)
+    .max(5 * 1024 * 1024, "파일 크기는 최대 5MB까지 가능합니다."),
+  path: z.string().optional(),
+  filename: z.string().optional(),
+  location: z.url().optional(),
 });
 
 export const updateAvatarReqSchema = z.object({
   userId: z.string().trim().nonempty(),
+  role: z.enum(["ADMIN", "USER"]),
   body: z.object({
-    avatarImage: avatarUploadSchema.nullable(),
+    avatarImage: avatarUploadSchema,
   }),
 });
 export type updateAvatarReqDTO = z.infer<typeof updateAvatarReqSchema>;
@@ -179,6 +196,7 @@ export type updateAvatarReqDTO = z.infer<typeof updateAvatarReqSchema>;
 // 비밀번호 변경
 export const updatePasswordReqSchema = z.object({
   userId: z.string().trim().nonempty(),
+  role: z.enum(["ADMIN", "USER"]),
   body: z.object({
     password: z.string().trim().nonempty("현재 비밀번호를 입력해주세요."),
     newPassword: z
@@ -211,6 +229,10 @@ export const updateAdminOfSchema = z.object({
 
 export const updateAdminDataReqSchema = z.object({
   userId: z.string().trim().nonempty(),
+  role: z.enum(["SUPER_ADMIN"]),
+  params: z.object({
+    adminId: z.string().trim().nonempty(),
+  }),
   body: z.object({
     email: z
       .email("이메일 형식이 올바르지 않습니다.")
@@ -233,6 +255,11 @@ export type updateAdminDataReqDTO = z.infer<typeof updateAdminDataReqSchema>;
 // 가입 승인 상태 변경
 export const updateUserSignUpStatusReqSchema = z.object({
   userId: z.string().trim().nonempty(),
+  role: z.enum(["SUPER_ADMIN", "ADMIN"]),
+  params: z.object({
+    adminId: z.string().trim().optional(),
+    residentId: z.string().trim().optional(),
+  }),
   body: z.object({
     joinStatus: z.enum(["APPROVED", "REJECTED"], {
       message:
@@ -245,6 +272,8 @@ export type updateUserSignUpStatusReqDTO = z.infer<
 >;
 
 export const updateUserListSignUpStatusReqSchema = z.object({
+  userId: z.string().trim().nonempty(),
+  role: z.enum(["SUPER_ADMIN", "ADMIN"]),
   body: z.object({
     joinStatus: z.enum(["APPROVED", "REJECTED"], {
       message:
@@ -256,8 +285,21 @@ export type updateUserListSignUpStatusReqDTO = z.infer<
   typeof updateUserListSignUpStatusReqSchema
 >;
 
-// 관리자 삭제 및 거절된 사용자 삭제
+// 관리자 삭제
 export const deleteAdminReqSchema = z.object({
   userId: z.string().trim().nonempty(),
+  role: z.enum(["SUPER_ADMIN"]),
+  params: z.object({
+    adminId: z.string().trim().nonempty(),
+  }),
 });
 export type deleteAdminReqDTO = z.infer<typeof deleteAdminReqSchema>;
+
+// 가입 요청 거절 인원들 삭제
+export const deleteRejectedUsersReqSchema = z.object({
+  userId: z.string().trim().nonempty(),
+  role: z.enum(["SUPER_ADMIN", "ADMIN"]),
+});
+export type deleteRejectedUsersReqDTO = z.infer<
+  typeof deleteRejectedUsersReqSchema
+>;

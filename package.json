@@ -2,6 +2,7 @@
   "name": "05-security-welive",
   "scripts": {
     "dev": "export NODE_ENV=development && nodemon --exec ts-node src/index.ts",
+    "dev:win": "cross-env NODE_ENV=development nodemon --exec ts-node ./src/app.ts",
     "migrate:dev": "dotenv -e .env.dev npx prisma migrate dev",
     "migrate:reset": "dotenv -e .env.dev npx prisma migrate reset",
     "format": "prettier . --write",

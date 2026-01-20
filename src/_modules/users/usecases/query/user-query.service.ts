@@ -1,5 +1,6 @@
 import {
   getMyProfileReqDTO,
+  getAdminReqDTO,
   getAdminListReqDTO,
   getResidentUserListReqDTO,
 } from "../../../_modules/users/dtos/user.request";
@@ -15,9 +16,33 @@ import {
   BusinessExceptionType,
 } from "../../../shared/exceptions/business.exception";
 
-export const UserQueryService = (userQueryRepo: IUserQueryRepo) => {
-  const findAdminById = async (dto: getMyProfileReqDTO): Promise<AdminView> => {
-    const admin = await userQueryRepo.findAdminById(dto.userId);
+export interface IUserQueryService {
+  getMyProfile: (dto: getMyProfileReqDTO) => Promise<ProfileView>;
+  findAdminById: (dto: getAdminReqDTO) => Promise<AdminView>;
+  getAdminList: (dto: getAdminListReqDTO) => Promise<AdminListResView>;
+  getResidentUserList: (
+    dto: getResidentUserListReqDTO,
+  ) => Promise<ResidentUserListResView>;
+}
+
+export const UserQueryService = (
+  userQueryRepo: IUserQueryRepo,
+): IUserQueryService => {
+  const findAdminById = async (dto: getAdminReqDTO): Promise<AdminView> => {
+    const { userId, role, params } = dto;
+
+    if (!userId || !role) {
+      throw new BusinessException({
+        type: BusinessExceptionType.FORBIDDEN,
+      });
+    }
+    if (role !== "SUPER_ADMIN") {
+      throw new BusinessException({
+        type: BusinessExceptionType.FORBIDDEN,
+      });
+    }
+
+    const admin = await userQueryRepo.findAdminById(params.adminId);
     if (!admin) {
       throw new BusinessException({
         type: BusinessExceptionType.USER_NOT_FOUND,
@@ -30,7 +55,17 @@ export const UserQueryService = (userQueryRepo: IUserQueryRepo) => {
   const getMyProfile = async (
     dto: getMyProfileReqDTO,
   ): Promise<ProfileView> => {
-    const profile = await userQueryRepo.getMyProfile(dto.userId);
+    const { userId, role } = dto;
+
+    let profile: ProfileView | null;
+    if (role === "ADMIN" || role === "USER") {
+      profile = await userQueryRepo.getMyProfile(userId);
+    } else {
+      throw new BusinessException({
+        type: BusinessExceptionType.FORBIDDEN,
+      });
+    }
+
     if (!profile) {
       throw new BusinessException({
         type: BusinessExceptionType.USER_NOT_FOUND,
@@ -43,7 +78,18 @@ export const UserQueryService = (userQueryRepo: IUserQueryRepo) => {
   const getAdminList = async (
     dto: getAdminListReqDTO,
   ): Promise<AdminListResView> => {
-    const { query } = dto;
+    const { userId, role, query } = dto;
+
+    if (!userId || !role) {
+      throw new BusinessException({
+        type: BusinessExceptionType.FORBIDDEN,
+      });
+    }
+    if (role !== "SUPER_ADMIN") {
+      throw new BusinessException({
+        type: BusinessExceptionType.FORBIDDEN,
+      });
+    }
 
     const adminListRes = await userQueryRepo.findAdminList(query);
 
@@ -53,7 +99,18 @@ export const UserQueryService = (userQueryRepo: IUserQueryRepo) => {
   const getResidentUserList = async (
     dto: getResidentUserListReqDTO,
   ): Promise<ResidentUserListResView> => {
-    const { query } = dto;
+    const { userId, role, query } = dto;
+
+    if (!userId || !role) {
+      throw new BusinessException({
+        type: BusinessExceptionType.FORBIDDEN,
+      });
+    }
+    if (role !== "ADMIN") {
+      throw new BusinessException({
+        type: BusinessExceptionType.FORBIDDEN,
+      });
+    }
 
     const residentUserListRes = await userQueryRepo.findResidentUserList(query);
 

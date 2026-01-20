@@ -3,6 +3,7 @@ import {
   getApartmentList,
   ApartmentListResponseDto,
 } from "../usecases/get-apartment-list.usecase";
+import { Apartment } from "../domain/apartment.entity";
 
 export class ApartmentsService {
   constructor(private readonly apartmentRepo: ApartmentQueryRepository) {}
@@ -13,5 +14,9 @@ export class ApartmentsService {
     search?: string,
   ): Promise<ApartmentListResponseDto> {
     return getApartmentList(this.apartmentRepo, page, limit, search);
+  }
+
+  async getApartmentDetail(id: string): Promise<Required<Apartment> | null> {
+    return this.apartmentRepo.findById(id);
   }
 }

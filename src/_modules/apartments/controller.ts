@@ -34,15 +34,25 @@ export class ApartmentsController {
   async getApartmentDetail(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
+      const apartment = await this.apartmentsService.getApartmentDetail(id);
+
+      if (!apartment) {
+        res.status(404).json({
+          success: false,
+          message: "아파트를 찾을 수 없습니다.",
+        });
+        return;
+      }
+
       res.status(200).json({
         success: true,
         message: "아파트 상세 조회 성공",
-        data: { id },
+        data: apartment,
       });
     } catch (error: any) {
-      res.status(404).json({
+      res.status(500).json({
         success: false,
-        message: error.message || "아파트를 찾을 수 없습니다.",
+        message: error.message || "내부 서버 에러",
       });
     }
   }

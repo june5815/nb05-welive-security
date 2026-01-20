@@ -23,7 +23,7 @@ enum JoinStatus {
 
 
 model User {
-  id           String     @id @default(cuid())
+  id           String     @id @default(uuid())
   username     String     @unique
   password     String
   email        String     @unique
@@ -54,7 +54,7 @@ model User {
 }
 
 model Apartment {
-  id           String   @id @default(cuid())
+  id           String   @id @default(uuid())
   name         String
   address      String
   description  String
@@ -85,7 +85,7 @@ model Apartment {
 }
 
 model Resident {
-  id            String   @id @default(cuid())
+  id            String   @id @default(uuid())
   email         String
   contact       String
   name          String
@@ -143,7 +143,7 @@ enum PollStatus {
 }
 
 model Complaint {
-  id      String @id @default(cuid())
+  id      String @id @default(uuid())
   title   String
   content String
 
@@ -163,16 +163,13 @@ model Complaint {
   apartmentId String
   apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
 
-  // 댓글 수 계산용 (Comment 재사용 or 전용 테이블 가능)
-  comments Comment[]
-
   @@index([userId])
   @@index([apartmentId])
   @@index([status])
 }
 
 model Poll {
-  id        String    @id @default(cuid())
+  id        String    @id @default(uuid())
   title     String
   content   String
   status    PollStatus  @default(PENDING) // enum 적용
@@ -199,7 +196,7 @@ model Poll {
 }
 
 model PollOption {
-  id        String @id @default(cuid())
+  id        String @id @default(uuid())
   text      String
   order     Int
   voteCount Int    @default(0)
@@ -255,6 +252,11 @@ enum EventResourceType {
   POLL
 }
 
+enum CommentResourceType {
+  NOTICE
+  COMPLAINT
+}
+
 enum NotificationType {
   COMPLAINT_CREATED
   COMPLAINT_UPDATED
@@ -272,7 +274,7 @@ enum NotificationTargetType {
 }
 
 model Notice {
-  id       String         @id @default(cuid())
+  id       String         @id @default(uuid())
   title    String
   content  String
   category NoticeCategory
@@ -291,8 +293,6 @@ model Notice {
   apartmentId String
   apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
 
-  // 관계
-  comments Comment[]
   event    Event? // 1:1 (공지 일정)
 
   @@index([apartmentId])
@@ -300,7 +300,7 @@ model Notice {
 }
 
 model Event {
-  id    String @id @default(cuid())
+  id    String @id @default(uuid())
   title String
 
   startDate DateTime
@@ -324,7 +324,7 @@ model Event {
 }
 
 model Comment {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   content   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -332,23 +332,19 @@ model Comment {
 
   // 작성자
   userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // 공지 댓글
-  noticeId String?
-  notice   Notice? @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+  // 리소스 추상화
+  resourceId   String
+  resourceType CommentResourceType
 
-  // 댓글 수 계산용
-  complaintId String?
-  complaint   Complaint? @relation(fields: [complaintId], references: [id], onDelete: Cascade)
-
-  @@index([noticeId])
-  @@index([complaintId])
+  @@index(userId)
+  @@index([resourceType, resourceId])
 }
 
 
 model NotificationEvent {
-  id         String                 @id @default(cuid())
+  id         String                 @id @default(uuid())
   type       NotificationType
   createdAt  DateTime               @default(now())
   version    Int                    @default(1)
@@ -362,7 +358,7 @@ model NotificationEvent {
 }
 
 model NotificationReceipt {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   createdAt DateTime @default(now())
 
   userId String

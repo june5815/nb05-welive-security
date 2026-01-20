@@ -12,7 +12,8 @@
     "rootDir": "src",
     "outDir": "dist",
     "sourceMap": true,
-    "types": ["jest", "node"]
+    "types": ["jest", "node"],
+    "typeRoots": ["src/shared/types", "node_modules/@types"]
   },
   "include": ["src", "**/*.test.ts"],
   "exclude": []
