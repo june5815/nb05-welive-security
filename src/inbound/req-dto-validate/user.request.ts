@@ -1,4 +1,5 @@
-import { z } from "zod";
+import path from "path";
+import { file, z } from "zod";
 
 const PHONE_REGEX = /^(?=.*\d)[\d]/;
 const PASSWORD_REGEX =
@@ -178,6 +179,9 @@ export const avatarUploadSchema = z.object({
     .number()
     .min(1)
     .max(5 * 1024 * 1024, "파일 크기는 최대 5MB까지 가능합니다."),
+  path: z.string().optional(),
+  filename: z.string().optional(),
+  location: z.url().optional(),
 });
 
 export const updateAvatarReqSchema = z.object({
