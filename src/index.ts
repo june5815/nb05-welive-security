@@ -17,7 +17,7 @@ app.use(
   cors({
     origin: config.parsed().CLIENT_DOMAIN,
     credentials: true,
-  })
+  }),
 );
 
 app.use("/api/v2/apartments", createApartmentRouter(db));

@@ -5,10 +5,8 @@ import { ApartmentQueryAdapter } from "../../_infra/repo/apartment/apartment-que
 import { ApartmentRepo } from "../../_infra/repo/apartment/apartment.repo";
 
 export const createApartmentRouter = (db: PrismaClient): Router => {
-
   const apartmentRepo = ApartmentRepo(db);
   const apartmentQueryAdapter = new ApartmentQueryAdapter(apartmentRepo);
-
 
   return createApartmentRoutes(apartmentQueryAdapter);
 };
