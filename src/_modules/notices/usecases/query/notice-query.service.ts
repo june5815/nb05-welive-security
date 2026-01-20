@@ -1,5 +1,5 @@
-import { noticeQueryRepository } from "../../../outbound/repos/query/notice-query.repo";
-import { GetNoticeListQuery } from "../views/notice.view";
+import { noticeQueryRepository } from "../../../../_infra/repos/notice/notice-query.repo";
+import { GetNoticeListQuery } from "../../dtos/notice.view";
 
 export const getNoticeListQuery =
   (repo: ReturnType<typeof noticeQueryRepository>) =>

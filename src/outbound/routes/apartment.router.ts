@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { PrismaClient } from "@prisma/client";
 import { createApartmentRoutes } from "../../_modules/apartments/routes";
-import { ApartmentQueryAdapter } from "../../_infra/repo/apartment/apartment-query.adapter";
-import { ApartmentRepo } from "../../_infra/repo/apartment/apartment.repo";
+import { ApartmentQueryAdapter } from "../../_infra/repos/apartment/apartment-query.adapter";
+import { ApartmentRepo } from "../../_infra/repos/apartment/apartment.repo";
 
 export const createApartmentRouter = (db: PrismaClient): Router => {
   const apartmentRepo = ApartmentRepo(db);

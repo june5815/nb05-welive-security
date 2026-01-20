@@ -1,5 +1,5 @@
 import { PrismaClient, CommentResourceType } from "@prisma/client";
-import { BaseQueryRepo } from "../../../../outbound/repos/query/base-query.repo";
+import { BaseQueryRepo } from "../../../../_infra/repos/_base/base-query.repo";
 
 export const commentQueryRepository = (prismaClient: PrismaClient) => {
   const base = BaseQueryRepo(prismaClient);

@@ -1,5 +1,5 @@
-import { IComplaintRepo } from "../../../ports/repos/complaint-repo.interface";
-import { ComplaintStatus } from "../../entities/complaints/complaints.entity";
+import { IComplaintRepo } from "../../../_common/ports/repos/complaint/complaint-repo.interface";
+import { ComplaintStatus } from "./complaints.entity";
 
 export const DeleteComplaint =
   (complaintRepo: IComplaintRepo) =>

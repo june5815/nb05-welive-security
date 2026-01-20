@@ -1,9 +1,9 @@
 import { Prisma } from "@prisma/client";
-import { UserRole } from "../../../_modules/users/domain/user.entity";
+import { UserRole } from "../../../../_common/utils/token.util";
 import {
   BusinessException,
   BusinessExceptionType,
-} from "../../../shared/exceptions/business.exception";
+} from "../../../../_common/exceptions/business.exception";
 
 export interface ComplaintDetail {
   id: string;

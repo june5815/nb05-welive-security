@@ -1,20 +1,19 @@
 import { NoticeType } from "@prisma/client";
 import { Request, Response, NextFunction } from "express";
 
-import { CreateNoticeRequestSchema } from "../requests/create-notice.request";
-import { UpdateNoticeRequestSchema } from "../requests/update-notice.request";
+import { CreateNoticeRequestSchema } from "../../_modules/notices/dtos/create-notice.request";
+import { UpdateNoticeRequestSchema } from "../../_modules/notices/dtos/update-notice.request";
 
-import { createNoticeService } from "../../application/command/services/notice/create-notice.service";
-import { updateNoticeService } from "../../application/command/services/notice/update-notice.service";
-import { deleteNoticeService } from "../../application/command/services/notice/delete-notice.service";
+import { createNoticeService } from "../../_modules/notices/service/create-notice.service";
+import { updateNoticeService } from "../../_modules/notices/service/update-notice.service";
+import { deleteNoticeService } from "../../_modules/notices/service/delete-notice.service";
 
 import {
-  getNoticeDetailQuery,
   getNoticeListQuery,
-} from "../../application/query/services/notice-query.service";
-
-import { noticeCommandRepository } from "../../outbound/repos/command/notice-command.repo";
-import { noticeQueryRepository } from "../../outbound/repos/query/notice-query.repo";
+  getNoticeDetailQuery,
+} from "./usecases/query/notice-query.service";
+import { noticeCommandRepository } from "../../_infra/repos/notice/notice-command.repo";
+import { noticeQueryRepository } from "../../_infra/repos/notice/notice-query.repo";
 
 /**
  * 공지 생성

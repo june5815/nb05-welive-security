@@ -1,4 +1,4 @@
-import { Apartment } from "../../../../application/command/entities/apartment/apartment.entity";
+import { Apartment } from "../../../../_modules/apartments/domain/apartment.entity";
 
 export interface ApartmentQueryRepository {
   findAll(): Promise<Required<Apartment>[]>;

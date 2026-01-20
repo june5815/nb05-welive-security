@@ -1,22 +1,22 @@
-import { LoginReqDto, RefreshTokenReqDto } from "../dtos/auth.request";
+import { LoginReqDto, RefreshTokenReqDto } from "../dtos/req/auth.request";
 import {
   LoginResDto,
   TokenResDto,
   NewTokenResDto,
-} from "../dtos/auth.response";
-import { UserEntity } from "../entities/user/user.entity";
-import { IUserCommandRepo } from "../../../application/ports/repos/command/user-command-repo.interface";
+} from "../dtos/res/auth.response";
+import { AuthEntity } from "../domain/auth.entity";
+import { IUserCommandRepo } from "../../../_common/ports/repos/user/user-command-repo.interface";
 import { IUnitOfWork } from "../../../_common/ports/db/u-o-w.interface";
 import { IHashManager } from "../../../_common/ports/managers/bcrypt-hash-manager.interface";
-import { ITokenUtil } from "../../../shared/utils/token.util";
+import { ITokenUtil } from "../../../_common/utils/token.util";
 import {
   BusinessException,
   BusinessExceptionType,
-} from "../../../shared/exceptions/business.exception";
+} from "../../../_common/exceptions/business.exception";
 import {
   TechnicalException,
   TechnicalExceptionType,
-} from "../../../shared/exceptions/technical.exception";
+} from "../../../_common/exceptions/technical.exception";
 
 export interface IAuthCommandService {
   login: (
@@ -43,7 +43,7 @@ export const AuthCommandService = (
           const foundUser = await userCommandRepo.findByUsername(username);
           if (
             !foundUser ||
-            !(await UserEntity.isPasswordMatched(
+            !(await AuthEntity.isPasswordMatched(
               foundUser,
               password,
               hashManager,
@@ -75,7 +75,7 @@ export const AuthCommandService = (
             userId: foundUser.id!,
             role: foundUser.role!,
           });
-          const updatedUser = await UserEntity.updateRefreshToken(
+          const updatedUser = await AuthEntity.updateRefreshToken(
             foundUser,
             refreshToken,
             hashManager,
@@ -155,7 +155,7 @@ export const AuthCommandService = (
           const foundUser = await userCommandRepo.findById(userId);
           if (
             !foundUser ||
-            !(await UserEntity.isRefreshTokenMatched(
+            !(await AuthEntity.isRefreshTokenMatched(
               foundUser,
               refreshToken,
               hashManager,
@@ -164,7 +164,7 @@ export const AuthCommandService = (
             return;
           }
 
-          const updatedUser = UserEntity.deleteRefreshToken(foundUser);
+          const updatedUser = AuthEntity.deleteRefreshToken(foundUser);
           await userCommandRepo.update(updatedUser);
         },
         {
@@ -200,7 +200,7 @@ export const AuthCommandService = (
           const foundUser = await userCommandRepo.findById(userId);
           if (
             !foundUser ||
-            !(await UserEntity.isRefreshTokenMatched(
+            !(await AuthEntity.isRefreshTokenMatched(
               foundUser,
               oldRefreshToken,
               hashManager,
@@ -232,7 +232,7 @@ export const AuthCommandService = (
             userId: foundUser.id!,
             role: foundUser.role!,
           });
-          const updatedUser = await UserEntity.updateRefreshToken(
+          const updatedUser = await AuthEntity.updateRefreshToken(
             foundUser,
             newRefreshToken,
             hashManager,

@@ -1,5 +1,5 @@
 import { NoticeCategory, NoticeType } from "@prisma/client";
-import { NoticeEntity } from "../../../../application/command/entities/notice/notice.entity";
+import { NoticeEntity } from "../../../../_modules/notices/domain/notice.entity";
 
 export interface NoticeCommandRepository {
   create(
