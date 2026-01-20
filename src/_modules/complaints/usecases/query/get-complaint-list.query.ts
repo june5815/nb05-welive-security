@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { UserRole } from "../../../_modules/users/domain/user.entity";
+import { UserRole } from "../../../../_common/utils/token.util";
 
 export interface ComplaintListItem {
   id: string;

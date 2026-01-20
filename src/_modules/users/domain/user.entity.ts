@@ -1,8 +1,4 @@
 import { IHashManager } from "../../../_common/ports/managers/bcrypt-hash-manager.interface";
-import {
-  BusinessException,
-  BusinessExceptionType,
-} from "../../../../shared/exceptions/business.exception";
 
 export const UserRole = {
   SUPER_ADMIN: "SUPER_ADMIN",
@@ -226,25 +222,6 @@ export const UserEntity = {
     };
   },
 
-  async updateRefreshToken(
-    user: User,
-    refreshToken: string,
-    hashManager: IHashManager,
-  ): Promise<User> {
-    const hashedToken = await hashManager.hash(refreshToken);
-    return {
-      ...user,
-      refreshToken: hashedToken,
-    };
-  },
-
-  deleteRefreshToken(user: User): User {
-    return {
-      ...user,
-      refreshToken: undefined,
-    };
-  },
-
   async isPasswordMatched(
     user: User,
     plainPassword: string,
@@ -254,25 +231,6 @@ export const UserEntity = {
     return await hashManager.compare({
       plainString: plainPassword,
       hashedString: user.password,
-    });
-  },
-
-  /**
-   * @error Unauthorized Exception (리프레시 토큰 미존재)
-   */
-  async isRefreshTokenMatched(
-    user: User,
-    refreshToken: string,
-    hashManager: IHashManager,
-  ): Promise<boolean> {
-    if (!user.refreshToken) {
-      throw new BusinessException({
-        type: BusinessExceptionType.UNAUTHORIZED_REQUEST,
-      });
-    }
-    return await hashManager.compare({
-      plainString: refreshToken,
-      hashedString: user.refreshToken,
     });
   },
 };

@@ -1,7 +1,7 @@
 import {
   BusinessException,
   BusinessExceptionType,
-} from "../../../../shared/exceptions/business.exception";
+} from "../../../_common/exceptions/business.exception";
 
 export const ComplaintStatus = {
   PENDING: "PENDING",

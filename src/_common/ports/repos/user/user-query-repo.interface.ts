@@ -5,7 +5,7 @@ import {
   AdminListResView,
   ResidentUserListReq,
   ResidentUserListResView,
-} from "../../../../application/query/views/user.view";
+} from "../../../../_modules/users/dtos/res/user.view";
 
 export interface IUserQueryRepo {
   findAdminById: (adminId: string) => Promise<AdminView | null>;

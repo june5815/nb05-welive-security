@@ -1,4 +1,4 @@
-import { noticeCommandRepository } from "../../../../outbound/repos/command/notice-command.repo";
+import { noticeCommandRepository } from "../../../_infra/repos/notice/notice-command.repo";
 
 export const deleteNoticeService =
   (repo: ReturnType<typeof noticeCommandRepository>) =>

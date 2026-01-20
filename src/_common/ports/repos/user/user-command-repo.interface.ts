@@ -1,5 +1,5 @@
 import { User as IUser } from "../../../../_modules/users/domain/user.entity";
-import { PessimisticLock } from "../../../../_common/utils/pessimistic-lock.util";
+import { PessimisticLock } from "../../../utils/pessimistic-lock.util";
 
 export interface IUserCommandRepo {
   /**

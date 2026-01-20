@@ -1,38 +1,38 @@
-import { BaseRouter } from "./inbound/routers/base.router";
-import { AuthRouter } from "./inbound/routers/auth.router";
-import { UserRouter } from "./inbound/routers/user.router";
+import { BaseRouter } from "./_modules/_base/base.router";
+import { AuthRouter } from "./_modules/auth/auth.router";
+import { UserRouter } from "./_modules/users/user.router";
 
-import { BaseController } from "./inbound/controllers/base.controller";
-import { AuthController } from "./inbound/controllers/auth.controller";
-import { UserController } from "./inbound/controllers/user.controller";
+import { BaseController } from "./_modules/_base/base.controller";
+import { AuthController } from "./_modules/auth/auth.controller";
+import { UserController } from "./_modules/users/user.controller";
 
-import { AuthCommandService } from "./application/command/services/auth-command.service";
-import { UserCommandService } from "./application/command/services/user-command.service";
-import { UserQueryService } from "./application/query/services/user-query.service";
+import { AuthCommandService } from "./_modules/auth/service/auth-command.service";
+import { UserCommandService } from "./_modules/users/service/user-command.service";
+import { UserQueryService } from "./_modules/users/service/user-query.service";
 
-import { BaseCommandRepo } from "./outbound/repos/command/base-command.repo";
-import { UserCommandRepo } from "./outbound/repos/command/user-command.repo";
-import { BaseQueryRepo } from "./outbound/repos/query/base-query.repo";
-import { UserQueryRepo } from "./outbound/repos/query/user-query.repo";
-import { UOW } from "./outbound/unit-of-work";
-import { HashManager } from "./outbound/managers/bcrypt-hash.manager";
+import { BaseCommandRepo } from "./_infra/repos/_base/base-command.repo";
+import { UserCommandRepo } from "./_infra/repos/user/user-command.repo";
+import { BaseQueryRepo } from "./_infra/repos/_base/base-query.repo";
+import { UserQueryRepo } from "./_infra/repos/user/user-query.repo";
+import { UOW } from "./_infra/db/unit-of-work";
+import { HashManager } from "./_infra/manager/bcrypt-hash.manager";
 import { PrismaClient } from "@prisma/client";
 
-import { ConfigUtil } from "./shared/utils/config.util";
-import { TokenUtil } from "./shared/utils/token.util";
+import { ConfigUtil } from "./_common/utils/config.util";
+import { TokenUtil } from "./_common/utils/token.util";
 
-import { AuthMiddleware } from "./inbound/middlewares/auth.middleware";
-import { CookieMiddleware } from "./inbound/middlewares/cookie.middleware";
-import { CorsMiddleware } from "./inbound/middlewares/cors.middleware";
-import { GlobalErrorMiddleware } from "./inbound/middlewares/global-error.middleware";
-import { JsonMiddleware } from "./inbound/middlewares/json.middleware";
-import { LoggerMiddleware } from "./inbound/middlewares/logger.middleware";
-import { MulterMiddleware } from "./inbound/middlewares/multer.middleware";
-import { NotFoundErrorMiddleware } from "./inbound/middlewares/not-found-error.middleware";
-import { RoleMiddleware } from "./inbound/middlewares/role.middleware";
-import { StaticServeMiddleware } from "./inbound/middlewares/static-serve.middleware";
+import { AuthMiddleware } from "./_common/middlewares/auth.middleware";
+import { CookieMiddleware } from "./_common/middlewares/cookie.middleware";
+import { CorsMiddleware } from "./_common/middlewares/cors.middleware";
+import { GlobalErrorMiddleware } from "./_common/middlewares/global-error.middleware";
+import { JsonMiddleware } from "./_common/middlewares/json.middleware";
+import { LoggerMiddleware } from "./_common/middlewares/logger.middleware";
+import { MulterMiddleware } from "./_common/middlewares/multer.middleware";
+import { NotFoundErrorMiddleware } from "./_common/middlewares/not-found-error.middleware";
+import { RoleMiddleware } from "./_common/middlewares/role.middleware";
+import { StaticServeMiddleware } from "./_common/middlewares/static-serve.middleware";
 
-import { HttpServer, IHttpServer } from "./inbound/servers/http-server";
+import { HttpServer, IHttpServer } from "./_servers/http-server";
 
 export const Injector = () => {
   const configUtil = ConfigUtil();
@@ -88,7 +88,7 @@ export const Injector = () => {
     multerMiddleware,
   );
 
-  const httpServer = HttpServer(
+  const httpServer: IHttpServer = HttpServer(
     configUtil,
     cookieMiddleware,
     corsMiddleware,
