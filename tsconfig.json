@@ -1,46 +1,20 @@
 {
   "compilerOptions": {
     "strict": true,
-
     "target": "ES2020",
-
     "module": "commonjs",
-
     "moduleResolution": "node",
-
-    // 문제
-    // js 파일에 import 또는 export가 없으면 ts는 파일을 전역 스크립트로 해석합니다.
-    // 따라서 파일 1에서 const a = 1을 선언하면, 파일 2에서 const a = 1을 선언할 수 없습니다.
-    // 해결
-    // moduleDetection: force
-    // ts가 모든 파일을 강제로 모듈로 해석합니다.
     "moduleDetection": "force",
-
-    // 문제
-    // cjs 모듈의 module.exports 객체를 esm 방식으로 가져오려면 * as express 처럼 써야합니다.
-    // 해결
-    // esModuleInterop: true
-    // cjs 모듈을 esm 모듈처럼 가져올 수 있습니다.
     "esModuleInterop": true,
-
     "resolveJsonModule": true,
-
     "skipLibCheck": true,
-
-    // 문제
-    // 운영 체제마다 파일의 대소문자 일관성을 처리하는 방식이 다릅니다.
-    // 해결
-    // forceConsistentCasingInFileNames: true,
     "forceConsistentCasingInFileNames": true,
-
     "rootDir": "src",
-
     "outDir": "dist",
-
     "sourceMap": true,
-
+    "types": ["jest", "node"],
     "typeRoots": ["src/shared/types", "node_modules/@types"]
   },
-  "include": ["src"],
+  "include": ["src", "**/*.test.ts"],
   "exclude": []
 }

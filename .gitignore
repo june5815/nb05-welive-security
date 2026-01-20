@@ -343,6 +343,11 @@ $RECYCLE.BIN/
 # Prisma
 prisma/schema.sql
 prisma/migrations/
+prisma/seed.ts
+
+# Test scripts
+test-*.sh
+*.test.sh
 
 # Markdown files (except README)
 *.md
