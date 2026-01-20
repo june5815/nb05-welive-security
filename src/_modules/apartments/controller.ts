@@ -1,9 +1,6 @@
 import { Request, Response } from "express";
 import { ApartmentsService } from "./service/apartments.service";
-import {
-  ApartmentListResponse,
-  ApartmentDetailResponse,
-} from "./dtos/apartment.dto";
+import { ApartmentListResponseDto } from "./usecases/get-apartment-list.usecase";
 
 export class ApartmentsController {
   constructor(private readonly apartmentsService: ApartmentsService) {}
@@ -14,8 +11,13 @@ export class ApartmentsController {
    */
   async listApartments(req: Request, res: Response): Promise<void> {
     try {
-      const response: ApartmentListResponse =
-        await this.apartmentsService.listApartments();
+      const { page = 0, limit = 10, search } = req.query;
+      const response: ApartmentListResponseDto =
+        await this.apartmentsService.listApartments(
+          Number(page),
+          Number(limit),
+          search ? String(search) : undefined,
+        );
       res.status(200).json(response);
     } catch (error: any) {
       res.status(500).json({
@@ -32,9 +34,11 @@ export class ApartmentsController {
   async getApartmentDetail(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const response: ApartmentDetailResponse =
-        await this.apartmentsService.getApartmentDetail(id);
-      res.status(200).json(response);
+      res.status(200).json({
+        success: true,
+        message: "아파트 상세 조회 성공",
+        data: { id },
+      });
     } catch (error: any) {
       res.status(404).json({
         success: false,

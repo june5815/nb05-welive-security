@@ -1,27 +1,17 @@
 import { ApartmentQueryRepository } from "../ports/apartment-query-repo.interface";
-import { ListApartmentsUseCase } from "../usecases/list-apartments.uc";
-import { GetApartmentDetailUseCase } from "../usecases/getApartmentDetail.uc";
 import {
-  ApartmentListResponse,
-  ApartmentDetailResponse,
-} from "../dtos/apartment.dto";
+  getApartmentList,
+  ApartmentListResponseDto,
+} from "../usecases/get-apartment-list.usecase";
 
 export class ApartmentsService {
-  private readonly listApartmentsUseCase: ListApartmentsUseCase;
-  private readonly getApartmentDetailUseCase: GetApartmentDetailUseCase;
+  constructor(private readonly apartmentRepo: ApartmentQueryRepository) {}
 
-  constructor(private readonly apartmentRepo: ApartmentQueryRepository) {
-    this.listApartmentsUseCase = new ListApartmentsUseCase(apartmentRepo);
-    this.getApartmentDetailUseCase = new GetApartmentDetailUseCase(
-      apartmentRepo,
-    );
-  }
-
-  async listApartments(): Promise<ApartmentListResponse> {
-    return this.listApartmentsUseCase.execute();
-  }
-
-  async getApartmentDetail(id: string): Promise<ApartmentDetailResponse> {
-    return this.getApartmentDetailUseCase.execute(id);
+  async listApartments(
+    page: number = 0,
+    limit: number = 10,
+    search?: string,
+  ): Promise<ApartmentListResponseDto> {
+    return getApartmentList(this.apartmentRepo, page, limit, search);
   }
 }

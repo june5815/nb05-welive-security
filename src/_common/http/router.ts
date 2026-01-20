@@ -7,27 +7,11 @@ import { ApartmentQueryRepository } from "../../_modules/apartments/ports/apartm
  * => 중앙 라우트 매니저
  * => 모든 모듈의 라우트를 등록하고 조율하는 책임을 가진 파일입니다.
  * => "어떤 경로에 어느 모듈을 붙을까?"를 결정합니다.
- *
- * Apartment 엔드포인트:
- * GET /api/v2/apartments - 아파트 목록 조회
- * GET /api/v2/apartments/{id} - 아파트 상세 조회
  */
 export function setupRoutes(
   app: express.Application,
   apartmentRepo: ApartmentQueryRepository,
 ) {
-  /**
-   * /api/v2/apartments로 들어오는 모든 요청을
-   * createApartmentRoutes에서 정의한 라우터로 전달
-   *
-   * 예시:
-   * GET /api/v2/apartments
-   *   → router.get('/', ...) 매칭
-   *
-   * GET /api/v2/apartments/123
-   *   → router.get('/:id', ...) 매칭
-   *   → req.params.id = "123"
-   */
   app.use("/api/v2/apartments", createApartmentRoutes(apartmentRepo));
 
   // TODO: 다른 모듈의 라우트 추가

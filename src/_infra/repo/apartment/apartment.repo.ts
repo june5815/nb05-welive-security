@@ -1,6 +1,7 @@
 import { Apartment, Prisma } from "@prisma/client";
 import { PrismaClient } from "@prisma/client";
 import { TxPrismaClient } from "../../../_common/utils/prisma-custom.types";
+import { ApartmentMapper } from "../../mapper/apartment.mapper";
 
 export interface IApartmentRepo {
   findById(id: string): Promise<Apartment | null>;
@@ -11,6 +12,16 @@ export interface IApartmentRepo {
   updateById(id: string, data: Prisma.ApartmentUpdateInput): Promise<Apartment>;
   deleteById(id: string): Promise<void>;
   findByAdminId(adminId: string): Promise<Apartment | null>;
+  search(query: string): Promise<Apartment[]>;
+  findWithPagination(
+    page: number,
+    limit: number,
+  ): Promise<{
+    data: Apartment[];
+    total: number;
+    page: number;
+    limit: number;
+  }>;
 }
 
 export const ApartmentRepo = (
@@ -70,6 +81,41 @@ export const ApartmentRepo = (
     });
   };
 
+  const search = async (query: string): Promise<Apartment[]> => {
+    return await prisma.apartment.findMany({
+      where: {
+        OR: [
+          { name: { contains: query, mode: "insensitive" } },
+          { address: { contains: query, mode: "insensitive" } },
+          { description: { contains: query, mode: "insensitive" } },
+        ],
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  };
+
+  const findWithPagination = async (
+    page: number,
+    limit: number,
+  ): Promise<{
+    data: Apartment[];
+    total: number;
+    page: number;
+    limit: number;
+  }> => {
+    const skip = page * limit;
+    const [data, total] = await Promise.all([
+      prisma.apartment.findMany({
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.apartment.count(),
+    ]);
+
+    return { data, total, page, limit };
+  };
+
   return {
     findById,
     findByName,
@@ -79,5 +125,7 @@ export const ApartmentRepo = (
     updateById,
     deleteById,
     findByAdminId,
+    search,
+    findWithPagination,
   };
 };
