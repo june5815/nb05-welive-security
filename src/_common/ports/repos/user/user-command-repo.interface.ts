@@ -1,4 +1,7 @@
-import { User as IUser } from "../../../../_modules/users/domain/user.entity";
+import {
+  AdminOf,
+  User as IUser,
+} from "../../../../_modules/users/domain/user.entity";
 import { PessimisticLock } from "../../../utils/pessimistic-lock.util";
 
 export interface IUserCommandRepo {
@@ -33,6 +36,10 @@ export interface IUserCommandRepo {
     id: string,
     pessimisticLock?: PessimisticLock,
   ) => Promise<IUser | null>;
+  findApartmentByAdminOf: (
+    adminOf: AdminOf,
+    pessimisticLock?: PessimisticLock,
+  ) => Promise<any | null>;
   lockManyAdmin: (pessimisticLock: PessimisticLock) => Promise<void>;
   lockManyResidentUser: (pessimisticLock: PessimisticLock) => Promise<void>;
   /**

@@ -74,11 +74,6 @@ export const UserCommandService = (
           type: BusinessExceptionType.DUPLICATE_CONTACT,
         });
       }
-      if (error.type === TechnicalExceptionType.UNIQUE_VIOLATION) {
-        throw new BusinessException({
-          type: BusinessExceptionType.DUPLICATE_APARTMENT,
-        });
-      }
       if (error.type === TechnicalExceptionType.OPTIMISTIC_LOCK_FAILED) {
         throw new BusinessException({
           type: BusinessExceptionType.UNKOWN_SERVER_ERROR,
@@ -123,25 +118,47 @@ export const UserCommandService = (
 
   const signUpAdmin = async (dto: createUserReqDTO): Promise<IUser> => {
     try {
-      const { body } = dto;
+      return await unitOfWork.doTx<IUser>(
+        async () => {
+          const { body } = dto;
 
-      const findedUser = await userCommandRepo.findByUsername(body.username);
-      if (findedUser) {
-        throw new BusinessException({
-          type: BusinessExceptionType.DUPLICATE_USERNAME,
-        });
-      }
+          const findedUser = await userCommandRepo.findByUsername(
+            body.username,
+          );
+          if (findedUser) {
+            throw new BusinessException({
+              type: BusinessExceptionType.DUPLICATE_USERNAME,
+            });
+          }
 
-      const { resident, adminOf, ...rest } = body;
-      const createUser = await UserEntity.createAdmin({
-        ...rest,
-        adminOf: adminOf as AdminOf,
-        hashManager,
-      });
+          const { resident, adminOf, ...rest } = body;
+          const existingApartment =
+            await userCommandRepo.findApartmentByAdminOf(
+              adminOf as AdminOf,
+              "update",
+            );
+          if (existingApartment && existingApartment.manager?.id) {
+            throw new BusinessException({
+              type: BusinessExceptionType.DUPLICATE_APARTMENT,
+            });
+          }
 
-      const savedUser = await userCommandRepo.createAdmin(createUser);
-
-      return savedUser;
+          const createUser = await UserEntity.createAdmin({
+            ...rest,
+            adminOf: adminOf as AdminOf,
+            hashManager,
+          });
+          const savedUser = await userCommandRepo.createAdmin(createUser);
+          return savedUser;
+        },
+        {
+          transactionOptions: {
+            useTransaction: true,
+            isolationLevel: "RepeatableRead",
+          },
+          useOptimisticLock: false,
+        },
+      );
     } catch (error) {
       handleError(error);
       throw error;
@@ -318,6 +335,21 @@ export const UserCommandService = (
             });
           }
 
+          if (body.adminOf) {
+            const existingApartment =
+              await userCommandRepo.findApartmentByAdminOf(
+                body.adminOf as AdminOf,
+                "update",
+              );
+            if (existingApartment && existingApartment.manager?.id) {
+              if (existingApartment.manager.id !== foundUser.id) {
+                throw new BusinessException({
+                  type: BusinessExceptionType.DUPLICATE_APARTMENT,
+                });
+              }
+            }
+          }
+
           const updatedUser = UserEntity.updateAdminInfo(foundUser, body);
 
           const savedUser = await userCommandRepo.update(updatedUser);
@@ -326,7 +358,7 @@ export const UserCommandService = (
         {
           transactionOptions: {
             useTransaction: true,
-            isolationLevel: "ReadCommitted",
+            isolationLevel: "RepeatableRead",
           },
           useOptimisticLock: false,
         },
