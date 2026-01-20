@@ -339,6 +339,8 @@ $RECYCLE.BIN/
 /public
 .env.prod
 .env.dev
+.env.test
+*.env
 
 # Prisma
 prisma/schema.sql

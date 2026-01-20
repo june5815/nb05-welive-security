@@ -1,9 +1,8 @@
 import { Apartment } from "../domain/apartment.entity";
-import { ApartmentQueryRepository } from "../ports/apartment-query-repo.interface";
 
 /**
  * 건물번호 배열 생성
- * 예: from=101, to=105 => [101, 102, 103, 104, 105]
+ * from=101, to=105 => [101, 102, 103, 104, 105]
  */
 const generateBuildingNumbers = (from: number, to: number): number[] => {
   return Array.from({ length: to - from + 1 }, (_, i) => from + i);
@@ -26,9 +25,6 @@ const generateUnitNumbers = (
   return units;
 };
 
-/**
- * 아파트 정보를 공개용 DTO로 변환
- */
 const mapToPublicDto = (apartment: Apartment) => ({
   id: apartment.id,
   name: apartment.name,
@@ -47,7 +43,6 @@ const mapToPublicDto = (apartment: Apartment) => ({
   ),
 });
 
-// DTO 타입 정의
 export interface ApartmentListItemDto {
   id?: string;
   name: string;

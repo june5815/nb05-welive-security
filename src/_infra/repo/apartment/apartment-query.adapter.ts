@@ -1,45 +1,41 @@
-import { ApartmentQueryRepository } from "../../../_modules/apartments/ports/apartment-query-repo.interface";
+import { ApartmentQueryRepository } from "../../../_common/ports/repos/apartment/apartment-query-repo.interface";
+import { IApartmentRepo } from "../../../_common/ports/repos/apartment/apartment-repo.interface";
 import { Apartment } from "../../../_modules/apartments/domain/apartment.entity";
-import { IApartmentRepo } from "./apartment.repo";
 import { ApartmentMapper } from "../../mapper/apartment.mapper";
 
 /**
- * IApartmentRepo를 ApartmentQueryRepository로 변환하는 어댑터
- * 도메인 모델의 요구사항에 맞춰 인프라 레포지토리로
+ * IApartmentRepo를 ApartmentQueryRepository로 변환 어댑터
+ * 도메인 모델의 요구사항에 맞춰 인프라 레포지토리
  */
 export class ApartmentQueryAdapter implements ApartmentQueryRepository {
   constructor(private repo: IApartmentRepo) {}
 
   async findAll(): Promise<Required<Apartment>[]> {
     const apartments = await this.repo.findAll();
-    return apartments.map((apt) =>
-      ApartmentMapper.toDomain(apt),
-    ) as Required<Apartment>[];
+    return apartments;
   }
 
   async findById(id: string): Promise<Required<Apartment> | null> {
     const apartment = await this.repo.findById(id);
     if (!apartment) return null;
-    return ApartmentMapper.toDomain(apartment) as Required<Apartment>;
+    return apartment;
   }
 
   async search(query: string): Promise<Required<Apartment>[]> {
     const apartments = await this.repo.search(query);
-    return apartments.map((apt) =>
-      ApartmentMapper.toDomain(apt),
-    ) as Required<Apartment>[];
+    return apartments;
   }
 
   async findByAddress(address: string): Promise<Required<Apartment> | null> {
     const apartment = await this.repo.findByAddress(address);
     if (!apartment) return null;
-    return ApartmentMapper.toDomain(apartment) as Required<Apartment>;
+    return apartment;
   }
 
   async findByAdminId(adminId: string): Promise<Required<Apartment>[]> {
     const apartment = await this.repo.findByAdminId(adminId);
     if (!apartment) return [];
-    return [ApartmentMapper.toDomain(apartment)] as Required<Apartment>[];
+    return [apartment];
   }
 
   async findWithPagination(
@@ -53,9 +49,7 @@ export class ApartmentQueryAdapter implements ApartmentQueryRepository {
   }> {
     const result = await this.repo.findWithPagination(page, limit);
     return {
-      data: result.data.map((apt) =>
-        ApartmentMapper.toDomain(apt),
-      ) as Required<Apartment>[],
+      data: result.data,
       total: result.total,
       page: result.page,
       limit: result.limit,
