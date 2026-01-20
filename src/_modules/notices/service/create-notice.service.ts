@@ -1,5 +1,7 @@
-import { noticeCommandRepository } from "../../../../outbound/repos/command/notice-command.repo";
-import { CreateNoticeCommand } from "../../entities/notice/create-notice.command";
+import {
+  noticeCommandRepository,
+  CreateNoticeCommand,
+} from "../../../_infra/repos/notice/notice-command.repo";
 
 export const createNoticeService =
   (repo: ReturnType<typeof noticeCommandRepository>) =>

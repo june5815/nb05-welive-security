@@ -1,5 +1,5 @@
 import { ApartmentQueryService } from "./apartment-query.service";
-import { ApartmentListResponse } from "../../../../application/dto/apartment/apartment.dto";
+import { ApartmentListResponse } from "../../dtos/apartment.dto";
 
 export interface GetApartmentsQuery {
   readonly page?: number;

@@ -13,8 +13,11 @@
     "outDir": "dist",
     "sourceMap": true,
     "types": ["jest", "node"],
-    "typeRoots": ["src/shared/types", "node_modules/@types"]
+    "typeRoots": ["src/_common/types", "node_modules/@types"]
   },
   "include": ["src", "**/*.test.ts"],
-  "exclude": []
+  "exclude": [],
+  "ts-node": {
+    "files": true
+  }
 }

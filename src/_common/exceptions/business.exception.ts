@@ -8,7 +8,7 @@ export enum BusinessExceptionType {
   NICKNAME_TOO_LONG,
   PASSWORD_TOO_SHORT,
   INVALID_AUTH,
-  UNAUTORIZED_REQUEST,
+  UNAUTHORIZED_REQUEST,
   TOO_MANY_POST,
   CONTENT_TOO_LONG,
   PARSE_BODY_ERROR,
@@ -19,6 +19,8 @@ export enum BusinessExceptionType {
   ALREADY_LIKED,
   NOTICE_CONTENT_REQUIRED,
   NOTICE_TITLE_REQUIRED,
+  COMMENT_CONTENT_REQUIRED,
+  COMMENT_NOT_FOUND,
 
   COMPLAINT_TITLE_REQUIRED,
   COMPLAINT_CONTENT_REQUIRED,
@@ -32,6 +34,7 @@ export enum BusinessExceptionType {
   STATUS_IS_PENDING,
   REJECTED_USER,
   INVALID_INPUT_IMAGE,
+  IMAGE_NOT_FOUND,
 
   INVALID_TOKEN,
   NOT_FOUND,
@@ -90,7 +93,7 @@ const BusinessExceptionTable: Record<
     statusCode: 400,
     message: "이메일 또는 비밀번호가 일치하지 않아요.",
   },
-  [BusinessExceptionType.UNAUTORIZED_REQUEST]: {
+  [BusinessExceptionType.UNAUTHORIZED_REQUEST]: {
     statusCode: 400,
     message: "권한이 없어요.",
   },
@@ -134,6 +137,14 @@ const BusinessExceptionTable: Record<
     statusCode: 401,
     message: "공지사항을 찾을 수 없습니다.",
   },
+  [BusinessExceptionType.COMMENT_CONTENT_REQUIRED]: {
+    statusCode: 401,
+    message: "잘못된 요청(필수사항 누락 또는 잘못된 입력값)입니다.",
+  },
+  [BusinessExceptionType.COMMENT_NOT_FOUND]: {
+    statusCode: 401,
+    message: "댓글을 찾을 수 없습니다.",
+  },
   [BusinessExceptionType.COMPLAINT_TITLE_REQUIRED]: {
     statusCode: 400,
     message: "잘못된 요청(필수사항 누락 또는 잘못된 입력값)입니다.",
@@ -167,6 +178,10 @@ const BusinessExceptionTable: Record<
   [BusinessExceptionType.INVALID_INPUT_IMAGE]: {
     statusCode: 400,
     message: "이미지 파일만 업로드 가능합니다.",
+  },
+  [BusinessExceptionType.IMAGE_NOT_FOUND]: {
+    statusCode: 400,
+    message: "이미지 파일을 찾을 수 없습니다. 다시 업로드해주세요.",
   },
 
   // Token Error

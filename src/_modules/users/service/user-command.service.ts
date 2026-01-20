@@ -7,18 +7,16 @@ import {
   updateUserListSignUpStatusReqDTO,
   deleteAdminReqDTO,
   deleteRejectedUsersReqDTO,
-} from "../../../inbound/req-dto-validate/user.request";
+} from "../dtos/req/user.request";
 import {
   AdminOf,
   Resident,
   User as IUser,
   UserEntity,
 } from "../domain/user.entity";
-import { IUserCommandRepo } from "../../../application/ports/repos/command/user-command-repo.interface";
+import { IUserCommandRepo } from "../../../_common/ports/repos/user/user-command-repo.interface";
 import { IUnitOfWork } from "../../../_common/ports/db/u-o-w.interface";
 import { IHashManager } from "../../../_common/ports/managers/bcrypt-hash-manager.interface";
-import { ITokenUtil } from "../../../_common/utils/token.util";
-import { PessimisticLock } from "../../../_common/utils/pessimistic-lock.util";
 import {
   BusinessException,
   BusinessExceptionType,
@@ -204,8 +202,7 @@ export const UserCommandService = (
             });
           }
 
-          const newAvatar =
-            body.avatarImage.location ?? body.avatarImage.filename;
+          const newAvatar = body.avatarImage.filename;
           const updatedUser = UserEntity.updateAvatar(foundUser, newAvatar!);
 
           const savedUser = await userCommandRepo.update(updatedUser);
@@ -329,7 +326,7 @@ export const UserCommandService = (
         {
           transactionOptions: {
             useTransaction: true,
-            isolationLevel: "RepeatableRead",
+            isolationLevel: "ReadCommitted",
           },
           useOptimisticLock: false,
         },
@@ -385,7 +382,7 @@ export const UserCommandService = (
         {
           transactionOptions: {
             useTransaction: true,
-            isolationLevel: "RepeatableRead",
+            isolationLevel: "ReadCommitted",
           },
           useOptimisticLock: false,
         },
@@ -480,7 +477,7 @@ export const UserCommandService = (
         {
           transactionOptions: {
             useTransaction: true,
-            isolationLevel: "RepeatableRead",
+            isolationLevel: "ReadCommitted",
           },
           useOptimisticLock: false,
         },

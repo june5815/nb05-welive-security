@@ -1,7 +1,7 @@
 import {
   noticeCommandRepository,
   UpdateNoticeCommand,
-} from "../../../../outbound/repos/command/notice-command.repo";
+} from "../../../_infra/repos/notice/notice-command.repo";
 
 export const updateNoticeService =
   (repo: ReturnType<typeof noticeCommandRepository>) =>

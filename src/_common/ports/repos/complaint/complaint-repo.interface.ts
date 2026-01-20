@@ -1,4 +1,4 @@
-import { Complaint } from "../../command/entities/complaints/complaints.entity";
+import { Complaint } from "../../../../_modules/complaints/domain/complaints.entity";
 
 export interface IComplaintRepo {
   create(complaint: Complaint): Promise<Complaint>;
