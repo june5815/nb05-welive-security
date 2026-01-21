@@ -3,7 +3,7 @@ import {
   ApartmentListResponseDto,
 } from "../usecases/get-apartment-list.usecase";
 import { Apartment } from "../domain/apartment.entity";
-import { ApartmentQueryRepository } from "../../../_common/ports/repos/apartment";
+import { ApartmentQueryRepository } from "../../../_common/ports/repos/apartment/apartment-query-repo.interface";
 
 export class ApartmentsService {
   constructor(private readonly apartmentRepo: ApartmentQueryRepository) {}
