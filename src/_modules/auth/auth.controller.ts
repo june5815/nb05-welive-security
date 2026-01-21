@@ -23,6 +23,7 @@ export const AuthController = (
     res: Response,
     accessToken: string,
     refreshToken: string,
+    csrfValue: string,
   ) => {
     const isProduction = process.env.NODE_ENV === "production";
     const options = {
@@ -41,6 +42,11 @@ export const AuthController = (
       ...options,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
+
+    res.cookie("csrf_token", csrfValue, {
+      ...options,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
   };
 
   const login = async (req: Request, res: Response): Promise<Response> => {
@@ -48,7 +54,12 @@ export const AuthController = (
 
     const { loginResDto, tokenResDto } = await authCommandService.login(reqDto);
 
-    setCookie(res, tokenResDto.accessToken, tokenResDto.refreshToken);
+    setCookie(
+      res,
+      tokenResDto.accessToken,
+      tokenResDto.refreshToken,
+      tokenResDto.csrfValue,
+    );
 
     return res.status(200).json(loginResDto);
   };
@@ -72,6 +83,7 @@ export const AuthController = (
     };
     res.clearCookie("access_token", clearOptions);
     res.clearCookie("refresh_token", clearOptions);
+    res.clearCookie("csrf_token", clearOptions);
 
     return res.status(204).json();
   };
@@ -92,6 +104,7 @@ export const AuthController = (
       res,
       newTokenResDto.newAccessToken,
       newTokenResDto.newRefreshToken,
+      newTokenResDto.newCsrfValue,
     );
 
     return res.status(204).json();

@@ -20,7 +20,7 @@ app.use(
   }),
 );
 
-app.use("/api/v2/apartments", createApartmentRouter(db));
+// app.use("/api/v2/apartments", createApartmentRouter(db));
 
 const PORT = config.parsed().PORT;
 

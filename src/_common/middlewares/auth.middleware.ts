@@ -3,7 +3,7 @@ import {
   BusinessException,
   BusinessExceptionType,
 } from "../exceptions/business.exception";
-import { ITokenUtil } from "../utils/token.util";
+import { ITokenUtil, AccessTokenPayload } from "../utils/token.util";
 import { IAuthMiddleware } from "../ports/middlewares/auth-middleware.interface";
 
 export const AuthMiddleware = (tokenUtil: ITokenUtil): IAuthMiddleware => {
@@ -34,7 +34,7 @@ export const AuthMiddleware = (tokenUtil: ITokenUtil): IAuthMiddleware => {
     const payload = tokenUtil.verifyToken({
       token: accessToken,
       type: "ACCESS",
-    });
+    }) as AccessTokenPayload;
 
     req.userId = payload.userId;
     req.userRole = payload.role;
