@@ -1,15 +1,13 @@
 import { Request, Response, NextFunction } from "express";
-
-import { CreateCommentRequestSchema } from "./request/create-comment.request";
-import { UpdateCommentRequestSchema } from "./request/update-comment.request";
-import { createCommentService } from "../application/command/services/create-comment.service";
-import { deleteCommentService } from "../application/command/services/delete-comment.service";
-import { updateCommentService } from "../application/command/services/update-comment.service";
-import { getCommentListQuery } from "../application/query/comment-query.service";
-import { commentCommandRepository } from "../outbound/repos/command/comment-command.repo";
-import { commentQueryRepository } from "../outbound/repos/query/comment-query.repo";
-import { CommentResourceType } from "@prisma/client";
-import { GetCommentListRequestSchema } from "./request/get-comment-list.request";
+import { commentCommandRepository } from "../../_infra/repos/comment/comment-command.repo";
+import { commentQueryRepository } from "../../_infra/repos/comment/comment-query.repo";
+import { CreateCommentRequestSchema } from "./dtos/request/create-comment.request";
+import { GetCommentListRequestSchema } from "./dtos/request/get-comment-list.request";
+import { UpdateCommentRequestSchema } from "./dtos/request/update-comment.request";
+import { createCommentService } from "./services/create-comment.service";
+import { deleteCommentService } from "./services/delete-comment.service";
+import { updateCommentService } from "./services/update-comment.service";
+import { getCommentListQuery } from "./usecases/query/comment-query.service";
 
 /**
  * 댓글 생성
