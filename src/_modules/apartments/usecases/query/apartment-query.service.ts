@@ -1,6 +1,5 @@
+import { ApartmentQueryRepository } from "../../../../_common/ports/repos/apartment";
 import { Apartment, ApartmentEntity } from "../../domain/apartment.entity";
-import { ApartmentQueryRepository } from "../../../../_common/ports/repos/apartment/apartment-query-repo.interface";
-// import { ApartmentQueryView } from "../../../../application/query/apartment/apartment.view";
 import {
   ApartmentListResponse,
   ApartmentDetailResponse,

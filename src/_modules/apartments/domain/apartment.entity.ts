@@ -19,7 +19,6 @@ export interface Apartment {
   readonly createdAt?: Date;
   readonly updatedAt?: Date;
   readonly version?: number;
-
   readonly admin?: AdminUser;
 }
 

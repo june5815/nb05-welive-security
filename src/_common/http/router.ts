@@ -1,6 +1,6 @@
 import express from "express";
 import { createApartmentRoutes } from "../../_modules/apartments/routes";
-import { ApartmentQueryRepository } from "../../_modules/apartments/ports/apartment-query-repo.interface";
+import { ApartmentQueryRepository } from "../ports/repos/apartment/apartment-query-repo.interface";
 
 /**
  * 모든 라우트를 Express 앱에 등록

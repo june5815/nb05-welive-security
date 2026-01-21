@@ -1,6 +1,6 @@
 import { Apartment } from "../../../../_modules/apartments/domain/apartment.entity";
 
-export interface ApartmentQueryRepository {
+export interface IApartmentQueryRepo {
   findAll(): Promise<Required<Apartment>[]>;
   findById(id: string): Promise<Required<Apartment> | null>;
   search(query: string): Promise<Required<Apartment>[]>;
@@ -16,3 +16,5 @@ export interface ApartmentQueryRepository {
     limit: number;
   }>;
 }
+
+export type ApartmentQueryRepository = IApartmentQueryRepo;
