@@ -1,5 +1,5 @@
 import { PrismaClient, CommentResourceType } from "@prisma/client";
-import { BaseCommandRepo } from "../../../../_infra/repos/_base/base-command.repo";
+import { BaseCommandRepo } from "../_base/base-command.repo";
 
 export interface CreateCommentCommand {
   content: string;
