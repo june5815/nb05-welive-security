@@ -1,4 +1,7 @@
-import { User as IUser } from "../../../_modules/users/domain/user.entity";
+import {
+  AdminOf,
+  User as IUser,
+} from "../../../_modules/users/domain/user.entity";
 import {
   UserMapper,
   superAdminInclude,
@@ -255,6 +258,49 @@ export const UserCommandRepo = (
     }
   };
 
+  const findApartmentByAdminOf = async (
+    adminOf: AdminOf,
+    pessimisticLock?: PessimisticLock,
+  ): Promise<any | null> => {
+    try {
+      const prisma = baseCommandRepo.getPrismaClient();
+      if (pessimisticLock) {
+        let query: Prisma.Sql;
+
+        switch (pessimisticLock) {
+          case "share":
+            query = Prisma.sql`SELECT * FROM "Apartment" WHERE "name" = ${adminOf.name} AND "address" = ${adminOf.address} AND "officeNumber" = ${adminOf.officeNumber} FOR SHARE`;
+            break;
+          case "update":
+            query = Prisma.sql`SELECT * FROM "Apartment" WHERE "name" = ${adminOf.name} AND "address" = ${adminOf.address} AND "officeNumber" = ${adminOf.officeNumber} FOR UPDATE`;
+            break;
+          default:
+            throw new Error("유효하지 않은 잠금 타입입니다.");
+        }
+        await prisma.$queryRaw(query);
+      }
+
+      const foundApartment = await prisma.apartment.findUnique({
+        where: {
+          name_address_officeNumber: {
+            name: adminOf.name,
+            address: adminOf.address,
+            officeNumber: adminOf.officeNumber,
+          },
+        },
+        include: { manager: true },
+      });
+
+      if (!foundApartment) {
+        return null;
+      } else {
+        return foundApartment;
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const lockManyAdmin = async (
     pessimisticLock: PessimisticLock,
   ): Promise<void> => {
@@ -499,6 +545,7 @@ export const UserCommandRepo = (
     createResidentUser,
     findByUsername,
     findById,
+    findApartmentByAdminOf,
     lockManyAdmin,
     lockManyResidentUser,
     update,
