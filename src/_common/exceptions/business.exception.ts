@@ -165,7 +165,7 @@ const BusinessExceptionTable: Record<
   },
   [BusinessExceptionType.DUPLICATE_APARTMENT]: {
     statusCode: 401,
-    message: "아파트 정보가 중복되었습니다.",
+    message: "이미 관리자가 존재하는 아파트입니다.",
   },
   [BusinessExceptionType.STATUS_IS_PENDING]: {
     statusCode: 401,
