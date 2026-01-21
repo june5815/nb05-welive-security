@@ -1,4 +1,4 @@
-import { ApartmentQueryRepository } from "../ports/apartment-query-repo.interface";
+import { ApartmentQueryRepository } from "../../../_common/ports/repos/apartment/apartment-query-repo.interface";
 import {
   getApartmentList,
   ApartmentListResponseDto,

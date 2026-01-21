@@ -73,7 +73,6 @@ export const AuthCommandService = (
 
           const refreshToken = tokenUtil.generateRefreshToken({
             userId: foundUser.id!,
-            role: foundUser.role!,
           });
           const updatedUser = await AuthEntity.updateRefreshToken(
             foundUser,
@@ -189,13 +188,13 @@ export const AuthCommandService = (
     dto: RefreshTokenReqDto,
   ): Promise<NewTokenResDto> => {
     const { refreshToken: oldRefreshToken } = dto.cookie;
-    const { userId, role } = tokenUtil.verifyToken({
+    const { userId } = tokenUtil.verifyToken({
       token: oldRefreshToken,
       type: "REFRESH",
     });
 
     try {
-      const { newRefreshToken } = await unitOfWork.doTx(
+      const { newRefreshToken, role } = await unitOfWork.doTx(
         async () => {
           const foundUser = await userCommandRepo.findById(userId);
           if (
@@ -230,7 +229,6 @@ export const AuthCommandService = (
 
           const newRefreshToken = tokenUtil.generateRefreshToken({
             userId: foundUser.id!,
-            role: foundUser.role!,
           });
           const updatedUser = await AuthEntity.updateRefreshToken(
             foundUser,
@@ -239,7 +237,7 @@ export const AuthCommandService = (
           );
           await userCommandRepo.update(updatedUser);
 
-          return { newRefreshToken };
+          return { newRefreshToken, role: foundUser.role! };
         },
         {
           transactionOptions: {

@@ -3,7 +3,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import { PrismaClient } from "@prisma/client";
 import { ConfigUtil } from "./_common/utils/config.util";
-import { createApartmentRouter } from "./outbound/routes/apartment.router";
+// import { createApartmentRouter } from "./outbound/routes/apartment.router";
 
 const config = ConfigUtil();
 const db = new PrismaClient();
@@ -20,7 +20,7 @@ app.use(
   }),
 );
 
-app.use("/api/v2/apartments", createApartmentRouter(db));
+// app.use("/api/v2/apartments", createApartmentRouter(db));
 
 const PORT = config.parsed().PORT;
 
