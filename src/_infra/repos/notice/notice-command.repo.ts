@@ -1,4 +1,9 @@
-import { PrismaClient, NoticeType, NoticeCategory } from "@prisma/client";
+import {
+  PrismaClient,
+  NoticeType,
+  NoticeCategory,
+  CommentResourceType,
+} from "@prisma/client";
 import { BaseCommandRepo } from "../_base/base-command.repo";
 
 export interface CreateNoticeCommand {
@@ -26,14 +31,14 @@ export interface UpdateNoticeCommand {
 }
 
 export const noticeCommandRepository = (prismaClient: PrismaClient) => {
-  const baseRepo = BaseCommandRepo(prismaClient);
-  const prisma = baseRepo.getPrismaClient();
+  const { getPrismaClient } = BaseCommandRepo(prismaClient);
 
   return {
     /**
      * 공지 생성
      */
     async create(command: CreateNoticeCommand) {
+      const prisma = getPrismaClient();
       return prisma.notice.create({
         data: {
           title: command.title,
@@ -68,52 +73,64 @@ export const noticeCommandRepository = (prismaClient: PrismaClient) => {
      * 공지 수정
      */
     async update(noticeId: string, command: UpdateNoticeCommand) {
-      // 1. apartmentId 먼저 조회 (비동기 로직 분리)
+      const prisma = getPrismaClient(); // tx or normal
+
       const notice = await prisma.notice.findUnique({
         where: { id: noticeId },
         select: { apartmentId: true },
       });
+      if (!notice) throw new Error("Notice not found");
 
-      if (!notice) {
-        throw new Error("Notice not found");
+      // event 제거 요청이면 deleteMany로 안전하게
+      if (command.event === null) {
+        await prisma.event.deleteMany({ where: { noticeId } });
       }
 
-      return prisma.notice.update({
+      const updated = await prisma.notice.update({
         where: { id: noticeId },
         data: {
           title: command.title,
           content: command.content,
           category: command.category,
           type: command.type,
-
-          event:
-            command.event === undefined
-              ? undefined
-              : command.event === null
-                ? { delete: true }
-                : {
-                    upsert: {
-                      create: {
-                        title: command.title ?? "",
-                        startDate: command.event.startDate,
-                        endDate: command.event.endDate,
-                        apartmentId: notice.apartmentId,
-                      },
-                      update: {
-                        startDate: command.event.startDate,
-                        endDate: command.event.endDate,
-                      },
-                    },
-                  },
         },
       });
+
+      // event 생성/수정이면 upsert
+      if (command.event && command.event !== null) {
+        await prisma.event.upsert({
+          where: { noticeId },
+          create: {
+            title: command.title ?? updated.title,
+            startDate: command.event.startDate,
+            endDate: command.event.endDate,
+            apartmentId: notice.apartmentId,
+            noticeId,
+          },
+          update: {
+            startDate: command.event.startDate,
+            endDate: command.event.endDate,
+          },
+        });
+      }
+
+      return updated;
     },
 
     /**
      * 공지 삭제
      */
     async delete(noticeId: string) {
-      return prisma.notice.delete({
+      const prisma = getPrismaClient(); // tx or normal
+
+      await prisma.comment.deleteMany({
+        where: {
+          resourceType: CommentResourceType.NOTICE,
+          resourceId: noticeId,
+        },
+      });
+
+      await prisma.notice.delete({
         where: { id: noticeId },
       });
     },

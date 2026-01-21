@@ -1,7 +1,7 @@
 import express, { Router } from "express";
 import { ApartmentsController } from "./controller";
 import { ApartmentsService } from "./service/apartments.service";
-import { ApartmentQueryRepository } from "./ports/apartment-query-repo.interface";
+import { ApartmentQueryRepository } from "../../_common/ports/repos/apartment";
 
 /**
  * Apartment 모듈 라우트 정의

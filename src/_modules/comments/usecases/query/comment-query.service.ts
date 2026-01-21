@@ -1,5 +1,5 @@
 import { CommentResourceType } from "@prisma/client";
-import { CommentQueryRepository } from "../../outbound/repos/query/comment-query.repo";
+import { CommentQueryRepository } from "../../../../_infra/repos/comment/comment-query.repo";
 
 export const getCommentListQuery =
   (repo: CommentQueryRepository) =>
