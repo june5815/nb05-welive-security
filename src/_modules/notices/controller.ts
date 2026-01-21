@@ -25,11 +25,13 @@ export const createNoticeController = async (
 ) => {
   try {
     const body = CreateNoticeRequestSchema.parse(req.body);
-
     const prismaClient = req.prismaClient;
-    const commandRepo = noticeCommandRepository(prismaClient);
+    const noticeCommandRepo = noticeCommandRepository(prismaClient);
 
-    const result = await createNoticeService(commandRepo)({
+    const result = await createNoticeService({
+      prisma: prismaClient,
+      noticeCommandRepo,
+    })({
       title: body.title,
       content: body.content,
       category: body.category,
@@ -43,7 +45,6 @@ export const createNoticeController = async (
           }
         : undefined,
     });
-
     res.status(201).json(result);
   } catch (e) {
     next(e);
@@ -104,10 +105,13 @@ export const updateNoticeController = async (
 ) => {
   try {
     const body = UpdateNoticeRequestSchema.parse(req.body);
+    const prismaClient = req.prismaClient;
+    const noticeCommandRepo = noticeCommandRepository(prismaClient);
 
-    const commandRepo = noticeCommandRepository(req.prismaClient);
-
-    await updateNoticeService(commandRepo)(req.params.noticeId, {
+    await updateNoticeService({
+      prisma: prismaClient,
+      noticeCommandRepo,
+    })(req.params.noticeId, {
       title: body.title,
       content: body.content,
       category: body.category,
@@ -141,9 +145,12 @@ export const deleteNoticeController = async (
 ) => {
   try {
     const prismaClient = req.prismaClient;
-    const commandRepo = noticeCommandRepository(prismaClient);
+    const noticeCommandRepo = noticeCommandRepository(prismaClient);
 
-    await deleteNoticeService(commandRepo)(req.params.noticeId);
+    await deleteNoticeService({
+      prisma: prismaClient,
+      noticeCommandRepo,
+    })(req.params.noticeId);
 
     res.status(204).end();
   } catch (e) {

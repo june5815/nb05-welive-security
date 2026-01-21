@@ -1,7 +1,6 @@
-// delete-comment.service.ts
-import { CommentCommandRepository } from "../../../outbound/repos/command/comment-command.repo";
 import { UserRole } from "@prisma/client";
 import { assertCommentPermission } from "./assert-comment-permission";
+import { CommentCommandRepository } from "../../../_infra/repos/comment/comment-command.repo";
 
 export const deleteCommentService =
   (repo: CommentCommandRepository) =>
