@@ -1,43 +1,38 @@
 export enum BusinessExceptionType {
-  TOKEN_EXPIRED,
-  UNKOWN_SERVER_ERROR,
-  EMAIL_REQUIRE,
-  INVALIDE_EMAIL,
-  PASSWORD_REQUIRED,
-  EMAIL_DUPLICATE,
-  NICKNAME_TOO_LONG,
-  PASSWORD_TOO_SHORT,
-  INVALID_AUTH,
+  FORBIDDEN,
   UNAUTHORIZED_REQUEST,
-  TOO_MANY_POST,
-  CONTENT_TOO_LONG,
-  PARSE_BODY_ERROR,
+  UNKOWN_SERVER_ERROR,
+
   USER_NOT_FOUND,
   ARTICLE_NOT_FOUND,
-  NICKNAME_DUPLICATE,
-  INVALID_PASSWORD,
-  ALREADY_LIKED,
+
   NOTICE_CONTENT_REQUIRED,
   NOTICE_TITLE_REQUIRED,
+  INVALID_EVENT_DATE,
+  NOTICE_NOT_FOUND,
+
   COMMENT_CONTENT_REQUIRED,
   COMMENT_NOT_FOUND,
 
   COMPLAINT_TITLE_REQUIRED,
   COMPLAINT_CONTENT_REQUIRED,
-  FORBIDDEN,
-  INVALID_EVENT_DATE,
-  NOTICE_NOT_FOUND,
 
+  DUPLICATE_EMAIL,
   DUPLICATE_USERNAME,
   DUPLICATE_CONTACT,
   DUPLICATE_APARTMENT,
-  STATUS_IS_PENDING,
-  REJECTED_USER,
+  INVALID_PASSWORD,
+  INVALID_AUTH,
   INVALID_INPUT_IMAGE,
   IMAGE_NOT_FOUND,
+  STATUS_IS_PENDING,
+  REJECTED_USER,
 
   INVALID_TOKEN,
+  TOKEN_EXPIRED,
+
   NOT_FOUND,
+
   VALIDATION_ERROR,
 }
 
@@ -45,69 +40,17 @@ const BusinessExceptionTable: Record<
   BusinessExceptionType,
   { statusCode: number; message: string }
 > = {
-  [BusinessExceptionType.ALREADY_LIKED]: {
-    statusCode: 400,
-    message: "이미 좋아요를 눌렀어요.",
-  },
-  [BusinessExceptionType.INVALID_PASSWORD]: {
+  [BusinessExceptionType.FORBIDDEN]: {
     statusCode: 401,
-    message: "비밀번호가 일치하지 않습니다.",
+    message: "권한과 관련된 오류입니다.",
   },
-  [BusinessExceptionType.NICKNAME_DUPLICATE]: {
+  [BusinessExceptionType.UNAUTHORIZED_REQUEST]: {
     statusCode: 401,
-    message: "닉네임이 중복되었습니다.",
-  },
-  [BusinessExceptionType.TOKEN_EXPIRED]: {
-    statusCode: 401,
-    message: "토큰이 만료되었습니다.",
+    message: "권한이 없어요.",
   },
   [BusinessExceptionType.UNKOWN_SERVER_ERROR]: {
     statusCode: 500,
     message: "알 수 없는 서버 에러입니다.",
-  },
-  [BusinessExceptionType.EMAIL_REQUIRE]: {
-    statusCode: 400,
-    message: "이메일을 입력해주세요.",
-  },
-  [BusinessExceptionType.INVALIDE_EMAIL]: {
-    statusCode: 400,
-    message: "이메일 형식이 올바르지 않습니다.",
-  },
-  [BusinessExceptionType.PASSWORD_REQUIRED]: {
-    statusCode: 400,
-    message: "비밀번호를 입력해주세요.",
-  },
-  [BusinessExceptionType.EMAIL_DUPLICATE]: {
-    statusCode: 409,
-    message: "이미 존재하는 이메일이에요.",
-  },
-  [BusinessExceptionType.NICKNAME_TOO_LONG]: {
-    statusCode: 400,
-    message: "닉네임은 최대 20자까지 가능해요.",
-  },
-  [BusinessExceptionType.PASSWORD_TOO_SHORT]: {
-    statusCode: 400,
-    message: "비밀번호는 최소 8자 이상이어야 해요.",
-  },
-  [BusinessExceptionType.INVALID_AUTH]: {
-    statusCode: 400,
-    message: "이메일 또는 비밀번호가 일치하지 않아요.",
-  },
-  [BusinessExceptionType.UNAUTHORIZED_REQUEST]: {
-    statusCode: 400,
-    message: "권한이 없어요.",
-  },
-  [BusinessExceptionType.TOO_MANY_POST]: {
-    statusCode: 400,
-    message: "",
-  },
-  [BusinessExceptionType.CONTENT_TOO_LONG]: {
-    statusCode: 400,
-    message: "",
-  },
-  [BusinessExceptionType.PARSE_BODY_ERROR]: {
-    statusCode: 400,
-    message: "",
   },
   [BusinessExceptionType.USER_NOT_FOUND]: {
     statusCode: 404,
@@ -124,10 +67,6 @@ const BusinessExceptionTable: Record<
   [BusinessExceptionType.NOTICE_TITLE_REQUIRED]: {
     statusCode: 400,
     message: "잘못된 요청(필수사항 누락 또는 잘못된 입력값)입니다.",
-  },
-  [BusinessExceptionType.FORBIDDEN]: {
-    statusCode: 401,
-    message: "권한과 관련된 오류입니다.",
   },
   [BusinessExceptionType.INVALID_EVENT_DATE]: {
     statusCode: 401,
@@ -155,25 +94,29 @@ const BusinessExceptionTable: Record<
   },
 
   // User
+  [BusinessExceptionType.DUPLICATE_EMAIL]: {
+    statusCode: 400,
+    message: "이메일이 중복되었습니다.",
+  },
   [BusinessExceptionType.DUPLICATE_USERNAME]: {
-    statusCode: 401,
+    statusCode: 400,
     message: "아이디가 중복되었습니다.",
   },
   [BusinessExceptionType.DUPLICATE_CONTACT]: {
-    statusCode: 401,
+    statusCode: 400,
     message: "연락처가 중복되었습니다.",
   },
   [BusinessExceptionType.DUPLICATE_APARTMENT]: {
-    statusCode: 401,
+    statusCode: 400,
     message: "이미 관리자가 존재하는 아파트입니다.",
   },
-  [BusinessExceptionType.STATUS_IS_PENDING]: {
-    statusCode: 401,
-    message: "계정 승인 대기 중입니다.\n승인 후 서비스 이용이 가능합니다.",
+  [BusinessExceptionType.INVALID_PASSWORD]: {
+    statusCode: 400,
+    message: "비밀번호가 일치하지 않습니다.",
   },
-  [BusinessExceptionType.REJECTED_USER]: {
-    statusCode: 401,
-    message: "비활성화된 계정입니다.",
+  [BusinessExceptionType.INVALID_AUTH]: {
+    statusCode: 400,
+    message: "이메일 또는 비밀번호가 일치하지 않아요.",
   },
   [BusinessExceptionType.INVALID_INPUT_IMAGE]: {
     statusCode: 400,
@@ -183,11 +126,23 @@ const BusinessExceptionTable: Record<
     statusCode: 400,
     message: "이미지 파일을 찾을 수 없습니다. 다시 업로드해주세요.",
   },
+  [BusinessExceptionType.STATUS_IS_PENDING]: {
+    statusCode: 401,
+    message: "계정 승인 대기 중입니다. 승인 후 서비스 이용이 가능합니다.",
+  },
+  [BusinessExceptionType.REJECTED_USER]: {
+    statusCode: 401,
+    message: "비활성화된 계정입니다.",
+  },
 
   // Token Error
   [BusinessExceptionType.INVALID_TOKEN]: {
     statusCode: 401,
     message: "유효하지 않은 토큰입니다.",
+  },
+  [BusinessExceptionType.TOKEN_EXPIRED]: {
+    statusCode: 401,
+    message: "토큰이 만료되었습니다.",
   },
 
   // Not Found

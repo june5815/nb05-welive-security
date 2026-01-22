@@ -12,7 +12,7 @@ export enum BusinessErrorType {
   UNAUTHORIZED_REQUEST = "UNAUTHORIZED_REQUEST",
   FORBIDDEN = "FORBIDDEN",
   USER_NOT_FOUND = "USER_NOT_FOUND",
-  EMAIL_DUPLICATE = "EMAIL_DUPLICATE",
+  DUPLICATE_EMAIL = "DUPLICATE_EMAIL",
   EMAIL_REQUIRED = "EMAIL_REQUIRED",
   INVALID_EMAIL = "INVALID_EMAIL",
   PASSWORD_REQUIRED = "PASSWORD_REQUIRED",
@@ -86,7 +86,7 @@ const ErrorTable: Record<
     statusCode: 404,
     message: "사용자를 찾을 수 없습니다.",
   },
-  [BusinessErrorType.EMAIL_DUPLICATE]: {
+  [BusinessErrorType.DUPLICATE_EMAIL]: {
     statusCode: 409,
     message: "이미 존재하는 이메일입니다.",
   },
