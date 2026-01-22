@@ -66,7 +66,7 @@ export const UserCommandService = (
       }
       if (error.type === TechnicalExceptionType.UNIQUE_VIOLATION_EMAIL) {
         throw new BusinessException({
-          type: BusinessExceptionType.EMAIL_DUPLICATE,
+          type: BusinessExceptionType.DUPLICATE_EMAIL,
         });
       }
       if (error.type === TechnicalExceptionType.UNIQUE_VIOLATION_CONTACT) {
