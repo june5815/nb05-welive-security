@@ -12,15 +12,14 @@ datasource db {
 enum UserRole {
   SUPER_ADMIN	// 슈퍼 관리자
   ADMIN			  // 관리자
-  USER		// 입주민
+  USER		    // 입주민
 }
 
 enum JoinStatus {
-  PENDING // 대기
-  APPROVED // 승인
-  REJECTED // 거절
+  PENDING     // 대기
+  APPROVED    // 승인
+  REJECTED    // 거절
 }
-
 
 model User {
   id           String     @id @default(uuid())
@@ -32,25 +31,34 @@ model User {
   role         UserRole   
   avatar       String?						        // 프로필 이미지
   joinStatus   JoinStatus @default(PENDING)
-  isActive     Boolean    @default(false) // 로그인 여부
-  refreshToken String?
+  isActive     Boolean    @default(false) // 계정 활성화 여부
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   version      Int        @default(1)
 
   // 1:1 관계
-  adminOf  Apartment? @relation("ApartmentManager")
-  resident Resident?  @relation("ResidentProfile")
+  refreshToken RefreshToken?
+  adminOf      Apartment? @relation("ApartmentManager")
+  resident     Resident?  @relation("ResidentProfile")
 
   // 1:n 관계
-  notices            Notice[] // 공지사항
-  complaints         Complaint[] // 민원
-  polls              Poll[] // 투표
-  pollVotes          PollVote[] // 투표용
-  comments           Comment[] // 댓글
-  residentImportLogs ResidentImportLog[] // 입주민 일괄등록 로그
+  notices            Notice[]                 // 공지사항
+  complaints         Complaint[]              // 민원
+  polls              Poll[]                   // 투표
+  pollVotes          PollVote[]               // 투표용
+  comments           Comment[]                // 댓글
+  residentImportLogs ResidentImportLog[]      // 입주민 일괄등록 로그
 
-  notificationReceipts NotificationReceipt[] // 알림 수신
+  notificationReceipts NotificationReceipt[]  // 알림 수신
+}
+
+model RefreshToken{
+  id            String    @id @default(uuid())
+  refreshToken  String    @unique
+  userId        String    @unique
+  updatedAt     DateTime  @updatedAt
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Apartment {

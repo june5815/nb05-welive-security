@@ -11,6 +11,7 @@ import { UserCommandService } from "./_modules/users/service/user-command.servic
 import { UserQueryService } from "./_modules/users/service/user-query.service";
 
 import { BaseCommandRepo } from "./_infra/repos/_base/base-command.repo";
+import { AuthCommandRepo } from "./_infra/repos/auth/auth-command.repo";
 import { UserCommandRepo } from "./_infra/repos/user/user-command.repo";
 import { BaseQueryRepo } from "./_infra/repos/_base/base-query.repo";
 import { UserQueryRepo } from "./_infra/repos/user/user-query.repo";
@@ -40,6 +41,7 @@ export const Injector = () => {
 
   const prisma = new PrismaClient();
   const baseCommandRepo = BaseCommandRepo(prisma);
+  const authCommandRepo = AuthCommandRepo(baseCommandRepo);
   const userCommandRepo = UserCommandRepo(baseCommandRepo);
   const baseQueryRepo = BaseQueryRepo(prisma);
   const userQueryRepo = UserQueryRepo(baseQueryRepo);
@@ -50,6 +52,7 @@ export const Injector = () => {
     unitOfWork,
     hashManager,
     tokenUtil,
+    authCommandRepo,
     userCommandRepo,
   );
   const userCommandService = UserCommandService(
