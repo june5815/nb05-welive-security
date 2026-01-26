@@ -14,10 +14,6 @@ import {
   BusinessException,
   BusinessExceptionType,
 } from "../../../_common/exceptions/business.exception";
-import {
-  TechnicalException,
-  TechnicalExceptionType,
-} from "../../../_common/exceptions/technical.exception";
 
 export interface IAuthCommandService {
   login: (
