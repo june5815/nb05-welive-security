@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { complaintSSEController } from "../../_modules/complaints/controlller/complaint-sse.controller";
+import { complaintSSEController } from "../../_modules/complaints/controller/complaint-sse.controller";
 
 export const createComplaintSSERouter = () => {
   const router = Router();
