@@ -45,7 +45,6 @@ export interface User {
   readonly avatar?: string;
   readonly joinStatus?: TJoinStatus;
   readonly isActive?: boolean;
-  readonly refreshToken?: string;
   readonly createdAt?: Date;
   readonly updatedAt?: Date;
   readonly version?: number;
@@ -132,7 +131,6 @@ export const UserEntity = {
     avatar?: string;
     joinStatus: TJoinStatus;
     isActive: boolean;
-    refreshToken?: string;
     createdAt: Date;
     updatedAt: Date;
     version: number;
@@ -152,7 +150,6 @@ export const UserEntity = {
     avatar?: string;
     joinStatus: TJoinStatus;
     isActive: boolean;
-    refreshToken?: string;
     createdAt: Date;
     updatedAt: Date;
     version: number;

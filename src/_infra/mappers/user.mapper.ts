@@ -127,7 +127,6 @@ export const UserMapper = {
       avatar: entity.avatar,
       joinStatus: entity.joinStatus,
       isActive: entity.isActive,
-      refreshToken: entity.refreshToken,
     };
 
     if (entity.role === UserRole.ADMIN && entity.adminOf) {
@@ -156,7 +155,6 @@ export const UserMapper = {
       avatar: user.avatar ?? undefined,
       joinStatus: user.joinStatus,
       isActive: user.isActive,
-      refreshToken: user.refreshToken ?? undefined,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       version: user.version,
@@ -177,7 +175,6 @@ export const UserMapper = {
       avatar: user.avatar ?? undefined,
       joinStatus: user.joinStatus,
       isActive: user.isActive,
-      refreshToken: user.refreshToken ?? undefined,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       version: user.version,
@@ -197,7 +194,6 @@ export const UserMapper = {
       avatar: user.avatar ?? undefined,
       joinStatus: user.joinStatus,
       isActive: user.isActive,
-      refreshToken: user.refreshToken ?? undefined,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       version: user.version,
