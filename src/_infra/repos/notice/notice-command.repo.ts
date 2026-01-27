@@ -5,6 +5,10 @@ import {
   CommentResourceType,
 } from "@prisma/client";
 import { BaseCommandRepo } from "../_base/base-command.repo";
+import {
+  BusinessException,
+  BusinessExceptionType,
+} from "../../../_common/exceptions/business.exception";
 
 export interface CreateNoticeCommand {
   title: string;
@@ -65,6 +69,7 @@ export const noticeCommandRepository = (prismaClient: PrismaClient) => {
               name: true,
             },
           },
+          event: true,
         },
       });
     },
@@ -79,7 +84,11 @@ export const noticeCommandRepository = (prismaClient: PrismaClient) => {
         where: { id: noticeId },
         select: { apartmentId: true },
       });
-      if (!notice) throw new Error("Notice not found");
+      if (!notice) {
+        throw new BusinessException({
+          type: BusinessExceptionType.NOTICE_NOT_FOUND,
+        });
+      }
 
       // event 제거 요청이면 deleteMany로 안전하게
       if (command.event === null) {

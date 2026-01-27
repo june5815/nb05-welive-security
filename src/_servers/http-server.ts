@@ -10,6 +10,7 @@ import { INotFoundErrorMiddleware } from "../_common/ports/middlewares/not-found
 import { IStaticServeMiddleware } from "../_common/ports/middlewares/static-serve-middleware.interface";
 import { IAuthRouter } from "../_modules/auth/auth.router";
 import { IUserRouter } from "../_modules/users/user.router";
+import { INoticeRouter } from "../_modules/notices/notice.routes";
 
 export interface IHttpServer {
   start: () => void;
@@ -26,6 +27,7 @@ export const HttpServer = (
   staticServeMiddleware: IStaticServeMiddleware,
   authRouter: IAuthRouter,
   userRouter: IUserRouter,
+  noticeRouter: INoticeRouter,
 ): IHttpServer => {
   const app: Application = express();
   const defaultHttpServer: DefaultHttpServer = http.createServer(app);
@@ -39,6 +41,7 @@ export const HttpServer = (
   // routers
   app.use(authRouter.PATH, authRouter.router);
   app.use(userRouter.PATH, userRouter.router);
+  app.use(noticeRouter.PATH, noticeRouter.router);
 
   // static
   app.use(staticServeMiddleware.staticServeHandler());
