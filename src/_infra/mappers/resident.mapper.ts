@@ -78,7 +78,6 @@ export const ResidentMapper = {
     return raws.map((raw) => ResidentMapper.toHouseholdEntity(raw));
   },
 
-  //entity DB
   toHouseholdCreateInput: (
     household: Household,
   ): Prisma.HouseholdCreateInput => ({
