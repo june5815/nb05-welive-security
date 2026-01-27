@@ -1,4 +1,8 @@
-import { CommentResourceType, PrismaClient } from "@prisma/client";
+import {
+  CommentResourceType,
+  NoticeCategory,
+  PrismaClient,
+} from "@prisma/client";
 import { BaseQueryRepo } from "../_base/base-query.repo";
 
 export const noticeQueryRepository = (prismaClient: PrismaClient) => {
@@ -8,69 +12,95 @@ export const noticeQueryRepository = (prismaClient: PrismaClient) => {
     page,
     limit,
     apartmentId,
+    category,
+    searchKeyword,
   }: {
     page: number;
     limit: number;
     apartmentId: string;
+    category?: NoticeCategory;
+    searchKeyword?: string;
   }) => {
     const prisma = base.getPrismaClient();
 
-    // 공지 목록
-    const [notices, total] = await Promise.all([
+    const keyword = searchKeyword?.trim();
+    const where = {
+      apartmentId,
+      ...(category ? { category } : {}),
+      ...(keyword
+        ? {
+            OR: [
+              { title: { contains: keyword, mode: "insensitive" as const } },
+              { content: { contains: keyword, mode: "insensitive" as const } },
+              {
+                user: {
+                  name: { contains: keyword, mode: "insensitive" as const },
+                },
+              },
+            ],
+          }
+        : {}),
+    };
+
+    // 공지 목록 + 전체 개수
+    const [notices, totalCount] = await Promise.all([
       prisma.notice.findMany({
-        where: { apartmentId },
+        where,
         orderBy: [{ type: "desc" }, { createdAt: "desc" }],
         skip: (page - 1) * limit,
         take: limit,
+        include: {
+          user: { select: { id: true, name: true } },
+        },
       }),
-      prisma.notice.count({ where: { apartmentId } }),
+      prisma.notice.count({ where }),
     ]);
 
-    // 댓글 수 집계
+    // 댓글수 합
     const noticeIds = notices.map((n) => n.id);
 
-    const commentCounts = await prisma.comment.groupBy({
-      by: ["resourceId"],
-      where: {
-        resourceType: CommentResourceType.NOTICE,
-        resourceId: { in: noticeIds },
-      },
-      _count: {
-        _all: true,
-      },
-    });
+    const commentCounts =
+      noticeIds.length === 0
+        ? []
+        : await prisma.comment.groupBy({
+            by: ["resourceId"],
+            where: {
+              resourceType: CommentResourceType.NOTICE,
+              resourceId: { in: noticeIds },
+            },
+            _count: { _all: true },
+          });
 
     const countMap = Object.fromEntries(
       commentCounts.map((c) => [c.resourceId, c._count._all]),
     );
 
-    // 합치기
-    const items = notices.map((notice) => ({
+    const data = notices.map((notice) => ({
       ...notice,
       commentCount: countMap[notice.id] ?? 0,
     }));
 
+    const hasNext = page * limit < totalCount;
+
     return {
-      items,
-      total,
+      data,
+      totalCount,
       page,
       limit,
+      hasNext,
     };
   };
 
   const findDetail = async (noticeId: string) => {
     const prisma = base.getPrismaClient();
 
+    // 조회수
     const [notice, commentCount] = await Promise.all([
-      prisma.notice.findUnique({
+      prisma.notice.update({
         where: { id: noticeId },
+        data: { viewCount: { increment: 1 } },
         include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
+          user: { select: { id: true, name: true } },
           event: true,
         },
       }),
