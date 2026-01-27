@@ -36,7 +36,7 @@ export const AuthCommandService = (
     const { username, password } = dto.body;
 
     try {
-      const { updatedUser, userId, role, refreshToken } = await unitOfWork.doTx(
+      const { foundUser, userId, role, refreshToken } = await unitOfWork.doTx(
         async () => {
           const foundUser = await userCommandRepo.findByUsername(username);
           if (
@@ -83,12 +83,13 @@ export const AuthCommandService = (
             refreshToken,
             userId: foundUser.id!,
             role: foundUser.role!,
-            updatedUser: foundUser,
+            foundUser,
           };
         },
         {
           transactionOptions: {
-            useTransaction: false,
+            useTransaction: true,
+            isolationLevel: "ReadCommitted",
           },
           useOptimisticLock: false,
         },
@@ -99,28 +100,28 @@ export const AuthCommandService = (
 
       const tokenResDto: TokenResDto = { accessToken, refreshToken, csrfValue };
       const loginResDto: LoginResDto = {
-        id: updatedUser.id!,
-        username: updatedUser.username!,
-        email: updatedUser.email!,
-        contact: updatedUser.contact!,
-        name: updatedUser.name!,
-        role: updatedUser.role!,
-        avatar: updatedUser.avatar,
-        joinStatus: updatedUser.joinStatus!,
-        isActive: updatedUser.isActive!,
-        adminOf: updatedUser.adminOf
+        id: foundUser.id!,
+        username: foundUser.username!,
+        email: foundUser.email!,
+        contact: foundUser.contact!,
+        name: foundUser.name!,
+        role: foundUser.role!,
+        avatar: foundUser.avatar,
+        joinStatus: foundUser.joinStatus!,
+        isActive: foundUser.isActive!,
+        adminOf: foundUser.adminOf
           ? {
-              id: updatedUser.adminOf.id!,
-              name: updatedUser.adminOf.name,
+              id: foundUser.adminOf.id!,
+              name: foundUser.adminOf.name,
             }
           : undefined,
-        resident: updatedUser.resident
+        resident: foundUser.resident
           ? {
-              id: updatedUser.resident.id!,
-              apartmentId: updatedUser.resident.apartmentId,
-              building: updatedUser.resident.building,
-              unit: updatedUser.resident.unit,
-              isHouseholder: updatedUser.resident.isHouseholder!,
+              id: foundUser.resident.id!,
+              apartmentId: foundUser.resident.apartmentId,
+              building: foundUser.resident.building,
+              unit: foundUser.resident.unit,
+              isHouseholder: foundUser.resident.isHouseholder!,
             }
           : undefined,
       };
@@ -153,7 +154,8 @@ export const AuthCommandService = (
         },
         {
           transactionOptions: {
-            useTransaction: false,
+            useTransaction: true,
+            isolationLevel: "ReadCommitted",
           },
           useOptimisticLock: false,
         },
@@ -175,21 +177,12 @@ export const AuthCommandService = (
     try {
       const { newRefreshToken, role } = await unitOfWork.doTx(
         async () => {
-          const foundUser = await userCommandRepo.findById(userId);
+          const foundUser = await userCommandRepo.findById(userId, "update");
           if (!foundUser) {
             throw new BusinessException({
               type: BusinessExceptionType.INVALID_AUTH,
             });
           }
-
-          const tokenData = await authCommandRepo.findByUserId(userId);
-
-          await AuthEntity.isRefreshTokenMatched(
-            tokenData,
-            oldRefreshToken,
-            hashManager,
-          );
-
           if (
             foundUser.joinStatus === "PENDING" &&
             foundUser.isActive === false
@@ -207,6 +200,14 @@ export const AuthCommandService = (
             });
           }
 
+          const tokenData = await authCommandRepo.findByUserId(userId);
+
+          await AuthEntity.isRefreshTokenMatched(
+            tokenData,
+            oldRefreshToken,
+            hashManager,
+          );
+
           const newRefreshToken = tokenUtil.generateRefreshToken({
             userId: foundUser.id!,
           });
@@ -222,7 +223,8 @@ export const AuthCommandService = (
         },
         {
           transactionOptions: {
-            useTransaction: false,
+            useTransaction: true,
+            isolationLevel: "ReadCommitted",
           },
           useOptimisticLock: false,
         },
