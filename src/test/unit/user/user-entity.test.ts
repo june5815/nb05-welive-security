@@ -5,7 +5,6 @@ import {
   User,
 } from "../../../_modules/users/domain/user.entity";
 import { IHashManager } from "../../../_common/ports/managers/bcrypt-hash-manager.interface";
-import { join } from "path";
 
 describe("UserEntity Unit Test", () => {
   const mockHashManager = {
