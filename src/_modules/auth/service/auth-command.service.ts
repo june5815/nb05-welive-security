@@ -5,6 +5,7 @@ import {
   NewTokenResDto,
 } from "../dtos/res/auth.response";
 import { AuthEntity } from "../domain/auth.entity";
+import { IAuthCommandRepo } from "../../../_common/ports/repos/auth/auth-command-repo.interface";
 import { IUserCommandRepo } from "../../../_common/ports/repos/user/user-command-repo.interface";
 import { IUnitOfWork } from "../../../_common/ports/db/u-o-w.interface";
 import { IHashManager } from "../../../_common/ports/managers/bcrypt-hash-manager.interface";
@@ -13,10 +14,6 @@ import {
   BusinessException,
   BusinessExceptionType,
 } from "../../../_common/exceptions/business.exception";
-import {
-  TechnicalException,
-  TechnicalExceptionType,
-} from "../../../_common/exceptions/technical.exception";
 
 export interface IAuthCommandService {
   login: (
@@ -30,6 +27,7 @@ export const AuthCommandService = (
   unitOfWork: IUnitOfWork,
   hashManager: IHashManager,
   tokenUtil: ITokenUtil,
+  authCommandRepo: IAuthCommandRepo,
   userCommandRepo: IUserCommandRepo,
 ): IAuthCommandService => {
   const login = async (
@@ -74,25 +72,25 @@ export const AuthCommandService = (
           const refreshToken = tokenUtil.generateRefreshToken({
             userId: foundUser.id!,
           });
-          const updatedUser = await AuthEntity.updateRefreshToken(
-            foundUser,
+          const tokenEntity = await AuthEntity.toCreate(
+            foundUser.id!,
             refreshToken,
             hashManager,
           );
-          await userCommandRepo.update(updatedUser);
+          await authCommandRepo.upsertRefreshToken(tokenEntity);
 
           return {
             refreshToken,
-            userId: updatedUser.id!,
-            role: updatedUser.role!,
-            updatedUser,
+            userId: foundUser.id!,
+            role: foundUser.role!,
+            updatedUser: foundUser,
           };
         },
         {
           transactionOptions: {
             useTransaction: false,
           },
-          useOptimisticLock: true,
+          useOptimisticLock: false,
         },
       );
 
@@ -129,14 +127,6 @@ export const AuthCommandService = (
 
       return { loginResDto, tokenResDto };
     } catch (error) {
-      if (error instanceof TechnicalException) {
-        if (error.type === TechnicalExceptionType.OPTIMISTIC_LOCK_FAILED) {
-          throw new BusinessException({
-            type: BusinessExceptionType.UNKOWN_SERVER_ERROR,
-          });
-        }
-      }
-
       throw error;
     }
   };
@@ -151,35 +141,24 @@ export const AuthCommandService = (
     try {
       return unitOfWork.doTx(
         async () => {
-          const foundUser = await userCommandRepo.findById(userId);
-          if (
-            !foundUser ||
-            !(await AuthEntity.isRefreshTokenMatched(
-              foundUser,
-              refreshToken,
-              hashManager,
-            ))
-          ) {
-            return;
-          }
+          const tokenData = await authCommandRepo.findByUserId(userId);
 
-          const updatedUser = AuthEntity.deleteRefreshToken(foundUser);
-          await userCommandRepo.update(updatedUser);
+          await AuthEntity.isRefreshTokenMatched(
+            tokenData,
+            refreshToken,
+            hashManager,
+          );
+
+          await authCommandRepo.deleteRefreshToken(userId);
         },
         {
           transactionOptions: {
             useTransaction: false,
           },
-          useOptimisticLock: true,
+          useOptimisticLock: false,
         },
       );
     } catch (error) {
-      if (error instanceof TechnicalException) {
-        if (error.type === TechnicalExceptionType.OPTIMISTIC_LOCK_FAILED) {
-          return;
-        }
-      }
-
       throw error;
     }
   };
@@ -197,18 +176,19 @@ export const AuthCommandService = (
       const { newRefreshToken, role } = await unitOfWork.doTx(
         async () => {
           const foundUser = await userCommandRepo.findById(userId);
-          if (
-            !foundUser ||
-            !(await AuthEntity.isRefreshTokenMatched(
-              foundUser,
-              oldRefreshToken,
-              hashManager,
-            ))
-          ) {
+          if (!foundUser) {
             throw new BusinessException({
               type: BusinessExceptionType.INVALID_AUTH,
             });
           }
+
+          const tokenData = await authCommandRepo.findByUserId(userId);
+
+          await AuthEntity.isRefreshTokenMatched(
+            tokenData,
+            oldRefreshToken,
+            hashManager,
+          );
 
           if (
             foundUser.joinStatus === "PENDING" &&
@@ -230,12 +210,13 @@ export const AuthCommandService = (
           const newRefreshToken = tokenUtil.generateRefreshToken({
             userId: foundUser.id!,
           });
-          const updatedUser = await AuthEntity.updateRefreshToken(
-            foundUser,
+          const tokenEntity = await AuthEntity.toCreate(
+            foundUser.id!,
             newRefreshToken,
             hashManager,
           );
-          await userCommandRepo.update(updatedUser);
+
+          await authCommandRepo.upsertRefreshToken(tokenEntity);
 
           return { newRefreshToken, role: foundUser.role! };
         },
@@ -243,7 +224,7 @@ export const AuthCommandService = (
           transactionOptions: {
             useTransaction: false,
           },
-          useOptimisticLock: true,
+          useOptimisticLock: false,
         },
       );
 
@@ -256,14 +237,6 @@ export const AuthCommandService = (
         newCsrfValue,
       };
     } catch (error) {
-      if (error instanceof TechnicalException) {
-        if (error.type === TechnicalExceptionType.OPTIMISTIC_LOCK_FAILED) {
-          throw new BusinessException({
-            type: BusinessExceptionType.UNKOWN_SERVER_ERROR,
-          });
-        }
-      }
-
       throw error;
     }
   };
