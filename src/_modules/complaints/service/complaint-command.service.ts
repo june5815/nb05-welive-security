@@ -26,30 +26,25 @@ export const ComplaintCommandService = (
 
   const update = async (dto: any) => {
     await uow.doTx(async () => {
-      /**
-       * CommandRepo는 조회 책임이 없으므로
-       * 기존 엔티티를 "가정"하고 update 시도
-       */
-      const origin = {
-        id: dto.params.complaintId,
-        title: dto.body.title,
-        content: dto.body.content,
-        isPublic: dto.body.isPublic,
-        userId: dto.userId,
-        apartmentId: dto.body.apartmentId,
-        status: "PENDING",
-      };
-
-      const updated = ComplaintEntity.update(origin as any, {
-        title: dto.body.title,
-        content: dto.body.content,
-        isPublic: dto.body.isPublic,
-      });
+      const updated = ComplaintEntity.update(
+        {
+          id: dto.params.complaintId,
+          userId: dto.userId,
+          apartmentId: dto.body.apartmentId,
+        } as any,
+        {
+          title: dto.body.title,
+          content: dto.body.content,
+          isPublic: dto.body.isPublic,
+        },
+      );
 
       const success = await repo.update(updated);
+
       if (!success) {
         throw new BusinessException({
           type: BusinessExceptionType.NOT_FOUND,
+          message: "존재하지 않거나 이미 처리된 민원입니다.",
         });
       }
     });

@@ -6,7 +6,7 @@ import { ComplaintMapper } from "../../mappers/complaint.mapper";
 export const ComplaintCommandRepo = (
   prisma: PrismaClient,
 ): IComplaintCommandRepo => {
-  const create = async (complaint: Complaint): Promise<void> => {
+  const create = async (complaint: Complaint) => {
     await prisma.complaint.create({
       data: ComplaintMapper.toCreate(complaint),
     });
@@ -15,7 +15,7 @@ export const ComplaintCommandRepo = (
   const update = async (complaint: Complaint): Promise<boolean> => {
     const result = await prisma.complaint.updateMany({
       where: {
-        id: complaint.id,
+        id: complaint.id!,
         status: ComplaintStatus.PENDING,
       },
       data: ComplaintMapper.toUpdate(complaint),
@@ -24,18 +24,19 @@ export const ComplaintCommandRepo = (
     return result.count === 1;
   };
 
-  const deleteById = async (id: string): Promise<void> => {
+  const deleteById = async (id: string) => {
     await prisma.complaint.delete({
       where: { id },
     });
   };
 
-  const updateStatus = async (id: string, status: string): Promise<void> => {
-    await prisma.complaint.update({
-      where: { id },
-      data: {
-        status: status as ComplaintStatus,
+  const updateStatus = async (id: string, status: ComplaintStatus) => {
+    await prisma.complaint.updateMany({
+      where: {
+        id,
+        status: ComplaintStatus.PENDING,
       },
+      data: { status },
     });
   };
 
