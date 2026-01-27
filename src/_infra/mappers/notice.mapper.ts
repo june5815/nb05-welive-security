@@ -23,7 +23,7 @@ export interface NoticeResponseDto {
   apartmentId: string;
   author: NoticeAuthorDto;
   commentCount: number;
-  event?: NoticeEventDto;
+  event: NoticeEventDto | null;
 }
 
 type NoticeSource = {
@@ -62,22 +62,28 @@ export const toNoticeResponse = (notice: NoticeSource): NoticeResponseDto => ({
         startDate: notice.event.startDate,
         endDate: notice.event.endDate,
       }
-    : undefined,
+    : null,
 });
 
-export const toNoticeListResponse = (notices: NoticeSource[]) =>
+export const toNoticeListResponse = (notices: NoticeSource[] = []) =>
   notices.map(toNoticeResponse);
 
 export const toNoticeListPagedResponse = (args: {
-  data: NoticeSource[];
-  totalCount: number;
+  data?: NoticeSource[];
+  items?: NoticeSource[];
+  totalCount?: number;
+  total?: number;
   page: number;
   limit: number;
-  hasNext: boolean;
-}) => ({
-  data: toNoticeListResponse(args.data),
-  totalCount: args.totalCount,
-  page: args.page,
-  limit: args.limit,
-  hasNext: args.hasNext,
-});
+}) => {
+  const data = args.data ?? args.items ?? [];
+  const totalCount = args.totalCount ?? args.total ?? 0;
+
+  return {
+    data: toNoticeListResponse(data),
+    totalCount,
+    page: args.page,
+    limit: args.limit,
+    hasNext: args.page * args.limit < totalCount,
+  };
+};
