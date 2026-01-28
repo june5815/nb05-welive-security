@@ -2,6 +2,8 @@ import { BaseRouter } from "./_modules/_base/base.router";
 import { AuthRouter } from "./_modules/auth/auth.router";
 import { UserRouter } from "./_modules/users/user.router";
 import { NoticeRouter } from "./_modules/notices/notice.routes";
+import { CommentRouter } from "./_modules/comments/routes";
+import { EventRouter } from "./_modules/events/routes";
 
 import { BaseController } from "./_modules/_base/base.controller";
 import { AuthController } from "./_modules/auth/auth.controller";
@@ -36,7 +38,6 @@ import { RoleMiddleware } from "./_common/middlewares/role.middleware";
 import { StaticServeMiddleware } from "./_common/middlewares/static-serve.middleware";
 
 import { HttpServer, IHttpServer } from "./_servers/http-server";
-import { CommentRouter } from "./_modules/comments/routes";
 
 export const Injector = () => {
   const configUtil = ConfigUtil();
@@ -110,6 +111,14 @@ export const Injector = () => {
     roleMiddleware,
   );
 
+  const eventRouter = EventRouter(
+    baseRouter,
+    baseController,
+    prisma,
+    authMiddleware,
+    roleMiddleware,
+  );
+
   const httpServer: IHttpServer = HttpServer(
     configUtil,
     cookieMiddleware,
@@ -123,6 +132,7 @@ export const Injector = () => {
     userRouter,
     noticeRouter,
     commentRouter,
+    eventRouter,
   );
 
   return {
