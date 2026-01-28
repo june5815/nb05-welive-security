@@ -1,6 +1,25 @@
 import { UserRole } from "@prisma/client";
+import {
+  BusinessException,
+  BusinessExceptionType,
+} from "../../../_common/exceptions/business.exception";
 
-export const assertCommentPermission = ({
+// 수정: 본인만 가능
+export const assertCommentUpdatePermission = ({
+  commentUserId,
+  requestUserId,
+}: {
+  commentUserId: string;
+  requestUserId: string;
+}) => {
+  const isOwner = commentUserId === requestUserId;
+  if (!isOwner) {
+    throw new BusinessException({ type: BusinessExceptionType.FORBIDDEN });
+  }
+};
+
+// 삭제: 본인 또는 관리자 가능
+export const assertCommentDeletePermission = ({
   commentUserId,
   requestUserId,
   requestUserRole,
@@ -15,6 +34,6 @@ export const assertCommentPermission = ({
     requestUserRole === UserRole.SUPER_ADMIN;
 
   if (!isOwner && !isAdmin) {
-    throw new Error("FORBIDDEN_COMMENT_ACCESS");
+    throw new BusinessException({ type: BusinessExceptionType.FORBIDDEN });
   }
 };

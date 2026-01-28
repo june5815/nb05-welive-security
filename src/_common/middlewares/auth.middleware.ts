@@ -38,6 +38,12 @@ export const AuthMiddleware = (tokenUtil: ITokenUtil): IAuthMiddleware => {
 
     req.userId = payload.userId;
     req.userRole = payload.role;
+
+    req.user = {
+      id: payload.userId,
+      role: payload.role,
+      apartmentId: (payload as any).apartmentId,
+    };
     if (!req.userId) {
       throw new BusinessException({
         type: BusinessExceptionType.USER_NOT_FOUND,

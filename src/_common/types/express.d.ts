@@ -1,13 +1,12 @@
 import express from "express";
-import { UserRole } from "@prisma/client";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, UserRole } from "@prisma/client";
 
 declare global {
   namespace Express {
     interface User {
-      [x: string]: any;
       id: string;
-      apartmentId: string;
+      role: UserRole;
+      apartmentId?: string;
     }
 
     interface Request {
@@ -15,6 +14,10 @@ declare global {
       user?: User;
       userId?: string;
       userRole?: UserRole;
+
+      apartmentId?: string;
     }
   }
 }
+
+export {};
