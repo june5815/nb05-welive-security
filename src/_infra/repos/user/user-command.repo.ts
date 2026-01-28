@@ -118,11 +118,12 @@ export const UserCommandRepo = (
   const createResidentUser = async (entity: IUser): Promise<IUser> => {
     try {
       const prisma = baseCommandRepo.getPrismaClient();
-      const existingResident = await prisma.resident.findUnique({
+      const existingResident = await prisma.householdMember.findFirst({
         where: {
-          email_name: {
-            email: entity.email,
-            name: entity.name,
+          household: {
+            apartmentId: entity.resident!.household.apartmentId,
+            building: entity.resident!.household.building,
+            unit: entity.resident!.household.unit,
           },
         },
         select: {
@@ -288,7 +289,7 @@ export const UserCommandRepo = (
             officeNumber: adminOf.officeNumber,
           },
         },
-        include: { manager: true },
+        include: { admin: true },
       });
 
       if (!foundApartment) {
@@ -503,7 +504,7 @@ export const UserCommandRepo = (
       const prisma = baseCommandRepo.getPrismaClient();
       await prisma.apartment.deleteMany({
         where: {
-          manager: { role: "ADMIN", joinStatus: "REJECTED" },
+          admin: { role: "ADMIN", joinStatus: "REJECTED" },
         },
       });
       await prisma.user.deleteMany({

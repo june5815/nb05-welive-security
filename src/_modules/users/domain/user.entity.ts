@@ -26,12 +26,17 @@ export interface AdminOf {
   readonly unitCountPerFloor: number;
 }
 
-export interface Resident {
+export interface Household {
   readonly id?: string;
   readonly apartmentId: string;
   readonly building: number;
   readonly unit: number;
+}
+
+export interface Resident {
+  readonly id?: string;
   readonly isHouseholder?: boolean;
+  readonly household: Household;
 }
 
 export interface User {

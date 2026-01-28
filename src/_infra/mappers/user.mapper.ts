@@ -8,7 +8,11 @@ import { Prisma } from "@prisma/client";
 
 export const superAdminInclude = Prisma.validator<Prisma.UserInclude>()({
   adminOf: true,
-  resident: true,
+  resident: {
+    include: {
+      household: true,
+    },
+  },
 });
 
 export const adminInclude = Prisma.validator<Prisma.UserInclude>()({
@@ -16,7 +20,11 @@ export const adminInclude = Prisma.validator<Prisma.UserInclude>()({
 });
 
 export const residentInclude = Prisma.validator<Prisma.UserInclude>()({
-  resident: true,
+  resident: {
+    include: {
+      household: true,
+    },
+  },
 });
 
 export type SuperAdmin = Prisma.UserGetPayload<{
@@ -105,14 +113,23 @@ export const UserMapper = {
           }
         : {
             create: {
-              email: entity.email,
-              contact: entity.contact,
-              name: entity.name,
-              building: entity.resident!.building,
-              unit: entity.resident!.unit,
-              apartment: {
-                connect: { id: entity.resident!.apartmentId },
+              household: {
+                connectOrCreate: {
+                  where: {
+                    apartmentId_building_unit: {
+                      apartmentId: entity.resident!.household.apartmentId,
+                      building: entity.resident!.household.building,
+                      unit: entity.resident!.household.unit,
+                    },
+                  },
+                  create: {
+                    apartmentId: entity.resident!.household.apartmentId,
+                    building: entity.resident!.household.building,
+                    unit: entity.resident!.household.unit,
+                  },
+                },
               },
+              isHouseholder: entity.resident?.isHouseholder ?? false,
             },
           },
     };
@@ -158,8 +175,8 @@ export const UserMapper = {
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       version: user.version,
-      adminOf: user.adminOf ?? undefined,
-      resident: user.resident ?? undefined,
+      adminOf: user.adminOf! || undefined,
+      resident: user.resident! || undefined,
     });
   },
 
