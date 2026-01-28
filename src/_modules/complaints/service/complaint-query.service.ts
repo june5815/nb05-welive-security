@@ -1,28 +1,13 @@
-import { IComplaintQueryRepo } from "../../../_common/ports/repos/complaint/complaint-query-repo.interface";
 import {
   BusinessException,
   BusinessExceptionType,
 } from "../../../_common/exceptions/business.exception";
+import { IComplaintQueryRepo } from "../../../_common/ports/repos/complaint/complaint-query-repo.interface";
+import { ComplaintView } from "../dtos/res/complaint.view";
 
 export const ComplaintQueryService = (
   complaintQueryRepo: IComplaintQueryRepo,
 ) => {
-  const getList = async (dto: any) => {
-    const { userId, role, query } = dto;
-
-    if (!userId || !role) {
-      throw new BusinessException({
-        type: BusinessExceptionType.FORBIDDEN,
-      });
-    }
-
-    return complaintQueryRepo.findList({
-      apartmentId: query.apartmentId,
-      page: query.page,
-      limit: query.limit,
-    });
-  };
-
   const getDetail = async (dto: any) => {
     const complaint = await complaintQueryRepo.findById(dto.params.complaintId);
 
@@ -32,11 +17,29 @@ export const ComplaintQueryService = (
       });
     }
 
-    return complaint;
+    return ComplaintView.from(complaint);
+  };
+
+  const getList = async (dto: any) => {
+    const { apartmentId, page, limit } = dto.query;
+
+    const result = await complaintQueryRepo.findList({
+      apartmentId,
+      page,
+      limit,
+    });
+
+    return {
+      data: result.data.map(ComplaintView.from),
+      totalCount: result.totalCount,
+      page,
+      limit,
+      hasNext: page * limit < result.totalCount,
+    };
   };
 
   return {
-    getList,
     getDetail,
+    getList,
   };
 };
