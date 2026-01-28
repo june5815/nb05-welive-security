@@ -137,7 +137,7 @@ export const UserCommandService = (
               adminOf as AdminOf,
               "update",
             );
-          if (existingApartment && existingApartment.manager?.id) {
+          if (existingApartment && existingApartment.admin?.id) {
             throw new BusinessException({
               type: BusinessExceptionType.DUPLICATE_APARTMENT,
             });
@@ -179,7 +179,13 @@ export const UserCommandService = (
       const { resident, adminOf, ...rest } = body;
       const createUser = await UserEntity.createResidentUser({
         ...rest,
-        resident: resident as Resident,
+        resident: {
+          household: {
+            apartmentId: resident!.apartmentId,
+            building: resident!.building,
+            unit: resident!.unit,
+          },
+        } as Resident,
         hashManager,
       });
 
@@ -341,8 +347,8 @@ export const UserCommandService = (
                 body.adminOf as AdminOf,
                 "update",
               );
-            if (existingApartment && existingApartment.manager?.id) {
-              if (existingApartment.manager.id !== foundUser.id) {
+            if (existingApartment && existingApartment.admin?.id) {
+              if (existingApartment.admin.id !== foundUser.id) {
                 throw new BusinessException({
                   type: BusinessExceptionType.DUPLICATE_APARTMENT,
                 });

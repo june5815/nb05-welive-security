@@ -118,9 +118,9 @@ export const AuthCommandService = (
         resident: foundUser.resident
           ? {
               id: foundUser.resident.id!,
-              apartmentId: foundUser.resident.apartmentId,
-              building: foundUser.resident.building,
-              unit: foundUser.resident.unit,
+              apartmentId: foundUser.resident.household.apartmentId,
+              building: foundUser.resident.household.building,
+              unit: foundUser.resident.household.unit,
               isHouseholder: foundUser.resident.isHouseholder!,
             }
           : undefined,
