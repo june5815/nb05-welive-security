@@ -1,4 +1,5 @@
 import { CommentResourceType } from "@prisma/client";
+import { noticeQueryRepository } from "../../../_infra/repos/notice/notice-query.repo";
 
 jest.mock("../../../_infra/repos/_base/base-query.repo", () => {
   return {
@@ -7,8 +8,6 @@ jest.mock("../../../_infra/repos/_base/base-query.repo", () => {
     })),
   };
 });
-
-import { noticeQueryRepository } from "../../../_infra/repos/notice/notice-query.repo";
 
 describe("공지사항queryRepo 테스트", () => {
   let prismaMock: any;
@@ -39,13 +38,14 @@ describe("공지사항queryRepo 테스트", () => {
       },
     ]);
     prismaMock.notice.count.mockResolvedValue(1);
+
     prismaMock.comment.groupBy.mockResolvedValue([
       { resourceId: "n1", _count: { _all: 2 } },
     ]);
 
     const repo = noticeQueryRepository(prismaMock);
 
-    await repo.findList({
+    const result = await repo.findList({
       page: 1,
       limit: 20,
       apartmentId: "apt_1",
@@ -61,6 +61,7 @@ describe("공지사항queryRepo 테스트", () => {
         category: "MAINTENANCE",
       }),
     );
+    expect(result.data[0].commentCount).toBe(2);
   });
 
   test("findList - searchKeyword가 제목/내용/작성자 검색으로 반영", async () => {

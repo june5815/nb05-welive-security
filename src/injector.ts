@@ -6,7 +6,6 @@ import { NoticeRouter } from "./_modules/notices/notice.routes";
 import { BaseController } from "./_modules/_base/base.controller";
 import { AuthController } from "./_modules/auth/auth.controller";
 import { UserController } from "./_modules/users/user.controller";
-import { NoticeController } from "./_modules/notices/notice.controller";
 
 import { AuthCommandService } from "./_modules/auth/service/auth-command.service";
 import { UserCommandService } from "./_modules/users/service/user-command.service";
@@ -15,10 +14,8 @@ import { UserQueryService } from "./_modules/users/service/user-query.service";
 import { AuthCommandRepo } from "./_infra/repos/auth/auth-command.repo";
 import { BaseCommandRepo } from "./_infra/repos/_base/base-command.repo";
 import { UserCommandRepo } from "./_infra/repos/user/user-command.repo";
-import { noticeCommandRepository } from "./_infra/repos/notice/notice-command.repo";
 import { BaseQueryRepo } from "./_infra/repos/_base/base-query.repo";
 import { UserQueryRepo } from "./_infra/repos/user/user-query.repo";
-import { noticeQueryRepository } from "./_infra/repos/notice/notice-query.repo";
 
 import { UOW } from "./_infra/db/unit-of-work";
 import { HashManager } from "./_infra/manager/bcrypt-hash.manager";
@@ -39,6 +36,7 @@ import { RoleMiddleware } from "./_common/middlewares/role.middleware";
 import { StaticServeMiddleware } from "./_common/middlewares/static-serve.middleware";
 
 import { HttpServer, IHttpServer } from "./_servers/http-server";
+import { CommentRouter } from "./_modules/comments/routes";
 
 export const Injector = () => {
   const configUtil = ConfigUtil();
@@ -48,10 +46,8 @@ export const Injector = () => {
   const baseCommandRepo = BaseCommandRepo(prisma);
   const authCommandRepo = AuthCommandRepo(baseCommandRepo);
   const userCommandRepo = UserCommandRepo(baseCommandRepo);
-  const noticeCommandRepo = noticeCommandRepository(prisma);
   const baseQueryRepo = BaseQueryRepo(prisma);
   const userQueryRepo = UserQueryRepo(baseQueryRepo);
-  const noticeQueryRepo = noticeQueryRepository(prisma);
 
   const unitOfWork = UOW(prisma, configUtil);
   const hashManager = HashManager(configUtil);
@@ -87,7 +83,6 @@ export const Injector = () => {
     userQueryService,
     userCommandService,
   );
-  const noticeController = NoticeController();
 
   const baseRouter = BaseRouter();
   const authRouter = AuthRouter(baseRouter, authController);
@@ -98,9 +93,19 @@ export const Injector = () => {
     roleMiddleware,
     multerMiddleware,
   );
+
   const noticeRouter = NoticeRouter(
     baseRouter,
-    noticeController,
+    baseController,
+    prisma,
+    authMiddleware,
+    roleMiddleware,
+  );
+
+  const commentRouter = CommentRouter(
+    baseRouter,
+    baseController,
+    prisma,
     authMiddleware,
     roleMiddleware,
   );
@@ -117,6 +122,7 @@ export const Injector = () => {
     authRouter,
     userRouter,
     noticeRouter,
+    commentRouter,
   );
 
   return {

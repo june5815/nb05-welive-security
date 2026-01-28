@@ -1,98 +1,74 @@
-import { Request, Response, NextFunction } from "express";
-import { commentCommandRepository } from "../../_infra/repos/comment/comment-command.repo";
-import { commentQueryRepository } from "../../_infra/repos/comment/comment-query.repo";
-import { CreateCommentRequestSchema } from "./dtos/request/create-comment.request";
-import { GetCommentListRequestSchema } from "./dtos/request/get-comment-list.request";
-import { UpdateCommentRequestSchema } from "./dtos/request/update-comment.request";
-import { createCommentService } from "./services/create-comment.service";
-import { deleteCommentService } from "./services/delete-comment.service";
-import { updateCommentService } from "./services/update-comment.service";
-import { getCommentListQuery } from "./usecases/query/comment-query.service";
+import { Request, Response } from "express";
+import { IBaseController } from "../_base/base.controller";
+import { ICommentQueryService } from "./services/comment-query.service";
+import { ICommentCommandService } from "./services/comment-command.service";
 
-/**
- * 댓글 생성
- */
-export const createCommentController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const body = CreateCommentRequestSchema.parse(req.body);
+import {
+  toCommentResponse,
+  toCommentListPagedResponse,
+} from "../../_infra/mappers/comment.mapper";
 
-    const repo = commentCommandRepository(req.prismaClient);
+import {
+  createCommentReqSchema,
+  getCommentListReqSchema,
+  updateCommentReqSchema,
+  deleteCommentReqSchema,
+} from "./dtos/req/comment.request";
 
-    const result = await createCommentService(repo)({
-      ...body,
-      userId: req.user!.id,
-    });
+export interface ICommentController {
+  createComment: (req: Request, res: Response) => Promise<void>;
+  getCommentList: (req: Request, res: Response) => Promise<void>;
+  updateComment: (req: Request, res: Response) => Promise<void>;
+  deleteComment: (req: Request, res: Response) => Promise<void>;
+}
 
-    res.status(201).json(result);
-  } catch (e) {
-    next(e);
-  }
-};
+export const CommentController = (
+  baseController: IBaseController,
+  commentQueryService: ICommentQueryService,
+  commentCommandService: ICommentCommandService,
+): ICommentController => {
+  const validate = baseController.validate;
 
-/**
- * 댓글 목록 조회
- */
-export const getCommentListController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const repo = commentQueryRepository(req.prismaClient);
-    const query = GetCommentListRequestSchema.parse(req.query);
-    const result = await getCommentListQuery(repo)(query);
+  return {
+    // 댓글 생성
+    createComment: async (req, res) => {
+      const reqDto = validate(createCommentReqSchema, {
+        body: req.body,
+        userId: req.userId,
+      });
+      const created = await commentCommandService.createComment(reqDto);
+      res.status(201).json(toCommentResponse(created));
+    },
 
-    res.json(result);
-  } catch (e) {
-    next(e);
-  }
-};
+    // 댓글 목록
+    getCommentList: async (req, res) => {
+      const reqDto = validate(getCommentListReqSchema, {
+        query: req.query,
+      });
+      const result = await commentQueryService.getCommentList(reqDto);
+      res.status(200).json(toCommentListPagedResponse(result));
+    },
 
-/**
- * 댓글 수정
- */
-export const updateCommentController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const body = UpdateCommentRequestSchema.parse(req.body);
+    // 댓글 수정
+    updateComment: async (req, res) => {
+      const reqDto = validate(updateCommentReqSchema, {
+        params: req.params,
+        body: req.body,
+        userId: req.userId,
+      });
+      await commentCommandService.updateComment(reqDto);
+      res.status(204).end();
+    },
+    // 댓글 삭제
+    deleteComment: async (req, res) => {
+      const reqDto = validate(deleteCommentReqSchema, {
+        params: req.params,
+        userId: req.userId,
+        role: req.userRole,
+      });
 
-    const repo = commentCommandRepository(req.prismaClient);
-
-    await updateCommentService(repo)(req.params.commentId, body.content, {
-      id: req.user!.id,
-      role: req.user!.role,
-    });
-    res.status(204).end();
-  } catch (e) {
-    next(e);
-  }
-};
-
-/**
- * 댓글 삭제
- */
-export const deleteCommentController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const repo = commentCommandRepository(req.prismaClient);
-
-    await deleteCommentService(repo)(req.params.commentId, {
-      id: req.user!.id,
-      role: req.user!.role,
-    });
-
-    res.status(204).end();
-  } catch (e) {
-    next(e);
-  }
+      await commentCommandService.deleteComment(reqDto);
+      res.status(204).end();
+    },
+  };
 };
