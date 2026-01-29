@@ -1,248 +1,286 @@
-// import request from "supertest";
-// import { PrismaClient } from "@prisma/client";
-// import * as bcrypt from "bcrypt";
-// import { Injector } from "../../../injector";
+import request from "supertest";
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcrypt";
+import { Injector } from "../../../injector";
 
-// jest.setTimeout(30000);
+jest.setTimeout(30000);
 
-// describe("Auth Module E2E Test", () => {
-//   let app: any;
-//   const prisma = new PrismaClient();
+describe("Auth API 통합 테스트", () => {
+  let app: any;
+  const prisma = new PrismaClient();
 
-//   const testUser = {
-//     username: "e2e_auth_user",
-//     password: "password123!",
-//     email: "e2e_auth@test.com",
-//     contact: "01099998888",
-//     name: "E2E Tester",
-//   };
+  const testUser = {
+    username: "e2e_auth_user",
+    password: "password123!",
+    email: "e2e_auth@test.com",
+    contact: "01099998888",
+    name: "E2E Tester",
+  };
+  const pendingUser = {
+    username: "pending_user",
+    password: "password123!",
+    email: "pending@test.com",
+    contact: "01088887777",
+    name: "Pending User",
+  };
+  const rejectUser = {
+    username: "reject_user",
+    password: "password123!",
+    email: "reject@test.com",
+    contact: "01077776666",
+    name: "Reject User",
+  };
 
-//   const pendingUser = {
-//     username: "pending_user",
-//     password: "password123!",
-//     email: "pending@test.com",
-//     contact: "01088887777",
-//     name: "Pending User",
-//   };
+  let tokenCookie: string[];
+  let userId: string;
 
-//   const rejectUser = {
-//     username: "reject_user",
-//     password: "password123!",
-//     email: "reject@test.com",
-//     contact: "01077776666",
-//     name: "Reject User",
-//   };
+  beforeAll(async () => {
+    const { httpServer } = Injector();
+    app = httpServer.app;
 
-//   beforeAll(async () => {
-//     const { httpServer } = Injector();
-//     app = httpServer.app;
+    await prisma.user.deleteMany();
+    await prisma.refreshToken.deleteMany();
+    await prisma.apartment.deleteMany();
+    await prisma.household.deleteMany();
+    await prisma.householdMember.deleteMany();
+    const hashedPassword = await bcrypt.hash(testUser.password, 10);
+    await prisma.user.create({
+      data: {
+        username: testUser.username,
+        password: hashedPassword,
+        email: testUser.email,
+        contact: testUser.contact,
+        name: testUser.name,
+        role: "USER",
+        joinStatus: "APPROVED", // 로그인 가능 상태
+        isActive: true,
+      },
+    });
+    await prisma.user.create({
+      data: {
+        username: pendingUser.username,
+        password: hashedPassword,
+        email: pendingUser.email,
+        contact: pendingUser.contact,
+        name: pendingUser.name,
+        role: "USER",
+        joinStatus: "PENDING", // 로그인 불가능 상태
+        isActive: false,
+      },
+    });
+    await prisma.user.create({
+      data: {
+        username: rejectUser.username,
+        password: hashedPassword,
+        email: rejectUser.email,
+        contact: rejectUser.contact,
+        name: rejectUser.name,
+        role: "USER",
+        joinStatus: "REJECTED", // 로그인 불가능 상태
+        isActive: false,
+      },
+    });
+  });
+  beforeEach(() => {});
+  afterEach(() => {});
+  afterAll(async () => {
+    await prisma.refreshToken.deleteMany();
+    await prisma.user.deleteMany({
+      where: {
+        username: {
+          in: [testUser.username, pendingUser.username, rejectUser.username],
+        },
+      },
+    });
+    await prisma.$disconnect();
+  });
 
-//     await prisma.refreshToken.deleteMany();
-//     await prisma.user.deleteMany({
-//       where: {
-//         username: { in: [testUser.username, pendingUser.username, rejectUser.username] },
-//       },
-//     });
+  describe("POST /api/v2/auth/login", () => {
+    test("성공: 유효한 정보로 로그인 시 쿠키에 토큰들을 설정하고, DB에 리프레시 토큰이 '해싱'되어 저장되어야 한다.", async () => {
+      const res = await request(app).post("/api/v2/auth/login").send({
+        username: testUser.username,
+        password: testUser.password,
+      });
 
-//     const hashedPassword = await bcrypt.hash(testUser.password, 10);
-//     await prisma.user.create({
-//       data: {
-//         username: testUser.username,
-//         password: hashedPassword,
-//         email: testUser.email,
-//         contact: testUser.contact,
-//         name: testUser.name,
-//         role: "USER",
-//         joinStatus: "APPROVED", // 로그인 가능 상태
-//         isActive: true,
-//       },
-//     });
+      expect(res.status).toBe(200);
+      expect(res.body).not.toHaveProperty("accessToken");
+      expect(res.body).not.toHaveProperty("refreshToken");
 
-//     // 4. 승인 대기(PENDING) 유저 생성 (로그인 실패 테스트용)
-//     await prisma.user.create({
-//       data: {
-//         username: pendingUser.username,
-//         password: hashedPassword,
-//         email: pendingUser.email,
-//         contact: pendingUser.contact,
-//         name: pendingUser.name,
-//         role: "USER",
-//         joinStatus: "PENDING", // 로그인 불가능 상태
-//         isActive: false,
-//       },
-//     });
+      expect(res.body).toHaveProperty("id");
+      expect(res.body.username).toBe(testUser.username);
+      expect(res.body.role).toBe("USER");
 
-//     // 5. 거부(REJECT) 유저 생성 (로그인 실패 테스트용)
-//     await prisma.user.create({
-//       data: {
-//         username: rejectUser.username,
-//         password: hashedPassword,
-//         email: rejectUser.email,
-//         contact: rejectUser.contact,
-//         name: rejectUser.name,
-//         role: "USER",
-//         joinStatus: "REJECTED", // 로그인 불가능 상태
-//         isActive: false,
-//       },
-//     });
-//     await prisma.$disconnect();
-//   });
+      userId = res.body.id;
+      const cookies = res.headers["set-cookie"] as unknown as string[];
 
-//   let accessToken: string;
-//   let refreshTokenCookie: string;
-//   let userId: string;
+      expect(cookies).toBeDefined();
 
-//   // ==========================================
-//   // 1. 로그인 (POST /api/v2/auth/login)
-//   // ==========================================
-//   describe("POST /api/v2/auth/login", () => {
-//     it("성공: 유효한 정보로 로그인 시 토큰을 발급하고, DB에 리프레시 토큰이 '해싱'되어 저장되어야 한다.", async () => {
-//       const res = await request(app).post("/api/v2/auth/login").send({
-//         username: testUser.username,
-//         password: testUser.password,
-//       });
+      const findCookie = (name: string) =>
+        cookies.find((c: string) => c.startsWith(`${name}=`));
+      const accessCookie = findCookie("access_token");
+      const refreshCookie = findCookie("refresh_token");
+      const csrfCookie = findCookie("csrf_token");
 
-//       // 1-1. 응답 상태 및 구조 확인
-//       expect(res.status).toBe(201);
+      expect(accessCookie).toBeDefined();
+      expect(refreshCookie).toBeDefined();
+      expect(csrfCookie).toBeDefined();
 
-//       // 서비스가 { loginResDto, tokenResDto } 구조로 반환하므로 이에 맞춰 검증
-//       expect(res.body).toHaveProperty("loginResDto");
-//       expect(res.body).toHaveProperty("tokenResDto");
+      expect(refreshCookie).toMatch(/HttpOnly/i);
 
-//       const { loginResDto, tokenResDto } = res.body;
+      tokenCookie = cookies;
 
-//       expect(loginResDto.username).toBe(testUser.username);
-//       expect(tokenResDto.accessToken).toBeDefined();
-//       expect(tokenResDto.csrfValue).toBeDefined();
+      const rawCookieValue = refreshCookie!.split(";")[0].split("=")[1];
+      const decodedValue = decodeURIComponent(rawCookieValue);
+      const plainRefreshToken = decodedValue.slice(
+        2,
+        decodedValue.lastIndexOf("."),
+      );
+      const storedToken = await prisma.refreshToken.findUnique({
+        where: { userId },
+      });
 
-//       // 변수 저장
-//       accessToken = tokenResDto.accessToken;
-//       userId = loginResDto.id;
+      expect(storedToken).not.toBeNull();
+      expect(storedToken?.refreshToken).not.toBe(plainRefreshToken);
 
-//       // 1-2. 쿠키 확인 (RefreshToken)
-//       const cookies = res.headers["set-cookie"];
-//       expect(cookies).toBeDefined();
-//       const refreshCookie = cookies.find((c: string) =>
-//         c.includes("refreshToken")
-//       );
-//       expect(refreshCookie).toBeDefined();
-//       expect(refreshCookie).toMatch(/HttpOnly/i); // 보안 쿠키 확인
+      const isMatch = await bcrypt.compare(
+        plainRefreshToken,
+        storedToken!.refreshToken,
+      );
 
-//       // 쿠키 값 파싱 (다음 요청을 위해)
-//       refreshTokenCookie = refreshCookie.split(";")[0]; // "refreshToken=..."
+      expect(isMatch).toBe(true);
+    });
 
-//       // 1-3. [중요] DB 저장 검증 (해싱 여부)
-//       const storedToken = await prisma.refreshToken.findUnique({
-//         where: { userId },
-//       });
-//       expect(storedToken).not.toBeNull();
+    test("실패: 아이디가 틀리면 상태 코드 400 INVALID_AUTH 에러를 반환해야 한다.", async () => {
+      const res = await request(app).post("/api/v2/auth/login").send({
+        username: "wrong_username",
+        password: testUser.password,
+      });
 
-//       // 쿠키의 토큰 값 추출 ("refreshToken=값" -> "값")
-//       const plainRefreshToken = refreshTokenCookie.split("=")[1];
+      expect(res.status).toEqual(400);
+      expect(res.body.message).toMatch(
+        "이메일 또는 비밀번호가 일치하지 않아요.",
+      );
+    });
 
-//       // DB의 값과 쿠키의 값이 '그냥' 같으면 안 됨 (해싱되어야 함)
-//       expect(storedToken?.refreshToken).not.toBe(plainRefreshToken);
+    test("실패: 비밀번호가 틀리면 상태 코드 400 INVALID_AUTH 에러를 반환해야 한다.", async () => {
+      const res = await request(app).post("/api/v2/auth/login").send({
+        username: testUser.username,
+        password: "wrong_password",
+      });
 
-//       // bcrypt로 비교했을 때 일치해야 함
-//       const isMatch = await bcrypt.compare(
-//         plainRefreshToken,
-//         storedToken!.refreshToken
-//       );
-//       expect(isMatch).toBe(true);
-//     });
+      expect(res.status).toEqual(400);
+      expect(res.body.message).toMatch(
+        "이메일 또는 비밀번호가 일치하지 않아요.",
+      );
+    });
 
-//     it("실패: 비밀번호가 틀리면 401(또는 예외처리 코드)을 반환해야 한다.", async () => {
-//       const res = await request(app).post("/api/v2/auth/login").send({
-//         username: testUser.username,
-//         password: "wrong_password",
-//       });
+    test("실패: 승인 대기(PENDING) 상태인 유저는 로그인할 수 없다.", async () => {
+      const res = await request(app).post("/api/v2/auth/login").send({
+        username: pendingUser.username,
+        password: pendingUser.password,
+      });
 
-//       // BusinessExceptionType.INVALID_AUTH -> 보통 401 Unauthorized
-//       expect(res.status).toBeGreaterThanOrEqual(400);
-//     });
+      expect(res.status).toEqual(401);
+      expect(res.body.message).toMatch(
+        "계정 승인 대기 중입니다. 승인 후 서비스 이용이 가능합니다.",
+      );
+    });
 
-//     it("실패: 승인 대기(PENDING) 상태인 유저는 로그인할 수 없다.", async () => {
-//       const res = await request(app).post("/api/v2/auth/login").send({
-//         username: pendingUser.username,
-//         password: pendingUser.password,
-//       });
+    test("실패: 거절된(REJECTED) 상태인 유저는 로그인할 수 없다.", async () => {
+      const res = await request(app).post("/api/v2/auth/login").send({
+        username: rejectUser.username,
+        password: rejectUser.password,
+      });
 
-//       // BusinessExceptionType.STATUS_IS_PENDING -> 403 Forbidden 권장
-//       expect(res.status).toBeGreaterThanOrEqual(400);
-//       expect(res.body.message).toMatch(/대기|승인|pending/i); // 에러 메시지 확인 (선택)
-//     });
-//   });
+      expect(res.status).toEqual(401);
+      expect(res.body.message).toMatch("비활성화된 계정입니다.");
+    });
+  });
 
-//   // ==========================================
-//   // 2. 토큰 갱신 (POST /api/v2/auth/refresh)
-//   // ==========================================
-//   describe("POST /api/v2/auth/refresh", () => {
-//     it("성공: 유효한 쿠키로 요청 시 토큰을 재발급하고, DB 토큰도 교체(RTR)되어야 한다.", async () => {
-//       // 갱신 전 DB 토큰 가져오기 (비교용)
-//       const beforeToken = await prisma.refreshToken.findUnique({
-//         where: { userId },
-//       });
+  describe("POST /api/v2/auth/refresh", () => {
+    test("성공: 유효한 쿠키로 요청 시 토큰을 재발급하고(쿠키 갱신), DB 토큰도 교체되어야 한다.", async () => {
+      const beforeToken = await prisma.refreshToken.findUnique({
+        where: { userId },
+      });
+      const res = await request(app)
+        .post("/api/v2/auth/refresh")
+        .set("Cookie", tokenCookie)
+        .send();
 
-//       const res = await request(app)
-//         .post("/api/v2/auth/refresh")
-//         .set("Cookie", [refreshTokenCookie]) // 쿠키 전송
-//         .send();
+      expect(res.status).toBe(204);
 
-//       expect(res.status).toBe(201); // Created
-//       expect(res.body).toHaveProperty("newAccessToken");
+      const newCookies = res.headers["set-cookie"] as unknown as string[];
 
-//       // 2-1. 새 쿠키 확인
-//       const cookies = res.headers["set-cookie"];
-//       const newRefreshCookie = cookies.find((c: string) =>
-//         c.includes("refreshToken")
-//       );
-//       expect(newRefreshCookie).toBeDefined();
+      expect(newCookies).toBeDefined();
 
-//       // 2-2. [중요] DB 토큰 변경 확인 (RTR)
-//       const afterToken = await prisma.refreshToken.findUnique({
-//         where: { userId },
-//       });
+      const newRefreshCookie = newCookies.find((c) =>
+        c.startsWith("refresh_token="),
+      );
 
-//       // DB의 토큰 해시값이 바뀌었어야 함
-//       expect(beforeToken?.refreshToken).not.toBe(afterToken?.refreshToken);
+      expect(newRefreshCookie).toBeDefined();
 
-//       // 변수 업데이트
-//       refreshTokenCookie = newRefreshCookie.split(";")[0];
-//       accessToken = res.body.newAccessToken;
-//     });
+      const afterToken = await prisma.refreshToken.findUnique({
+        where: { userId },
+      });
 
-//     it("실패: 쿠키 없이 요청하면 400/401 에러를 반환해야 한다.", async () => {
-//       const res = await request(app).post("/api/v2/auth/refresh").send();
-//       expect(res.status).toBeGreaterThanOrEqual(400);
-//     });
-//   });
+      expect(beforeToken?.refreshToken).not.toBe(afterToken?.refreshToken);
 
-//   // ==========================================
-//   // 3. 로그아웃 (POST /api/v2/auth/logout)
-//   // ==========================================
-//   describe("POST /api/v2/auth/logout", () => {
-//     it("성공: 로그아웃 시 DB에서 리프레시 토큰이 삭제되고 쿠키가 만료되어야 한다.", async () => {
-//       const res = await request(app)
-//         .post("/api/v2/auth/logout")
-//         .set("Authorization", `Bearer ${accessToken}`) // AccessToken 헤더
-//         .set("Cookie", [refreshTokenCookie]) // RefreshToken 쿠키
-//         .send();
+      tokenCookie = newCookies;
+    });
 
-//       expect(res.status).toBe(200);
+    test("실패: 쿠키에 리프레시 토큰이 없으면 상태 코드 400 에러를 반환해야 한다.", async () => {
+      const res = await request(app).post("/api/v2/auth/refresh").send();
 
-//       // 3-1. 쿠키 만료 확인
-//       const cookies = res.headers["set-cookie"];
-//       const logoutCookie = cookies.find((c: string) =>
-//         c.includes("refreshToken")
-//       );
-//       // Max-Age=0 또는 Expires가 과거 날짜인지 확인
-//       expect(logoutCookie).toMatch(/Max-Age=0|Expires/);
+      // zod가 처리하여 400 반환
+      expect(res.status).toBe(400);
+      expect(res.body.message).toMatch(
+        "Invalid input: expected string, received undefined",
+      );
+    });
+  });
 
-//       // 3-2. [중요] DB 삭제 확인
-//       const storedToken = await prisma.refreshToken.findUnique({
-//         where: { userId },
-//       });
-//       expect(storedToken).toBeNull(); // 데이터가 없어야 함
-//     });
-//   });
-// });
+  describe("POST /api/v2/auth/logout", () => {
+    test("성공: 로그아웃 시 DB에서 리프레시 토큰이 삭제되고 쿠키가 만료되어야 한다.", async () => {
+      const res = await request(app)
+        .post("/api/v2/auth/logout")
+        .set("Cookie", tokenCookie)
+        .send();
+
+      expect(res.status).toBe(204);
+
+      const storedToken = await prisma.refreshToken.findUnique({
+        where: { userId },
+      });
+
+      expect(storedToken).toBeNull();
+
+      const logoutCookies = res.headers["set-cookie"] as unknown as string[];
+      const refreshCookie = logoutCookies.find((c) =>
+        c.startsWith("refresh_token="),
+      );
+
+      expect(refreshCookie).toMatch(/Max-Age=0|Expires/);
+    });
+  });
+
+  test("실패: 쿠키에 리프레시 토큰이 없으면 상태 코드 401 UNAUTHORIZED_REQUEST 에러를 반환해야 한다.", async () => {
+    const res = await request(app).post("/api/v2/auth/logout").send();
+
+    expect(res.status).toBe(401);
+    expect(res.body.message).toMatch("권한이 없어요.");
+  });
+
+  test("실패: 로그아웃을 한 상태에서 다시 로그아웃 요청시 상태 코드 401 UNAUTHORIZED_REQUEST 에러를 반환해야 한다.", async () => {
+    await prisma.refreshToken.deleteMany({
+      where: { userId },
+    });
+
+    const res = await request(app)
+      .post("/api/v2/auth/logout")
+      .set("Cookie", tokenCookie)
+      .send();
+
+    expect(res.status).toBe(401);
+    expect(res.body.message).toMatch("권한이 없어요.");
+  });
+});
