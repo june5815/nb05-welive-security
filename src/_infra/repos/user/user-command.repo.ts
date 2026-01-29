@@ -118,20 +118,42 @@ export const UserCommandRepo = (
   const createResidentUser = async (entity: IUser): Promise<IUser> => {
     try {
       const prisma = baseCommandRepo.getPrismaClient();
-      const existingResident = await prisma.resident.findUnique({
-        where: {
-          email_name: {
+      const [existingResident, household] = await Promise.all([
+        await prisma.householdMember.findUnique({
+          where: {
             email: entity.email,
-            name: entity.name,
           },
-        },
-        select: {
-          id: true,
-        },
-      });
+          select: {
+            id: true,
+          },
+        }),
+        (await prisma.household.findUnique({
+          where: {
+            apartmentId_building_unit: {
+              apartmentId: entity.resident!.household.apartmentId,
+              building: entity.resident!.household.building,
+              unit: entity.resident!.household.unit,
+            },
+          },
+          select: {
+            id: true,
+          },
+        })) ??
+          (await prisma.household.create({
+            data: {
+              apartmentId: entity.resident!.household.apartmentId,
+              building: entity.resident!.household.building,
+              unit: entity.resident!.household.unit,
+            },
+          })),
+      ]);
 
       const savedUser = await prisma.user.create({
-        data: UserMapper.toCreateUser(entity, existingResident?.id),
+        data: UserMapper.toCreateUser(
+          entity,
+          household.id,
+          existingResident?.id,
+        ),
         include: residentInclude,
       });
 
@@ -288,7 +310,7 @@ export const UserCommandRepo = (
             officeNumber: adminOf.officeNumber,
           },
         },
-        include: { manager: true },
+        include: { admin: true },
       });
 
       if (!foundApartment) {
@@ -503,7 +525,7 @@ export const UserCommandRepo = (
       const prisma = baseCommandRepo.getPrismaClient();
       await prisma.apartment.deleteMany({
         where: {
-          manager: { role: "ADMIN", joinStatus: "REJECTED" },
+          admin: { role: "ADMIN", joinStatus: "REJECTED" },
         },
       });
       await prisma.user.deleteMany({

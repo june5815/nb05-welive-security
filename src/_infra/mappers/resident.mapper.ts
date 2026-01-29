@@ -42,7 +42,10 @@ export const ResidentMapper = {
     return ResidentEntity.restoreHouseholdMember({
       id: raw.id,
       householdId: raw.householdId,
-      userId: raw.userId,
+      userId: raw.userId || undefined,
+      email: raw.user.email,
+      contact: raw.user.contact,
+      name: raw.user.name,
       isHouseholder: raw.isHouseholder,
       movedInAt: raw.movedInAt ?? undefined,
       movedOutAt: raw.movedOutAt ?? undefined,
@@ -99,7 +102,7 @@ export const ResidentMapper = {
       connect: { id: member.householdId },
     },
     user: {
-      connect: { id: member.userId },
+      connect: { id: member.userId! },
     },
   }),
 

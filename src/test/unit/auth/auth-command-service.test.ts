@@ -97,10 +97,12 @@ describe("AuthCommandService Unit Test", () => {
       isActive: true,
       resident: {
         id: "resident-1",
-        apartmentId: "apartment-1",
-        building: 1,
-        unit: 1001,
         isHouseholder: true,
+        household: {
+          apartmentId: "apartment-1",
+          building: 1,
+          unit: 101,
+        },
       },
     };
 
@@ -118,7 +120,7 @@ describe("AuthCommandService Unit Test", () => {
         id: "resident-1",
         apartmentId: "apartment-1",
         building: 1,
-        unit: 1001,
+        unit: 101,
         isHouseholder: true,
       },
     };

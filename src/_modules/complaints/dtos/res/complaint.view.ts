@@ -1,31 +1,39 @@
-import { Complaint, TComplaintStatus } from "../../domain/complaints.entity";
+import { ComplaintStatus } from "../../domain/complaints.entity";
 
 export interface ComplaintView {
   id: string;
   title: string;
   content: string;
-  status: TComplaintStatus;
+  status: keyof typeof ComplaintStatus;
   isPublic: boolean;
   viewsCount: number;
-  userId: string;
-  apartmentId: string;
   createdAt: Date;
   updatedAt: Date;
+
+  complainant: {
+    id: string;
+    name: string;
+  };
+
+  apartmentId: string;
 }
 
 export const ComplaintView = {
-  from(entity: Complaint): ComplaintView {
+  from(model: any): ComplaintView {
     return {
-      id: entity.id!,
-      title: entity.title,
-      content: entity.content,
-      status: entity.status!,
-      isPublic: entity.isPublic,
-      viewsCount: entity.viewsCount ?? 0,
-      userId: entity.userId,
-      apartmentId: entity.apartmentId,
-      createdAt: entity.createdAt!,
-      updatedAt: entity.updatedAt!,
+      id: model.id,
+      title: model.title,
+      content: model.content,
+      status: model.status,
+      isPublic: model.isPublic,
+      viewsCount: model.viewsCount,
+      createdAt: model.createdAt,
+      updatedAt: model.updatedAt,
+      apartmentId: model.apartmentId,
+      complainant: {
+        id: model.user.id,
+        name: model.user.name,
+      },
     };
   },
 };

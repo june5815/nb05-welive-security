@@ -27,7 +27,10 @@ export interface Household {
 export interface HouseholdMember {
   readonly id: string;
   readonly householdId: string;
-  readonly userId: string;
+  readonly userId?: string;
+  readonly email: string;
+  readonly contact: string;
+  readonly name: string;
   readonly isHouseholder: boolean;
   readonly movedInAt?: Date;
   readonly movedOutAt?: Date;

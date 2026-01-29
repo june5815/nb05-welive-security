@@ -1,5 +1,5 @@
 // import { ResidentQueryService } from "../../../_modules/residents/usecases/resident-query.usecase";
-// import { IResidentQueryRepo } from "../../../_common/ports/repos/resident/resident-query.repo.interface";
+// import { IResidentQueryRepo } from "../../../_modules/residents/domain/resident-query.repo.interface";
 // import {
 //   BusinessException,
 //   BusinessExceptionType,

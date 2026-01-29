@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { registerClient } from "../../events/service/complaint-notification.service";
+import { registerClient } from "../../../_modules/complaints/service/complaint-notification.service";
 
 export const complaintSSEController = async (
   req: Request,

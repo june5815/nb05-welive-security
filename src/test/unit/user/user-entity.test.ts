@@ -96,9 +96,11 @@ describe("UserEntity Unit Test", () => {
         name: "Resident",
         hashManager: mockHashManager,
         resident: {
-          apartmentId: "Test Apt ID",
-          building: 5,
-          unit: 5051,
+          household: {
+            apartmentId: "Test Apt ID",
+            building: 5,
+            unit: 5051,
+          },
         },
       };
 
@@ -214,9 +216,11 @@ describe("UserEntity Unit Test", () => {
         unitCountPerFloor: 4,
       },
       resident: {
-        apartmentId: "AptID",
-        building: 2,
-        unit: 2011,
+        household: {
+          apartmentId: "AptID",
+          building: 2,
+          unit: 2011,
+        },
       },
     };
 
@@ -289,9 +293,11 @@ describe("UserEntity Unit Test", () => {
         unitCountPerFloor: 4,
       },
       resident: {
-        apartmentId: "AptID",
-        building: 2,
-        unit: 2011,
+        household: {
+          apartmentId: "AptID",
+          building: 2,
+          unit: 2011,
+        },
       },
     };
 

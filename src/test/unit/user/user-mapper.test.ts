@@ -98,16 +98,24 @@ describe("UserMapper Unit Test", () => {
       name: "User",
       password: "hashed_password",
       resident: {
-        apartmentId: "apt-1",
-        building: 1,
-        unit: 1001,
+        isHouseholder: false,
+        household: {
+          apartmentId: "apt-1",
+          building: 1,
+          unit: 1001,
+        },
       },
     } as User;
 
     test("관리자에 의해 등록된 입주민 정보가 있으면 APPROVED 상태로 연결해야 한다.", () => {
+      const householdId = "household-1";
       const persistResidentId = "res-1";
 
-      const result = UserMapper.toCreateUser(entity, persistResidentId);
+      const result = UserMapper.toCreateUser(
+        entity,
+        householdId,
+        persistResidentId,
+      );
 
       expect(result.username).toBe("user");
       expect(result.email).toBe("user@test.com");
@@ -121,7 +129,9 @@ describe("UserMapper Unit Test", () => {
     });
 
     test("관리자에 의해 등록되지 않은 입주민이 가입할 경우 PENDING 상태로 새로 생성해야 한다.", () => {
-      const result = UserMapper.toCreateUser(entity);
+      const householdId = "household-1";
+
+      const result = UserMapper.toCreateUser(entity, householdId);
 
       expect(result.username).toBe("user");
       expect(result.email).toBe("user@test.com");
@@ -131,9 +141,23 @@ describe("UserMapper Unit Test", () => {
       expect(result.role).toBe(UserRole.USER);
       expect(result.joinStatus).toBe(JoinStatus.PENDING);
       expect(result.isActive).toBe(false);
-      expect(result.resident?.create?.apartment?.connect?.id).toBe("apt-1");
-      expect(result.resident?.create?.building).toBe(1);
-      expect(result.resident?.create?.unit).toBe(1001);
+      expect(result.resident?.connectOrCreate).toBeDefined();
+      expect(result.resident?.connectOrCreate?.where.email).toBe(
+        "user@test.com",
+      );
+      expect(result.resident?.connectOrCreate?.create.isHouseholder).toBe(
+        false,
+      );
+      expect(result.resident?.connectOrCreate?.create.email).toBe(
+        "user@test.com",
+      );
+      expect(result.resident?.connectOrCreate?.create.contact).toBe(
+        "01022222222",
+      );
+      expect(result.resident?.connectOrCreate?.create.name).toBe("User");
+      expect(
+        result.resident?.connectOrCreate?.create?.household?.connect?.id,
+      ).toBe(householdId);
     });
   });
 

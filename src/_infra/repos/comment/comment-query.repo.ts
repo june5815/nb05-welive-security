@@ -1,4 +1,4 @@
-import { PrismaClient, CommentResourceType } from "@prisma/client";
+import { CommentResourceType, PrismaClient } from "@prisma/client";
 import { BaseQueryRepo } from "../_base/base-query.repo";
 
 export const commentQueryRepository = (prismaClient: PrismaClient) => {
@@ -17,55 +17,33 @@ export const commentQueryRepository = (prismaClient: PrismaClient) => {
   }) => {
     const prisma = base.getPrismaClient();
 
+    const where = { resourceType, resourceId };
+
     const [comments, totalCount] = await Promise.all([
       prisma.comment.findMany({
-        where: {
-          resourceId,
-          resourceType,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
+        where,
+        orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,
         take: limit,
         include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
+          user: { select: { id: true, name: true } },
         },
       }),
-      prisma.comment.count({
-        where: {
-          resourceId,
-          resourceType,
-        },
-      }),
+      prisma.comment.count({ where }),
     ]);
 
+    const hasNext = page * limit < totalCount;
+
     return {
-      data: comments.map((comment) => ({
-        id: comment.id,
-        content: comment.content,
-        createdAt: comment.createdAt,
-        updatedAt: comment.updatedAt,
-        author: {
-          id: comment.user.id,
-          name: comment.user.name,
-        },
-      })),
+      data: comments,
       totalCount,
       page,
       limit,
-      hasNext: page * limit < totalCount,
+      hasNext,
     };
   };
 
-  return {
-    findList,
-  };
+  return { findList };
 };
 
 export type CommentQueryRepository = ReturnType<typeof commentQueryRepository>;
