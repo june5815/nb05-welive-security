@@ -118,6 +118,8 @@ model Household {
   updatedAt DateTime @updatedAt
   version   Int      @default(1)
 
+
+  @@unique([apartmentId, building, unit])
   @@index([apartmentId])
 }
 
