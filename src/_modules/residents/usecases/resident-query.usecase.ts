@@ -2,8 +2,7 @@ import {
   BusinessException,
   BusinessExceptionType,
 } from "../../../_common/exceptions/business.exception";
-import { IResidentQueryRepo } from "../domain/resident-query.repo.interface";
-import { HouseholdMemberWithRelations } from "../domain/resident.type";
+import { IResidentQueryRepo } from "../../../_common/ports/repos/resident/resident-query.repo.interface";
 import {
   HouseholdMemberDetailView,
   HouseholdMembersListResponseView,

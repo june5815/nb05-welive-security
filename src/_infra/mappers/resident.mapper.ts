@@ -44,7 +44,6 @@ export const ResidentMapper = {
       householdId: raw.householdId,
       userId: raw.userId,
       isHouseholder: raw.isHouseholder,
-      householdMemberStatus: (raw as any).householdMemberStatus ?? "ACTIVE",
       movedInAt: raw.movedInAt ?? undefined,
       movedOutAt: raw.movedOutAt ?? undefined,
       createdAt: raw.createdAt,

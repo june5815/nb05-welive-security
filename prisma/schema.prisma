@@ -10,15 +10,15 @@ datasource db {
 }
 
 enum UserRole {
-  SUPER_ADMIN	// 슈퍼 관리자
-  ADMIN			  // 관리자
-  USER		    // 입주민
+  SUPER_ADMIN // 슈퍼 관리자
+  ADMIN // 관리자
+  USER // 입주민
 }
 
 enum JoinStatus {
-  PENDING     // 대기
-  APPROVED    // 승인
-  REJECTED    // 거절
+  PENDING // 대기
+  APPROVED // 승인
+  REJECTED // 거절
 }
 
 enum UserType {
@@ -27,24 +27,24 @@ enum UserType {
 }
 
 model User {
-  id           String     @id @default(uuid())
-  username     String     @unique
+  id           String           @id @default(uuid())
+  username     String           @unique
   password     String
-  email        String     @unique
-  contact      String     @unique
+  email        String           @unique
+  contact      String           @unique
   name         String
   role         UserRole
   avatar       String? // 프로필 이미지
-  joinStatus   JoinStatus @default(PENDING)
-  isActive     Boolean    @default(false) // 계정 활성화 여부
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  version      Int        @default(1)
+  joinStatus   JoinStatus       @default(PENDING)
+  isActive     Boolean          @default(false) // 계정 활성화 여부
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  version      Int              @default(1)
   refreshToken RefreshToken?
   // 1:1 관계
-  adminOf Apartment? @relation("ApartmentManager")
+  adminOf      Apartment?       @relation("ApartmentManager")
+  resident     HouseholdMember? // 세대원 (1개 세대에만 속함)
 
-  resident           HouseholdMember[] // 세대원
   notices            Notice[] // 공지사항
   complaints         Complaint[] // 민원
   polls              Poll[] // 투표
@@ -52,16 +52,16 @@ model User {
   comments           Comment[] // 댓글
   residentImportLogs ResidentImportLog[] // 입주민 일괄등록 로그
 
-  notificationReceipts NotificationReceipt[]  // 알림 수신
+  notificationReceipts NotificationReceipt[] // 알림 수신
 }
 
-model RefreshToken{
-  id            String    @id @default(uuid())
-  refreshToken  String    @unique
-  userId        String    @unique
-  updatedAt     DateTime  @updatedAt
+model RefreshToken {
+  id           String   @id @default(uuid())
+  refreshToken String   @unique
+  userId       String   @unique
+  updatedAt    DateTime @updatedAt
 
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Apartment {
@@ -117,7 +117,6 @@ model Household {
   updatedAt DateTime @updatedAt
   version   Int      @default(1)
 
-  @@unique([apartmentId, building, unit])
   @@index([apartmentId])
 }
 
@@ -125,7 +124,7 @@ model Household {
 model HouseholdMember {
   id            String    @id @default(uuid())
   householdId   String
-  userId        String
+  userId        String  
   isHouseholder Boolean   @default(false)
   movedInAt     DateTime? //전입 날짜
   movedOutAt    DateTime? //전출 날짜

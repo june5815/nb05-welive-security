@@ -1,6 +1,11 @@
 import { Apartment as ApartmentPrisma } from "@prisma/client";
 import { Apartment } from "../../_modules/apartments/domain/apartment.entity";
 import { generateId } from "../../_common/utils/id-generator.util";
+import { ApartmentEntity } from "../../_modules/apartments/domain/apartment.entity";
+import {
+  ApartmentDetailResView,
+  ApartmentListResView,
+} from "../../_modules/apartments/dtos/res/apartment.view";
 
 export class ApartmentMapper {
   static toDomain(raw: ApartmentPrisma): Apartment {
@@ -77,5 +82,52 @@ export class ApartmentMapper {
       id: generateId(),
       ...base,
     };
+  }
+
+  static toListPresentation(
+    apartments: (ApartmentPrisma & { admin: any | null })[],
+    totalCount: number,
+    page: number,
+    limit: number,
+  ): ApartmentListResView {
+    const data = apartments.map((apartment) => {
+      const { admin, ...apartmentWithoutAdmin } = apartment;
+      return {
+        ...apartment,
+        totalUnits: ApartmentEntity.getTotalUnits(apartmentWithoutAdmin),
+      };
+    });
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total: totalCount,
+        totalPages,
+      },
+    };
+  }
+
+  static toDetailPresentation(
+    apartment: ApartmentPrisma & { admin: any | null },
+  ): ApartmentDetailResView {
+    const { admin, ...apartmentWithoutAdmin } = apartment;
+    return {
+      ...apartment,
+      totalUnits: ApartmentEntity.getTotalUnits(apartmentWithoutAdmin),
+      buildingCount: ApartmentEntity.getBuildingCount(apartmentWithoutAdmin),
+      householdCountPerBuilding: ApartmentEntity.getHouseholdCountPerBuilding(
+        apartmentWithoutAdmin,
+      ),
+    };
+  }
+
+  static toDetailPresentationArray(
+    apartments: (ApartmentPrisma & { admin: any | null })[],
+  ): ApartmentDetailResView[] {
+    return apartments.map((apartment) => this.toDetailPresentation(apartment));
   }
 }

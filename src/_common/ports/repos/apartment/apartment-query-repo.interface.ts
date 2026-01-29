@@ -1,20 +1,24 @@
-import { Apartment } from "../../../../_modules/apartments/domain/apartment.entity";
+import {
+  ApartmentListResView,
+  ApartmentDetailResView,
+} from "../../../../_modules/apartments/dtos/res/apartment.view";
+import { ApartmentListQueryReq } from "../../../../_modules/apartments/dtos/req/apartment.request";
 
 export interface IApartmentQueryRepo {
-  findAll(): Promise<Required<Apartment>[]>;
-  findById(id: string): Promise<Required<Apartment> | null>;
-  search(query: string): Promise<Required<Apartment>[]>;
-  findByAddress(address: string): Promise<Required<Apartment> | null>;
-  findByAdminId(adminId: string): Promise<Required<Apartment>[]>;
-  findWithPagination(
-    page: number,
-    limit: number,
-  ): Promise<{
-    data: Required<Apartment>[];
-    total: number;
-    page: number;
-    limit: number;
-  }>;
+  findApartmentList: (
+    query: ApartmentListQueryReq,
+  ) => Promise<ApartmentListResView>;
+  findApartmentDetailById: (
+    apartmentId: string,
+  ) => Promise<ApartmentDetailResView | null>;
+  findApartmentByName: (name: string) => Promise<ApartmentDetailResView | null>;
+  findApartmentByAddress: (
+    address: string,
+  ) => Promise<ApartmentDetailResView | null>;
+  findApartmentByDescription: (
+    description: string,
+  ) => Promise<ApartmentDetailResView[]>;
+  findApartmentByOfficeNumber: (
+    officeNumber: string,
+  ) => Promise<ApartmentDetailResView | null>;
 }
-
-export type ApartmentQueryRepository = IApartmentQueryRepo;
