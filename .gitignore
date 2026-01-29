@@ -346,6 +346,7 @@ $RECYCLE.BIN/
 prisma/schema.sql
 prisma/migrations/
 prisma/seed.ts
+prisma/seeds/*.seed.ts
 
 # Test scripts
 test-*.sh

@@ -1,8 +1,7 @@
 import { Prisma } from "@prisma/client";
-import { IResidentQueryRepo } from "../../../_modules/residents/domain/resident-query.repo.interface";
+import { IResidentQueryRepo } from "../../../_common/ports/repos/resident/resident-query.repo.interface";
 import { HouseholdMemberWithRelations } from "../../../_modules/residents/domain/resident.type";
 import { IBaseQueryRepo } from "../_base/base-query.repo";
-import { ResidentMapper } from "../../mappers/resident.mapper";
 
 export const createResidentQueryRepository = (
   baseQueryRepo: IBaseQueryRepo,

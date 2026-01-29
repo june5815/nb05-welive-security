@@ -1,6 +1,3 @@
-import { createDeflate } from "zlib";
-import { id } from "zod/v4/locales";
-
 export const UserType = {
   PRE_RESIDENT: "PRE_RESIDENT",
   RESIDENT: "RESIDENT",
@@ -15,25 +12,16 @@ export const HouseholdStatus = {
 export type HouseholdStatus =
   (typeof HouseholdStatus)[keyof typeof HouseholdStatus];
 
-export const HouseholdMemberStatus = {
-  EMPTY: "EMPTY",
-  ACTIVE: "ACTIVE",
-  MOVE_OUT: "MOVE_OUT",
-} as const;
-export type HouseholdMemberStatus =
-  (typeof HouseholdMemberStatus)[keyof typeof HouseholdMemberStatus];
-
 export interface Household {
   readonly id: string;
   readonly apartmentId: string;
   readonly building: number;
   readonly unit: number;
   readonly householdStatus: HouseholdStatus;
-  readonly movedOutAt?: Date;
-  readonly members?: HouseholdMember[];
   readonly createdAt: Date;
   readonly updatedAt: Date;
   readonly version: number;
+  readonly members?: HouseholdMember[];
 }
 
 export interface HouseholdMember {
@@ -44,7 +32,6 @@ export interface HouseholdMember {
   readonly contact: string;
   readonly name: string;
   readonly isHouseholder: boolean;
-  readonly householdMemberStatus: HouseholdMemberStatus;
   readonly movedInAt?: Date;
   readonly movedOutAt?: Date;
   readonly createdAt: Date;
@@ -77,4 +64,8 @@ export interface HouseholdMemberWithRelations extends HouseholdMember {
     readonly building: number;
     readonly unit: number;
   };
+}
+
+export interface HouseholdWithMembers extends Household {
+  readonly members: HouseholdMemberWithRelations[];
 }

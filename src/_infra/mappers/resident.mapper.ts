@@ -43,11 +43,10 @@ export const ResidentMapper = {
       id: raw.id,
       householdId: raw.householdId,
       userId: raw.userId || undefined,
-      email: raw.email,
-      contact: raw.contact,
-      name: raw.name,
+      email: raw.user.email,
+      contact: raw.user.contact,
+      name: raw.user.name,
       isHouseholder: raw.isHouseholder,
-      householdMemberStatus: (raw as any).householdMemberStatus ?? "ACTIVE",
       movedInAt: raw.movedInAt ?? undefined,
       movedOutAt: raw.movedOutAt ?? undefined,
       createdAt: raw.createdAt,
@@ -103,11 +102,8 @@ export const ResidentMapper = {
       connect: { id: member.householdId },
     },
     user: {
-      connect: { id: member.userId },
+      connect: { id: member.userId! },
     },
-    email: member.email,
-    contact: member.contact,
-    name: member.name,
   }),
 
   toHouseholdMemberCreateInputArray: (

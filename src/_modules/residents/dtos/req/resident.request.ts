@@ -59,7 +59,7 @@ export const householdMemberDetailReqSchema = z.object({
   }),
   params: z.object({
     apartmentId: z.string().trim().nonempty("건물 ID가 필요합니다."),
-    householdMemberId: z.string().trim().uuid("유효한 UUID 형식이어야 합니다."),
+    householdMemberId: z.uuid({ message: "유효한 UUID 형식이어야 합니다." }),
   }),
 });
 

@@ -3,7 +3,6 @@ import {
   HouseholdMember,
   ResidentImportLog,
   HouseholdStatus,
-  HouseholdMemberStatus,
 } from "./resident.type";
 
 export const ResidentEntity = {
@@ -17,7 +16,7 @@ export const ResidentEntity = {
       apartmentId: props.apartmentId,
       building: props.building,
       unit: props.unit,
-      householdStatus: "ACTIVE" as HouseholdStatus,
+      householdStatus: "EMPTY" as HouseholdStatus,
       members: [],
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -28,31 +27,69 @@ export const ResidentEntity = {
   restoreHousehold(props: Household): Household {
     return { ...props };
   },
-
-  moveOutHousehold(household: Household, movedOutAt: Date): Household {
-    return {
-      ...household,
-      householdStatus: "MOVE_OUT" as HouseholdStatus,
-      movedOutAt,
-      updatedAt: new Date(),
-    };
-  },
-
+  //세대 상태
   activateHousehold(household: Household): Household {
     return {
       ...household,
       householdStatus: "ACTIVE" as HouseholdStatus,
-      movedOutAt: undefined,
+      updatedAt: new Date(),
+    };
+  },
+  moveOutHousehold(household: Household): Household {
+    return {
+      ...household,
+      householdStatus: "MOVE_OUT" as HouseholdStatus,
+      updatedAt: new Date(),
+    };
+  },
+  emptyHousehold(household: Household): Household {
+    return {
+      ...household,
+      householdStatus: "EMPTY" as HouseholdStatus,
       updatedAt: new Date(),
     };
   },
 
-  addMember(household: Household, member: HouseholdMember): Household {
+  //세대 정보
+  updateHousehold(
+    household: Household,
+    updates: {
+      building?: number;
+      unit?: number;
+      householdStatus?: HouseholdStatus;
+    },
+  ): Household {
     return {
       ...household,
-      members: [...(household.members || []), member],
+      building: updates.building ?? household.building,
+      unit: updates.unit ?? household.unit,
+      householdStatus: updates.householdStatus ?? household.householdStatus,
       updatedAt: new Date(),
     };
+  },
+
+  hasActiveMembers(household: Household): boolean {
+    if (!household.members || household.members.length === 0) return false;
+    return household.members.some((member) => !member.movedOutAt);
+  },
+
+  getActiveMembers(household: Household): HouseholdMember[] {
+    if (!household.members) return [];
+    return household.members.filter((member) => !member.movedOutAt);
+  },
+
+  getHouseholder(household: Household): HouseholdMember | undefined {
+    if (!household.members) return undefined;
+    return household.members.find((member) => member.isHouseholder);
+  },
+
+  getOrdinaryMembers(household: Household): HouseholdMember[] {
+    if (!household.members) return [];
+    return household.members.filter((member) => !member.isHouseholder);
+  },
+
+  getActiveMemberCount(household: Household): number {
+    return ResidentEntity.getActiveMembers(household).length;
   },
 
   createHouseholdMember(props: {
@@ -70,8 +107,7 @@ export const ResidentEntity = {
       contact: props.contact,
       name: props.name,
       isHouseholder: props.isHouseholder,
-      householdMemberStatus: "ACTIVE" as HouseholdMemberStatus,
-      movedInAt: props.movedInAt,
+      movedInAt: props.movedInAt || new Date(),
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -79,18 +115,6 @@ export const ResidentEntity = {
 
   restoreHouseholdMember(props: HouseholdMember): HouseholdMember {
     return { ...props };
-  },
-
-  moveOutHouseholdMember(
-    member: HouseholdMember,
-    movedOutAt: Date,
-  ): HouseholdMember {
-    return {
-      ...member,
-      householdMemberStatus: "MOVE_OUT" as HouseholdMemberStatus,
-      movedOutAt,
-      updatedAt: new Date(),
-    };
   },
 
   designateAsHouseholder(member: HouseholdMember): HouseholdMember {
@@ -101,7 +125,10 @@ export const ResidentEntity = {
     };
   },
 
-  removeHouseholder(member: HouseholdMember): HouseholdMember {
+  /**
+   * 세대주 해제
+   */
+  removeHouseholderStatus(member: HouseholdMember): HouseholdMember {
     return {
       ...member,
       isHouseholder: false,
@@ -109,6 +136,59 @@ export const ResidentEntity = {
     };
   },
 
+  moveOutMember(member: HouseholdMember, movedOutAt?: Date): HouseholdMember {
+    return {
+      ...member,
+      movedOutAt: movedOutAt || new Date(),
+      updatedAt: new Date(),
+    };
+  },
+
+  moveInMember(member: HouseholdMember, movedInAt?: Date): HouseholdMember {
+    return {
+      ...member,
+      movedInAt: movedInAt || new Date(),
+      movedOutAt: undefined,
+      updatedAt: new Date(),
+    };
+  },
+
+  addMemberToHousehold(
+    household: Household,
+    member: HouseholdMember,
+  ): Household {
+    return {
+      ...household,
+      members: [...(household.members || []), member],
+      updatedAt: new Date(),
+    };
+  },
+
+  removeMemberFromHousehold(household: Household, memberId: string): Household {
+    return {
+      ...household,
+      members: (household.members || []).filter((m) => m.id !== memberId),
+      updatedAt: new Date(),
+    };
+  },
+
+  updateMembers(household: Household, members: HouseholdMember[]): Household {
+    return {
+      ...household,
+      members,
+      updatedAt: new Date(),
+    };
+  },
+
+  findMemberByUserId(
+    household: Household,
+    userId: string,
+  ): HouseholdMember | undefined {
+    if (!household.members) return undefined;
+    return household.members.find((m) => m.userId === userId);
+  },
+
+  // ResidentImportLog
   createResidentImportLog(props: {
     fileName: string;
     totalCount: number;
