@@ -10,8 +10,8 @@
     "type:check": "tsc --noEmit",
     "test:unit": "export NODE_ENV=test && jest src/test/unit --runInBand",
     "test:unit:win": "cross-env NODE_ENV=test jest src/test/unit --runInBand",
-    "test:e2e": "export NODE_ENV=test && jest src/test/e2e --runInBand",
-    "test:e2e:win": "cross-env NODE_ENV=test jest src/test/e2e --runInBand",
+    "test:api": "export NODE_ENV=test && jest src/test/api --runInBand",
+    "test:api:win": "cross-env NODE_ENV=test jest src/test/api/auth --runInBand",
     "build": "npx tsc",
     "prod": "node ./dist/index.js",
     "prepare": "husky"
