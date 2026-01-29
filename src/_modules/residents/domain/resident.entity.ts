@@ -57,14 +57,18 @@ export const ResidentEntity = {
 
   createHouseholdMember(props: {
     householdId: string;
-    userId: string;
     isHouseholder: boolean;
     movedInAt?: Date;
+    email: string;
+    contact: string;
+    name: string;
   }): HouseholdMember {
     return {
       id: crypto.randomUUID(),
       householdId: props.householdId,
-      userId: props.userId,
+      email: props.email,
+      contact: props.contact,
+      name: props.name,
       isHouseholder: props.isHouseholder,
       householdMemberStatus: "ACTIVE" as HouseholdMemberStatus,
       movedInAt: props.movedInAt,

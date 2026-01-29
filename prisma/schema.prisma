@@ -40,11 +40,12 @@ model User {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   version      Int        @default(1)
-  refreshToken RefreshToken?
+  
   // 1:1 관계
-  adminOf Apartment? @relation("ApartmentManager")
+  refreshToken       RefreshToken?
+  adminOf            Apartment?
+  resident           HouseholdMember?
 
-  resident           HouseholdMember[] // 세대원
   notices            Notice[] // 공지사항
   complaints         Complaint[] // 민원
   polls              Poll[] // 투표
@@ -81,7 +82,7 @@ model Apartment {
   version   Int      @default(1)
 
   // 1:1 관계
-  admin User? @relation("ApartmentManager", fields: [adminId], references: [id])
+  admin User? @relation(fields: [adminId], references: [id], onDelete: SetNull)
 
   // 1:n 관계
   household          Household[]
@@ -125,7 +126,10 @@ model Household {
 model HouseholdMember {
   id            String    @id @default(uuid())
   householdId   String
-  userId        String
+  userId        String?   @unique
+  email         String    @unique
+  contact       String
+  name          String
   isHouseholder Boolean   @default(false)
   movedInAt     DateTime? //전입 날짜
   movedOutAt    DateTime? //전출 날짜
@@ -134,9 +138,8 @@ model HouseholdMember {
   updatedAt DateTime @updatedAt
 
   household Household @relation(fields: [householdId], references: [id])
-  user      User      @relation(fields: [userId], references: [id])
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([householdId, userId])
   @@index([userId])
 }
 

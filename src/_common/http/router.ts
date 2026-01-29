@@ -1,5 +1,5 @@
 import express from "express";
-import { createApartmentRoutes } from "../../_modules/apartments/routes";
+// import { createApartmentRoutes } from "../../_modules/apartments/routes";
 import { ApartmentQueryRepository } from "../ports/repos/apartment/apartment-query-repo.interface";
 
 /**
@@ -12,8 +12,7 @@ export function setupRoutes(
   app: express.Application,
   apartmentRepo: ApartmentQueryRepository,
 ) {
-  app.use("/api/v2/apartments", createApartmentRoutes(apartmentRepo));
-
+  // app.use("/api/v2/apartments", createApartmentRoutes(apartmentRepo));
   // TODO: 다른 모듈의 라우트 추가
   // app.use('/api/v2/users', createUserRoutes(userRepo));
   // app.use('/api/v2/residents', createResidentRoutes(residentRepo));

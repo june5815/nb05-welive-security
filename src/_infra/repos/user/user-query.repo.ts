@@ -146,7 +146,7 @@ export const UserQueryRepo = (
       const prismaClient = baseQueryRepo.getPrismaClient();
       const { page, limit, searchKeyword, joinStatus, building, unit } = query;
 
-      const residentWhere: Prisma.ResidentWhereInput = {};
+      const residentWhere: Prisma.HouseholdWhereInput = {};
       if (building) {
         residentWhere.building = building;
       }
@@ -156,7 +156,11 @@ export const UserQueryRepo = (
 
       const whereCondition: Prisma.UserWhereInput = {
         role: UserRole.USER,
-        resident: residentWhere,
+        resident: {
+          household: {
+            ...residentWhere,
+          },
+        },
       };
 
       if (joinStatus) {
@@ -182,7 +186,11 @@ export const UserQueryRepo = (
           take: limit,
           where: whereCondition,
           include: {
-            resident: true,
+            resident: {
+              include: {
+                household: true,
+              },
+            },
           },
           orderBy: {
             createdAt: "desc",
@@ -199,8 +207,8 @@ export const UserQueryRepo = (
           joinStatus: residentUser.joinStatus,
           resident: {
             id: residentUser.resident!.id,
-            building: String(residentUser.resident!.building),
-            unit: String(residentUser.resident!.unit),
+            building: String(residentUser.resident!.household.building),
+            unit: String(residentUser.resident!.household.unit),
           },
         })),
         totalCount,
