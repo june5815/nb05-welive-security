@@ -89,6 +89,7 @@ export const UserMapper = {
 
   toCreateUser(
     entity: IUser,
+    householdId: string,
     existingResidentId?: string,
   ): Prisma.UserCreateInput {
     const status = existingResidentId
@@ -112,24 +113,21 @@ export const UserMapper = {
             },
           }
         : {
-            create: {
-              household: {
-                connectOrCreate: {
-                  where: {
-                    apartmentId_building_unit: {
-                      apartmentId: entity.resident!.household.apartmentId,
-                      building: entity.resident!.household.building,
-                      unit: entity.resident!.household.unit,
-                    },
-                  },
-                  create: {
-                    apartmentId: entity.resident!.household.apartmentId,
-                    building: entity.resident!.household.building,
-                    unit: entity.resident!.household.unit,
+            connectOrCreate: {
+              where: {
+                email: entity.email,
+              },
+              create: {
+                isHouseholder: entity.resident!.isHouseholder || false,
+                household: {
+                  connect: {
+                    id: householdId,
                   },
                 },
+                email: entity.email,
+                contact: entity.contact,
+                name: entity.name,
               },
-              isHouseholder: entity.resident?.isHouseholder ?? false,
             },
           },
     };

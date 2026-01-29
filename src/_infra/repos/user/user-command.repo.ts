@@ -118,21 +118,42 @@ export const UserCommandRepo = (
   const createResidentUser = async (entity: IUser): Promise<IUser> => {
     try {
       const prisma = baseCommandRepo.getPrismaClient();
-      const existingResident = await prisma.householdMember.findFirst({
-        where: {
-          household: {
-            apartmentId: entity.resident!.household.apartmentId,
-            building: entity.resident!.household.building,
-            unit: entity.resident!.household.unit,
+      const [existingResident, household] = await Promise.all([
+        await prisma.householdMember.findUnique({
+          where: {
+            email: entity.email,
           },
-        },
-        select: {
-          id: true,
-        },
-      });
+          select: {
+            id: true,
+          },
+        }),
+        (await prisma.household.findUnique({
+          where: {
+            apartmentId_building_unit: {
+              apartmentId: entity.resident!.household.apartmentId,
+              building: entity.resident!.household.building,
+              unit: entity.resident!.household.unit,
+            },
+          },
+          select: {
+            id: true,
+          },
+        })) ??
+          (await prisma.household.create({
+            data: {
+              apartmentId: entity.resident!.household.apartmentId,
+              building: entity.resident!.household.building,
+              unit: entity.resident!.household.unit,
+            },
+          })),
+      ]);
 
       const savedUser = await prisma.user.create({
-        data: UserMapper.toCreateUser(entity, existingResident?.id),
+        data: UserMapper.toCreateUser(
+          entity,
+          household.id,
+          existingResident?.id,
+        ),
         include: residentInclude,
       });
 

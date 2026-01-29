@@ -42,7 +42,10 @@ export const ResidentMapper = {
     return ResidentEntity.restoreHouseholdMember({
       id: raw.id,
       householdId: raw.householdId,
-      userId: raw.userId,
+      userId: raw.userId || undefined,
+      email: raw.email,
+      contact: raw.contact,
+      name: raw.name,
       isHouseholder: raw.isHouseholder,
       householdMemberStatus: (raw as any).householdMemberStatus ?? "ACTIVE",
       movedInAt: raw.movedInAt ?? undefined,
@@ -102,6 +105,9 @@ export const ResidentMapper = {
     user: {
       connect: { id: member.userId },
     },
+    email: member.email,
+    contact: member.contact,
+    name: member.name,
   }),
 
   toHouseholdMemberCreateInputArray: (
