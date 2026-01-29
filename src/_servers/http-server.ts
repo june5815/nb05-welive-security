@@ -12,6 +12,7 @@ import { IAuthRouter } from "../_modules/auth/auth.router";
 import { IUserRouter } from "../_modules/users/user.router";
 import { INoticeRouter } from "../_modules/notices/notice.routes";
 import { ICommentRouter } from "../_modules/comments/routes";
+import { IEventRouter } from "../_modules/events/routes";
 
 export interface IHttpServer {
   start: () => void;
@@ -31,6 +32,7 @@ export const HttpServer = (
   userRouter: IUserRouter,
   noticeRouter: INoticeRouter,
   commentRouter: ICommentRouter,
+  eventRouter: IEventRouter,
 ): IHttpServer => {
   const app: Application = express();
   const defaultHttpServer: DefaultHttpServer = http.createServer(app);
@@ -46,6 +48,7 @@ export const HttpServer = (
   app.use(userRouter.PATH, userRouter.router);
   app.use(noticeRouter.PATH, noticeRouter.router);
   app.use(commentRouter.PATH, commentRouter.router);
+  app.use(eventRouter.PATH, eventRouter.router);
 
   // static
   app.use(staticServeMiddleware.staticServeHandler());
