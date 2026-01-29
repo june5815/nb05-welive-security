@@ -217,7 +217,7 @@ describe("UserCommandService Unit Test", () => {
     test("signUpAdmin 실패: 이미 존재하는 아파트 관리자라면 DUPLICATE_APARTMENT 에러를 던져야 한다.", async () => {
       mockUserCommandRepo.findByUsername.mockResolvedValue(null);
       mockUserCommandRepo.findApartmentByAdminOf.mockResolvedValue({
-        manager: { id: "other-admin" },
+        admin: { id: "other-admin" },
       } as any);
 
       await expect(service.signUpAdmin(adminDto)).rejects.toMatchObject({
@@ -616,7 +616,7 @@ describe("UserCommandService Unit Test", () => {
       mockUserCommandRepo.findById.mockResolvedValue(mockFoundUser);
 
       mockUserCommandRepo.findApartmentByAdminOf.mockResolvedValue({
-        manager: { id: "other-admin" },
+        admin: { id: "other-admin" },
       });
 
       await expect(service.updateAdminData(dto)).rejects.toMatchObject({
