@@ -78,6 +78,38 @@ export const UserCommandRepo = (
         include: adminInclude,
       });
 
+      const adminOf = savedUser.adminOf;
+      if (adminOf) {
+        const {
+          id: apartmentId,
+          buildingNumberTo: building,
+          floorCountPerBuilding: floor,
+          unitCountPerFloor: unit,
+        } = adminOf;
+
+        const householdsToCreate = [];
+
+        for (let b = 1; b <= building; b++) {
+          for (let f = 1; f <= floor; f++) {
+            for (let u = 1; u <= unit; u++) {
+              const householdUnit = Number(f) * 100 + Number(u);
+              householdsToCreate.push({
+                apartmentId: apartmentId,
+                building: b,
+                unit: householdUnit,
+              });
+            }
+          }
+        }
+
+        if (householdsToCreate.length > 0) {
+          await prisma.household.createMany({
+            data: householdsToCreate,
+            skipDuplicates: true,
+          });
+        }
+      }
+
       return UserMapper.toAdminEntity(savedUser);
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -127,7 +159,7 @@ export const UserCommandRepo = (
             id: true,
           },
         }),
-        (await prisma.household.findUnique({
+        await prisma.household.findUnique({
           where: {
             apartmentId_building_unit: {
               apartmentId: entity.resident!.household.apartmentId,
@@ -138,20 +170,13 @@ export const UserCommandRepo = (
           select: {
             id: true,
           },
-        })) ??
-          (await prisma.household.create({
-            data: {
-              apartmentId: entity.resident!.household.apartmentId,
-              building: entity.resident!.household.building,
-              unit: entity.resident!.household.unit,
-            },
-          })),
+        }),
       ]);
 
       const savedUser = await prisma.user.create({
         data: UserMapper.toCreateUser(
           entity,
-          household.id,
+          household!.id,
           existingResident?.id,
         ),
         include: residentInclude,
