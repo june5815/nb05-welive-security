@@ -11,7 +11,7 @@
     "test:unit": "export NODE_ENV=test && jest src/test/unit --runInBand",
     "test:unit:win": "cross-env NODE_ENV=test jest src/test/unit --runInBand",
     "test:api": "export NODE_ENV=test && jest src/test/api --runInBand",
-    "test:api:win": "cross-env NODE_ENV=test jest src/test/api/auth --runInBand",
+    "test:api:win": "cross-env NODE_ENV=test jest src/test/api --runInBand",
     "build": "npx tsc",
     "prod": "node ./dist/index.js",
     "prepare": "husky"
