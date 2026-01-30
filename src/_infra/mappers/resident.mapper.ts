@@ -1,6 +1,5 @@
 import { Prisma } from "@prisma/client";
 import {
-  Household,
   HouseholdMember,
   HouseholdMemberWithRelations,
   ResidentImportLog,
@@ -10,7 +9,7 @@ import {
   HouseholdMembersListView,
   HouseholdMemberView,
 } from "../../_modules/residents/dtos/res/resident.view";
-import { ResidentEntity } from "../../_modules/residents/domain/resident.entity";
+import { HouseholdEntity } from "../../_modules/residents/domain/resident.entity";
 
 export const householdMemberFullInclude =
   Prisma.validator<Prisma.HouseholdMemberInclude>()({
@@ -22,24 +21,13 @@ export const householdMemberFullInclude =
     },
   });
 
-export const householdWithMembersInclude =
-  Prisma.validator<Prisma.HouseholdInclude>()({
-    members: {
-      include: householdMemberFullInclude,
-    },
-  });
-
 export type HouseholdMemberRaw = Prisma.HouseholdMemberGetPayload<{
   include: typeof householdMemberFullInclude;
 }>;
 
-export type HouseholdWithMembersRaw = Prisma.HouseholdGetPayload<{
-  include: typeof householdWithMembersInclude;
-}>;
-
 export const ResidentMapper = {
   toHouseholdMemberEntity: (raw: HouseholdMemberRaw): HouseholdMember => {
-    return ResidentEntity.restoreHouseholdMember({
+    return HouseholdEntity.restoreHouseholdMember({
       id: raw.id,
       householdId: raw.householdId,
       userId: raw.userId || undefined,
@@ -60,37 +48,6 @@ export const ResidentMapper = {
     return raws.map((raw) => ResidentMapper.toHouseholdMemberEntity(raw));
   },
 
-  toHouseholdEntity: (raw: HouseholdWithMembersRaw): Household => {
-    return ResidentEntity.restoreHousehold({
-      id: raw.id,
-      apartmentId: raw.apartmentId,
-      building: raw.building,
-      unit: raw.unit,
-      householdStatus: raw.householdStatus,
-      members: raw.members.map((m) =>
-        ResidentMapper.toHouseholdMemberEntity(m),
-      ),
-      createdAt: raw.createdAt,
-      updatedAt: raw.updatedAt,
-      version: raw.version,
-    });
-  },
-
-  toHouseholdEntityArray: (raws: HouseholdWithMembersRaw[]): Household[] => {
-    return raws.map((raw) => ResidentMapper.toHouseholdEntity(raw));
-  },
-
-  toHouseholdCreateInput: (
-    household: Household,
-  ): Prisma.HouseholdCreateInput => ({
-    id: household.id,
-    building: household.building,
-    unit: household.unit,
-    householdStatus: household.householdStatus,
-    apartment: {
-      connect: { id: household.apartmentId },
-    },
-  }),
   toHouseholdMemberCreateInput: (
     member: HouseholdMember,
   ): Prisma.HouseholdMemberCreateInput => ({
@@ -101,9 +58,11 @@ export const ResidentMapper = {
     household: {
       connect: { id: member.householdId },
     },
-    user: {
-      connect: { id: member.userId! },
-    },
+    user: member.userId
+      ? {
+          connect: { id: member.userId },
+        }
+      : undefined,
     email: member.email,
     contact: member.contact,
     name: member.name,
@@ -117,30 +76,15 @@ export const ResidentMapper = {
     );
   },
 
-  toHouseholdUpdateInput: (
-    household: Household,
-  ): Prisma.HouseholdUpdateInput => ({
-    householdStatus: household.householdStatus,
-  }),
-
-  toHouseholdPartialUpdateInput: (
-    updates: Partial<Household>,
-  ): Prisma.HouseholdUpdateInput => {
-    const input: Prisma.HouseholdUpdateInput = {};
-
-    if (updates.householdStatus !== undefined) {
-      input.householdStatus = updates.householdStatus;
-    }
-
-    return input;
-  },
-
   toHouseholdMemberUpdateInput: (
     member: HouseholdMember,
   ): Prisma.HouseholdMemberUpdateInput => ({
     isHouseholder: member.isHouseholder,
     movedInAt: member.movedInAt,
     movedOutAt: member.movedOutAt,
+    email: member.email,
+    contact: member.contact,
+    name: member.name,
   }),
 
   toHouseholdMemberPartialUpdateInput: (
@@ -157,16 +101,17 @@ export const ResidentMapper = {
     if (updates.movedOutAt !== undefined) {
       input.movedOutAt = updates.movedOutAt;
     }
+    if (updates.email !== undefined) {
+      input.email = updates.email;
+    }
+    if (updates.contact !== undefined) {
+      input.contact = updates.contact;
+    }
+    if (updates.name !== undefined) {
+      input.name = updates.name;
+    }
 
     return input;
-  },
-
-  toHouseholdMemberBatchUpdateInput: (
-    members: Partial<HouseholdMember>[],
-  ): Prisma.HouseholdMemberUpdateInput[] => {
-    return members.map((member) =>
-      ResidentMapper.toHouseholdMemberPartialUpdateInput(member),
-    );
   },
 
   toHouseholdMemberView: (
@@ -202,7 +147,7 @@ export const ResidentMapper = {
   toResidentImportLogEntity: (
     raw: Prisma.ResidentImportLogGetPayload<object>,
   ): ResidentImportLog => {
-    return ResidentEntity.restoreResidentImportLog({
+    return HouseholdEntity.restoreResidentImportLog({
       id: raw.id,
       fileName: raw.fileName,
       totalCount: raw.totalCount,

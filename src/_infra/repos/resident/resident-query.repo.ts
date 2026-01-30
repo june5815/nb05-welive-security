@@ -3,7 +3,7 @@ import { IResidentQueryRepo } from "../../../_common/ports/repos/resident/reside
 import { HouseholdMemberWithRelations } from "../../../_modules/residents/domain/resident.type";
 import { IBaseQueryRepo } from "../_base/base-query.repo";
 
-export const createResidentQueryRepository = (
+export const ResidentQueryRepository = (
   baseQueryRepo: IBaseQueryRepo,
 ): IResidentQueryRepo => {
   const prisma = baseQueryRepo.getPrismaClient() as any;
