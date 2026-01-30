@@ -548,8 +548,8 @@ export const UserCommandService = (
           await userCommandRepo.lockManyResidentUser("update");
 
           body.joinStatus === "APPROVED"
-            ? await userCommandRepo.approveManyResidentUser()
-            : await userCommandRepo.rejectManyResidentUser();
+            ? await userCommandRepo.approveManyResidentUser(userId)
+            : await userCommandRepo.rejectManyResidentUser(userId);
         },
         {
           transactionOptions: {
@@ -664,7 +664,7 @@ export const UserCommandService = (
           }
 
           await userCommandRepo.lockManyResidentUser("update");
-          await userCommandRepo.deleteManyResidentUser();
+          await userCommandRepo.deleteManyResidentUser(userId);
         },
         {
           transactionOptions: {

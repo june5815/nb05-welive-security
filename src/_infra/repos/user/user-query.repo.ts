@@ -141,12 +141,38 @@ export const UserQueryRepo = (
 
   const findResidentUserList = async (
     query: ResidentUserListReq,
+    userId: string,
   ): Promise<ResidentUserListResView> => {
     try {
       const prismaClient = baseQueryRepo.getPrismaClient();
       const { page, limit, searchKeyword, joinStatus, building, unit } = query;
 
+      const userData = await prismaClient.user.findUnique({
+        where: { id: userId },
+        include: {
+          adminOf: {
+            select: { id: true },
+          },
+        },
+      });
+      // 혹시라도 관리자 정보나 아파트 정보가 부재할 경우를 위한 처리
+      // 추후 에러를 던지는 방향으로 수정해볼 수도 있음
+      if (!userData || !userData.adminOf) {
+        return {
+          data: [],
+          totalCount: 0,
+          page,
+          limit,
+          hasNext: false,
+        };
+      }
+
+      const apartmentId = userData.adminOf.id;
+
       const residentWhere: Prisma.HouseholdWhereInput = {};
+      if (apartmentId) {
+        residentWhere.apartmentId = apartmentId;
+      }
       if (building) {
         residentWhere.building = building;
       }

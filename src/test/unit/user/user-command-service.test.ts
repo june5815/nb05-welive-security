@@ -866,8 +866,12 @@ describe("UserCommandService Unit Test", () => {
       expect(mockUserCommandRepo.lockManyResidentUser).toHaveBeenCalledWith(
         "update",
       );
-      expect(mockUserCommandRepo.approveManyResidentUser).toHaveBeenCalled();
-      expect(mockUserCommandRepo.rejectManyResidentUser).not.toHaveBeenCalled();
+      expect(mockUserCommandRepo.approveManyResidentUser).toHaveBeenCalledWith(
+        dto.userId,
+      );
+      expect(
+        mockUserCommandRepo.rejectManyResidentUser,
+      ).not.toHaveBeenCalledWith(dto.userId);
       expect(mockUnitOfWork.doTx).toHaveBeenCalledWith(
         expect.any(Function),
         expect.objectContaining({
@@ -1026,7 +1030,9 @@ describe("UserCommandService Unit Test", () => {
       expect(mockUserCommandRepo.lockManyResidentUser).toHaveBeenCalledWith(
         "update",
       );
-      expect(mockUserCommandRepo.deleteManyResidentUser).toHaveBeenCalled();
+      expect(mockUserCommandRepo.deleteManyResidentUser).toHaveBeenCalledWith(
+        dto.userId,
+      );
       expect(mockUnitOfWork.doTx).toHaveBeenCalledWith(
         expect.any(Function),
         expect.objectContaining({

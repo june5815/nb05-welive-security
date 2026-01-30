@@ -495,11 +495,26 @@ export const UserCommandRepo = (
     }
   };
 
-  const approveManyResidentUser = async (): Promise<void> => {
+  const approveManyResidentUser = async (userId: string): Promise<void> => {
     try {
       const prisma = baseCommandRepo.getPrismaClient();
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: { adminOf: true },
+      });
+      // 혹시라도 관리자 정보나 아파트 정보가 부재할 경우를 위한 처리
+      if (!user || !user.adminOf) {
+        throw new Error("관리자 또는 아파트 정보를 찾을 수 없습니다.");
+      }
+
+      const apartmentId = user.adminOf.id;
+
       await prisma.user.updateMany({
-        where: { joinStatus: "PENDING", role: "USER" },
+        where: {
+          joinStatus: "PENDING",
+          role: "USER",
+          resident: { household: { apartmentId } },
+        },
         data: {
           joinStatus: "APPROVED",
           isActive: true,
@@ -511,11 +526,26 @@ export const UserCommandRepo = (
     }
   };
 
-  const rejectManyResidentUser = async (): Promise<void> => {
+  const rejectManyResidentUser = async (userId: string): Promise<void> => {
     try {
       const prisma = baseCommandRepo.getPrismaClient();
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: { adminOf: true },
+      });
+      // 혹시라도 관리자 정보나 아파트 정보가 부재할 경우를 위한 처리
+      if (!user || !user.adminOf) {
+        throw new Error("관리자 또는 아파트 정보를 찾을 수 없습니다.");
+      }
+
+      const apartmentId = user.adminOf.id;
+
       await prisma.user.updateMany({
-        where: { joinStatus: "PENDING", role: "USER" },
+        where: {
+          joinStatus: "PENDING",
+          role: "USER",
+          resident: { household: { apartmentId } },
+        },
         data: {
           joinStatus: "REJECTED",
           isActive: false,
@@ -568,11 +598,26 @@ export const UserCommandRepo = (
     }
   };
 
-  const deleteManyResidentUser = async (): Promise<void> => {
+  const deleteManyResidentUser = async (userId: string): Promise<void> => {
     try {
       const prisma = baseCommandRepo.getPrismaClient();
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: { adminOf: true },
+      });
+      // 혹시라도 관리자 정보나 아파트 정보가 부재할 경우를 위한 처리
+      if (!user || !user.adminOf) {
+        throw new Error("관리자 또는 아파트 정보를 찾을 수 없습니다.");
+      }
+
+      const apartmentId = user.adminOf.id;
+
       await prisma.user.deleteMany({
-        where: { role: "USER", joinStatus: "REJECTED" },
+        where: {
+          role: "USER",
+          joinStatus: "REJECTED",
+          resident: { household: { apartmentId } },
+        },
       });
     } catch (error) {
       if (
