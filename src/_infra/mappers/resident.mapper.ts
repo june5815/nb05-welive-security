@@ -43,9 +43,9 @@ export const ResidentMapper = {
       id: raw.id,
       householdId: raw.householdId,
       userId: raw.userId || undefined,
-      email: raw.user?.email || "",
-      contact: raw.user?.contact || "",
-      name: raw.user?.name || "",
+      email: raw.email,
+      contact: raw.contact,
+      name: raw.name,
       isHouseholder: raw.isHouseholder,
       movedInAt: raw.movedInAt ?? undefined,
       movedOutAt: raw.movedOutAt ?? undefined,
@@ -101,11 +101,9 @@ export const ResidentMapper = {
     household: {
       connect: { id: member.householdId },
     },
-    user: member.userId
-      ? {
-          connect: { id: member.userId },
-        }
-      : undefined,
+    user: {
+      connect: { id: member.userId! },
+    },
     email: member.email,
     contact: member.contact,
     name: member.name,
