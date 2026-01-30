@@ -38,11 +38,11 @@ describe("Auth API 통합 테스트", () => {
     const { httpServer } = Injector();
     app = httpServer.app;
 
-    await prisma.user.deleteMany();
-    await prisma.refreshToken.deleteMany();
-    await prisma.apartment.deleteMany();
-    await prisma.household.deleteMany();
     await prisma.householdMember.deleteMany();
+    await prisma.household.deleteMany();
+    await prisma.apartment.deleteMany();
+    await prisma.refreshToken.deleteMany();
+    await prisma.user.deleteMany();
     const hashedPassword = await bcrypt.hash(testUser.password, 10);
     await prisma.user.create({
       data: {
@@ -52,7 +52,7 @@ describe("Auth API 통합 테스트", () => {
         contact: testUser.contact,
         name: testUser.name,
         role: "USER",
-        joinStatus: "APPROVED", // 로그인 가능 상태
+        joinStatus: "APPROVED",
         isActive: true,
       },
     });
@@ -64,7 +64,7 @@ describe("Auth API 통합 테스트", () => {
         contact: pendingUser.contact,
         name: pendingUser.name,
         role: "USER",
-        joinStatus: "PENDING", // 로그인 불가능 상태
+        joinStatus: "PENDING",
         isActive: false,
       },
     });
@@ -76,7 +76,7 @@ describe("Auth API 통합 테스트", () => {
         contact: rejectUser.contact,
         name: rejectUser.name,
         role: "USER",
-        joinStatus: "REJECTED", // 로그인 불가능 상태
+        joinStatus: "REJECTED",
         isActive: false,
       },
     });
@@ -84,14 +84,11 @@ describe("Auth API 통합 테스트", () => {
   beforeEach(() => {});
   afterEach(() => {});
   afterAll(async () => {
+    await prisma.householdMember.deleteMany();
+    await prisma.household.deleteMany();
+    await prisma.apartment.deleteMany();
     await prisma.refreshToken.deleteMany();
-    await prisma.user.deleteMany({
-      where: {
-        username: {
-          in: [testUser.username, pendingUser.username, rejectUser.username],
-        },
-      },
-    });
+    await prisma.user.deleteMany();
     await prisma.$disconnect();
   });
 

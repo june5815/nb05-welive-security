@@ -219,6 +219,7 @@ describe("UserQueryService Unit Test", () => {
 
       expect(mockUserQueryRepo.findResidentUserList).toHaveBeenCalledWith(
         dto.query,
+        dto.userId,
       );
       expect(result).toEqual(mockListRes);
     });

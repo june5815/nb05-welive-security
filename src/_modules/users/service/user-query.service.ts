@@ -112,7 +112,10 @@ export const UserQueryService = (
       });
     }
 
-    const residentUserListRes = await userQueryRepo.findResidentUserList(query);
+    const residentUserListRes = await userQueryRepo.findResidentUserList(
+      query,
+      userId,
+    );
 
     return residentUserListRes;
   };

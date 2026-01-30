@@ -52,9 +52,9 @@ export interface IUserCommandRepo {
   update: (entity: IUser) => Promise<IUser>;
   approveManyAdmin: () => Promise<void>;
   rejectManyAdmin: () => Promise<void>;
-  approveManyResidentUser: () => Promise<void>;
-  rejectManyResidentUser: () => Promise<void>;
+  approveManyResidentUser: (userId: string) => Promise<void>;
+  rejectManyResidentUser: (userId: string) => Promise<void>;
   deleteAdmin: (userId: string) => Promise<void>;
   deleteManyAdmin: () => Promise<void>;
-  deleteManyResidentUser: () => Promise<void>;
+  deleteManyResidentUser: (userId: string) => Promise<void>;
 }

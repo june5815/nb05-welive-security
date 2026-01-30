@@ -16,5 +16,6 @@ export interface IUserQueryRepo {
   findAdminList: (query: AdminListReq) => Promise<AdminListResView>;
   findResidentUserList: (
     query: ResidentUserListReq,
+    userId: string,
   ) => Promise<ResidentUserListResView>;
 }
