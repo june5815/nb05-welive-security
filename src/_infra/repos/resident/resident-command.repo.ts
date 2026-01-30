@@ -14,7 +14,6 @@ import {
 export const ResidentCommandRepository = (
   baseCommandRepo: IBaseCommandRepo,
 ): IResidentCommandRepo => {
-
   const createHouseholdMember = async (
     entity: HouseholdMember,
   ): Promise<HouseholdMember> => {
