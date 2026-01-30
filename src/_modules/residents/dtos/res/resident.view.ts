@@ -21,3 +21,10 @@ export interface HouseholdMembersListResponseView {
   limit: number;
   hasNext: boolean;
 }
+
+export interface CreateResidentResView extends HouseholdMemberView {}
+
+export interface CreateResidentResponseView {
+  data: CreateResidentResView;
+  message: string;
+}

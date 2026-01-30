@@ -10,6 +10,7 @@ import { INotFoundErrorMiddleware } from "../_common/ports/middlewares/not-found
 import { IStaticServeMiddleware } from "../_common/ports/middlewares/static-serve-middleware.interface";
 import { IAuthRouter } from "../_modules/auth/auth.router";
 import { IUserRouter } from "../_modules/users/user.router";
+import { IApartmentRouter } from "../_modules/apartments/apartment.router";
 import { INoticeRouter } from "../_modules/notices/notice.routes";
 import { ICommentRouter } from "../_modules/comments/routes";
 import { IEventRouter } from "../_modules/events/routes";
@@ -30,6 +31,7 @@ export const HttpServer = (
   staticServeMiddleware: IStaticServeMiddleware,
   authRouter: IAuthRouter,
   userRouter: IUserRouter,
+  apartmentRouter: IApartmentRouter,
   noticeRouter: INoticeRouter,
   commentRouter: ICommentRouter,
   eventRouter: IEventRouter,
@@ -46,6 +48,7 @@ export const HttpServer = (
   // routers
   app.use(authRouter.PATH, authRouter.router);
   app.use(userRouter.PATH, userRouter.router);
+  app.use(apartmentRouter.PATH, apartmentRouter.router);
   app.use(noticeRouter.PATH, noticeRouter.router);
   app.use(commentRouter.PATH, commentRouter.router);
   app.use(eventRouter.PATH, eventRouter.router);

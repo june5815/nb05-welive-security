@@ -1,6 +1,7 @@
 import { BaseRouter } from "./_modules/_base/base.router";
 import { AuthRouter } from "./_modules/auth/auth.router";
 import { UserRouter } from "./_modules/users/user.router";
+import { ApartmentRouter } from "./_modules/apartments/apartment.router";
 import { NoticeRouter } from "./_modules/notices/notice.routes";
 import { CommentRouter } from "./_modules/comments/routes";
 import { EventRouter } from "./_modules/events/routes";
@@ -8,16 +9,19 @@ import { EventRouter } from "./_modules/events/routes";
 import { BaseController } from "./_modules/_base/base.controller";
 import { AuthController } from "./_modules/auth/auth.controller";
 import { UserController } from "./_modules/users/user.controller";
+import { ApartmentController } from "./_modules/apartments/apartment.controller";
 
 import { AuthCommandService } from "./_modules/auth/service/auth-command.service";
 import { UserCommandService } from "./_modules/users/service/user-command.service";
 import { UserQueryService } from "./_modules/users/service/user-query.service";
+import { ApartmentQueryUsecase } from "./_modules/apartments/usecases/query/apartment-query.usecase";
 
 import { AuthCommandRepo } from "./_infra/repos/auth/auth-command.repo";
 import { BaseCommandRepo } from "./_infra/repos/_base/base-command.repo";
 import { UserCommandRepo } from "./_infra/repos/user/user-command.repo";
 import { BaseQueryRepo } from "./_infra/repos/_base/base-query.repo";
 import { UserQueryRepo } from "./_infra/repos/user/user-query.repo";
+import { ApartmentQueryRepo } from "./_infra/repos/apartment/apartment-query.repo";
 
 import { UOW } from "./_infra/db/unit-of-work";
 import { HashManager } from "./_infra/manager/bcrypt-hash.manager";
@@ -49,6 +53,7 @@ export const Injector = () => {
   const userCommandRepo = UserCommandRepo(baseCommandRepo);
   const baseQueryRepo = BaseQueryRepo(prisma);
   const userQueryRepo = UserQueryRepo(baseQueryRepo);
+  const apartmentQueryRepo = ApartmentQueryRepo(baseQueryRepo);
 
   const unitOfWork = UOW(prisma, configUtil);
   const hashManager = HashManager(configUtil);
@@ -65,6 +70,7 @@ export const Injector = () => {
     userCommandRepo,
   );
   const userQueryService = UserQueryService(userQueryRepo);
+  const apartmentQueryUsecase = ApartmentQueryUsecase(apartmentQueryRepo);
 
   const authMiddleware = AuthMiddleware(tokenUtil);
   const cookieMiddleware = CookieMiddleware(configUtil);
@@ -84,6 +90,10 @@ export const Injector = () => {
     userQueryService,
     userCommandService,
   );
+  const apartmentController = ApartmentController(
+    baseController,
+    apartmentQueryUsecase,
+  );
 
   const baseRouter = BaseRouter();
   const authRouter = AuthRouter(baseRouter, authController);
@@ -94,6 +104,7 @@ export const Injector = () => {
     roleMiddleware,
     multerMiddleware,
   );
+  const apartmentRouter = ApartmentRouter(baseRouter, apartmentController);
 
   const noticeRouter = NoticeRouter(
     baseRouter,
@@ -130,6 +141,7 @@ export const Injector = () => {
     staticServeMiddleware,
     authRouter,
     userRouter,
+    apartmentRouter,
     noticeRouter,
     commentRouter,
     eventRouter,
