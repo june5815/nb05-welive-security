@@ -2,8 +2,6 @@ import request from "supertest";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { Injector } from "../../../injector";
-import { connect } from "http2";
-import e from "express";
 
 jest.setTimeout(30000);
 
@@ -59,6 +57,7 @@ describe("User API 통합 테스트", () => {
     name: "Resident",
     resident: resident,
   };
+  const newPassword = "newPassword123!";
 
   beforeAll(async () => {
     const { httpServer } = Injector();
@@ -81,6 +80,9 @@ describe("User API 통합 테스트", () => {
     await prisma.$disconnect();
   });
 
+  /**
+   * 슈퍼 관리자 생성 테스트
+   */
   describe("POST /api/v2/users/super-admins", () => {
     test("성공: 유효한 정보로 요청 시 슈퍼 관리자를 생성하고 상태 코드 204를 반환해야 한다.", async () => {
       const res = await request(app)
@@ -166,6 +168,9 @@ describe("User API 통합 테스트", () => {
     });
   });
 
+  /**
+   * 관리자 생성 테스트
+   */
   describe("POST /api/v2/users/admins", () => {
     test("성공: 유효한 정보로 요청 시 관리자와 아파트를 생성하고, 세대 정보를 대량 생성한 뒤 상태 코드 204를 반환해야 한다.", async () => {
       const res = await request(app)
@@ -348,6 +353,9 @@ describe("User API 통합 테스트", () => {
     });
   });
 
+  /**
+   * 입주민 생성 테스트
+   */
   describe("POST /api/v2/users/residents", () => {
     let apartmentId: string;
 
@@ -550,6 +558,9 @@ describe("User API 통합 테스트", () => {
     });
   });
 
+  /**
+   * 관리자 목록 조회 테스트 (슈퍼 관리자 권한 필요)
+   */
   describe("GET /api/v2/users/admins", () => {
     let superAdminCookies: string[];
     let adminCookies: string[];
@@ -716,6 +727,9 @@ describe("User API 통합 테스트", () => {
     });
   });
 
+  /**
+   * 입주민 목록 조회 테스트 (관리자 권한 필요)
+   */
   describe("GET /api/v2/users/residents", () => {
     let superAdminCookies: string[];
     let adminCookies: string[];
@@ -957,6 +971,9 @@ describe("User API 통합 테스트", () => {
     });
   });
 
+  /**
+   * 특정 관리자 상세 조회 테스트 (슈퍼 관리자 권한 필요)
+   */
   describe("GET /api/v2/users/admins/:adminId", () => {
     let superAdminCookies: string[];
     let adminCookies: string[];
@@ -1037,6 +1054,9 @@ describe("User API 통합 테스트", () => {
     });
   });
 
+  /**
+   * 본인 프로필 조회 테스트 (관리자 및 입주민)
+   */
   describe("GET /api/v2/users/me", () => {
     let superAdminCookies: string[];
     let adminCookies: string[];
@@ -1123,6 +1143,9 @@ describe("User API 통합 테스트", () => {
     });
   });
 
+  /**
+   * 관리자 개별 가입 상태 변경 테스트 (슈퍼 관리자 권한 필요)
+   */
   describe("PATCH /api/v2/users/admins/:adminId/join-status", () => {
     let superAdminCookies: string[];
     let adminCookies: string[];
@@ -1300,6 +1323,9 @@ describe("User API 통합 테스트", () => {
     });
   });
 
+  /**
+   * 관리자 일괄 가입 상태 변경 테스트 (슈퍼 관리자 권한 필요)
+   */
   describe("PATCH /api/v2/users/admins/join-status", () => {
     let superAdminCookies: string[];
     let adminCookies: string[];
@@ -1438,13 +1464,15 @@ describe("User API 통합 테스트", () => {
     });
   });
 
+  /**
+   * 입주민 개별 가입 상태 변경 테스트 (관리자 권한 필요)
+   */
   describe("PATCH /api/v2/users/residents/:residentId/join-status", () => {
     let superAdminCookies: string[];
     let adminCookies: string[];
+    let residentUser: any;
     let pendingUser: any;
-    let beRejectUser: any;
     let pendingUserId: string;
-    let beRejectUserId: string;
 
     beforeAll(async () => {
       const hashedPassword = await bcrypt.hash("password123!", 10);
@@ -1467,6 +1495,11 @@ describe("User API 통합 테스트", () => {
         password: adminData.password,
       });
       adminCookies = adminLoginRes.headers["set-cookie"] as unknown as string[];
+
+      residentUser = await prisma.user.findUnique({
+        where: { username: residentUserData.username },
+        include: { resident: { include: { household: true } } },
+      });
 
       const myHousehold = await prisma.household.findUnique({
         where: {
@@ -1500,41 +1533,18 @@ describe("User API 통합 테스트", () => {
         include: { resident: { include: { household: true } } },
       });
       pendingUserId = pendingUser.id;
-
-      beRejectUser = await prisma.user.create({
-        data: {
-          username: "reject_resident",
-          password: hashedPassword,
-          email: "reject_res@test.com",
-          contact: "01033338888",
-          name: "Reject Res",
-          role: "USER",
-          joinStatus: "PENDING",
-          isActive: false,
-          resident: {
-            create: {
-              household: { connect: { id: myHousehold!.id } },
-              name: "Reject Res",
-              email: "reject_res@test.com",
-              contact: "01033338888",
-            },
-          },
-        },
-        include: { resident: { include: { household: true } } },
-      });
-      beRejectUserId = beRejectUser.id;
     });
 
     test("성공: 관리자가 자신의 아파트에 신청한 입주민을 승인하면 상태가 변경되고 상태 코드 204를 반환해야 한다.", async () => {
       const res = await request(app)
-        .patch(`/api/v2/users/residents/${pendingUserId}/join-status`)
+        .patch(`/api/v2/users/residents/${residentUser.id}/join-status`)
         .set("Cookie", adminCookies)
         .send({ joinStatus: "APPROVED" });
 
       expect(res.status).toBe(204);
 
       const updatedUser = await prisma.user.findUnique({
-        where: { id: pendingUserId },
+        where: { id: residentUser.id },
       });
       expect(updatedUser?.joinStatus).toBe("APPROVED");
       expect(updatedUser?.isActive).toBe(true);
@@ -1542,14 +1552,14 @@ describe("User API 통합 테스트", () => {
 
     test("성공: 관리자가 자신의 아파트에 신청한 입주민을 거절하면 상태가 변경되고 상태 코드 204를 반환해야 한다.", async () => {
       const res = await request(app)
-        .patch(`/api/v2/users/residents/${beRejectUserId}/join-status`)
+        .patch(`/api/v2/users/residents/${pendingUserId}/join-status`)
         .set("Cookie", adminCookies)
         .send({ joinStatus: "REJECTED" });
 
       expect(res.status).toBe(204);
 
       const updatedUser = await prisma.user.findUnique({
-        where: { id: beRejectUserId },
+        where: { id: pendingUserId },
       });
       expect(updatedUser?.joinStatus).toBe("REJECTED");
       expect(updatedUser?.isActive).toBe(false);
@@ -1591,6 +1601,9 @@ describe("User API 통합 테스트", () => {
     });
   });
 
+  /**
+   * 입주민 일괄 가입 상태 변경 테스트 (관리자 권한 필요)
+   */
   describe("PATCH /api/v2/users/residents/join-status", () => {
     let superAdminCookies: string[];
     let adminCookies: string[];
@@ -1622,7 +1635,7 @@ describe("User API 통합 테스트", () => {
       });
       adminCookies = adminLoginRes.headers["set-cookie"] as unknown as string[];
       const userLoginRes = await request(app).post("/api/v2/auth/login").send({
-        username: "pending_resident",
+        username: residentUserData.username,
         password: residentUserData.password,
       });
       userCookies = userLoginRes.headers["set-cookie"] as unknown as string[];
@@ -1825,6 +1838,1034 @@ describe("User API 통합 테스트", () => {
         .patch("/api/v2/users/residents/join-status")
         .set("Cookie", userCookies)
         .send({ joinStatus: "APPROVED" });
+
+      expect(res.status).toBe(401);
+      expect(res.body.message).toMatch("권한과 관련된 오류입니다.");
+    });
+  });
+
+  /**
+   * 본인 프로필 사진 수정 테스트 (관리자 및 입주민)
+   */
+  describe("PATCH /api/v2/users/me/avatar", () => {
+    let superAdminCookies: string[];
+    let adminCookies: string[];
+    let userCookies: string[];
+    let adminId: string;
+    let userId: string;
+
+    beforeAll(async () => {
+      const superLoginRes = await request(app).post("/api/v2/auth/login").send({
+        username: superAdminData.username,
+        password: superAdminData.password,
+      });
+      superAdminCookies = superLoginRes.headers[
+        "set-cookie"
+      ] as unknown as string[];
+
+      const admin = await prisma.user.findUnique({
+        where: { username: adminData.username },
+        include: { adminOf: true },
+      });
+      adminId = admin!.id;
+      const adminLoginRes = await request(app).post("/api/v2/auth/login").send({
+        username: adminData.username,
+        password: adminData.password,
+      });
+      adminCookies = adminLoginRes.headers["set-cookie"] as unknown as string[];
+
+      const user = await prisma.user.findUnique({
+        where: { username: residentUserData.username },
+      });
+      userId = user!.id;
+      const userLoginRes = await request(app).post("/api/v2/auth/login").send({
+        username: residentUserData.username,
+        password: residentUserData.password,
+      });
+      userCookies = userLoginRes.headers["set-cookie"] as unknown as string[];
+    });
+
+    test("성공: 관리자가 프로필 사진을 업로드하면 DB에 아바타 정보가 업데이트되고 상태 코드 204 OK를 반환해야 한다.", async () => {
+      const fileBuffer = Buffer.from("fake_image_content");
+
+      const res = await request(app)
+        .patch("/api/v2/users/me/avatar")
+        .set("Cookie", adminCookies)
+        .attach("avatarImage", fileBuffer, "admin_profile.jpg");
+
+      expect(res.status).toBe(204);
+
+      const updatedAdmin = await prisma.user.findUnique({
+        where: { id: adminId },
+      });
+      expect(updatedAdmin!.avatar).not.toBeNull();
+      // 만약 로컬/S3 업로드 로직이 실제 동작한다면 URL 형태인지 체크
+      // expect(updatedAdmin?.avatar).toMatch(/^https?:\/\//);
+    });
+
+    test("성공: 입주민이 프로필 사진을 업로드하면 DB에 아바타 정보가 업데이트되고 상태 코드 204 OK를 반환해야 한다.", async () => {
+      const fileBuffer = Buffer.from("user_image_content");
+
+      const res = await request(app)
+        .patch("/api/v2/users/me/avatar")
+        .set("Cookie", userCookies)
+        .attach("avatarImage", fileBuffer, "user_profile.png");
+
+      expect(res.status).toBe(204);
+
+      const updatedUser = await prisma.user.findUnique({
+        where: { id: userId },
+      });
+      expect(updatedUser!.avatar).not.toBeNull();
+    });
+
+    test("실패: 슈퍼 관리자가 아바타 수정을 시도하면 상태 코드 401 FORBIDDEN 에러를 반환해야 한다.", async () => {
+      const fileBuffer = Buffer.from("super_image_content");
+
+      const res = await request(app)
+        .patch("/api/v2/users/me/avatar")
+        .set("Cookie", superAdminCookies)
+        .attach("avatarImage", fileBuffer, "super_profile.jpg");
+
+      expect(res.status).toBe(401);
+      expect(res.body.message).toMatch("권한과 관련된 오류입니다.");
+    });
+
+    test("실패: 파일을 첨부하지 않고 요청하면 상태 코드 400 IMAGE_NOT_FOUND 에러를 반환해야 한다.", async () => {
+      const res = await request(app)
+        .patch("/api/v2/users/me/avatar")
+        .set("Cookie", userCookies)
+        .send();
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toMatch(
+        "이미지 파일을 찾을 수 없습니다. 다시 업로드해주세요.",
+      );
+    });
+  });
+
+  /**
+   * 본인 비밀번호 변경 테스트 (관리자 및 입주민)
+   */
+  describe("PATCH /api/v2/users/me/password", () => {
+    let superAdminCookies: string[];
+    let adminCookies: string[];
+    let userCookies: string[];
+    let adminId: string;
+    let userId: string;
+
+    beforeAll(async () => {
+      const superLoginRes = await request(app).post("/api/v2/auth/login").send({
+        username: superAdminData.username,
+        password: superAdminData.password,
+      });
+      superAdminCookies = superLoginRes.headers[
+        "set-cookie"
+      ] as unknown as string[];
+
+      const adminLoginRes = await request(app).post("/api/v2/auth/login").send({
+        username: adminData.username,
+        password: adminData.password,
+      });
+      adminCookies = adminLoginRes.headers["set-cookie"] as unknown as string[];
+
+      const adminUser = await prisma.user.findUnique({
+        where: { username: adminData.username },
+      });
+      adminId = adminUser!.id;
+
+      const userLoginRes = await request(app).post("/api/v2/auth/login").send({
+        username: residentUserData.username,
+        password: residentUserData.password,
+      });
+      userCookies = userLoginRes.headers["set-cookie"] as unknown as string[];
+
+      const residentUser = await prisma.user.findUnique({
+        where: { username: residentUserData.username },
+      });
+      userId = residentUser!.id;
+    });
+
+    test("성공: 관리자가 현재 비밀번호를 올바르게 입력하면 새 비밀번호로 변경되고 상태 코드 204를 반환해야 한다.", async () => {
+      const res = await request(app)
+        .patch("/api/v2/users/me/password")
+        .set("Cookie", adminCookies)
+        .send({
+          password: adminData.password,
+          newPassword: newPassword,
+        });
+
+      expect(res.status).toBe(204);
+
+      const updatedAdmin = await prisma.user.findUnique({
+        where: { id: adminId },
+      });
+      const isMatch = await bcrypt.compare(newPassword, updatedAdmin!.password);
+
+      expect(isMatch).toBe(true);
+    });
+
+    test("성공: 입주민이 현재 비밀번호를 올바르게 입력하면 새 비밀번호로 변경되고 상태 코드 204를 반환해야 한다.", async () => {
+      const res = await request(app)
+        .patch("/api/v2/users/me/password")
+        .set("Cookie", userCookies)
+        .send({
+          password: residentUserData.password,
+          newPassword: newPassword,
+        });
+
+      expect(res.status).toBe(204);
+
+      const updatedUser = await prisma.user.findUnique({
+        where: { id: userId },
+      });
+      const isMatch = await bcrypt.compare(newPassword, updatedUser!.password);
+
+      expect(isMatch).toBe(true);
+    });
+
+    test("실패: 관리자가 비밀번호를 변경한 다음 이전 비밀번호로 재로그인을 시도하면 상태 코드 401 INVALID_AUTH 에러를 반환해야 한다.", async () => {
+      const res = await request(app).post("/api/v2/auth/login").send({
+        username: adminData.username,
+        password: adminData.password,
+      });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toMatch(
+        "이메일 또는 비밀번호가 일치하지 않아요.",
+      );
+    });
+
+    test("실패: 입주민이 비밀번호를 변경한 다음 이전 비밀번호로 재로그인을 시도하면 상태 코드 401 INVALID_AUTH 에러를 반환해야 한다.", async () => {
+      const res = await request(app).post("/api/v2/auth/login").send({
+        username: residentUserData.username,
+        password: residentUserData.password,
+      });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toMatch(
+        "이메일 또는 비밀번호가 일치하지 않아요.",
+      );
+    });
+
+    test("실패: 현재 비밀번호가 일치하지 않으면 상태 코드 400 INVALID_PASSWORD 에러를 반환해야 한다.", async () => {
+      const res = await request(app)
+        .patch("/api/v2/users/me/password")
+        .set("Cookie", adminCookies)
+        .send({
+          password: "wrong_password!1",
+          newPassword: "any_new_password!1",
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toMatch("비밀번호가 일치하지 않습니다.");
+    });
+
+    test("실패: 슈퍼 관리자가 비밀번호 변경을 시도하면 상태 코드 401 FORBIDDEN 에러를 반환해야 한다.", async () => {
+      const res = await request(app)
+        .patch("/api/v2/users/me/password")
+        .set("Cookie", superAdminCookies)
+        .send({
+          password: superAdminData.password,
+          newPassword: newPassword,
+        });
+
+      expect(res.status).toBe(401);
+      expect(res.body.message).toMatch("권한과 관련된 오류입니다.");
+    });
+
+    test("실패: 필수 정보(새 비밀번호 등)가 누락되면 상태 코드 400 zod 에러를 반환해야 한다.", async () => {
+      const res = await request(app)
+        .patch("/api/v2/users/me/password")
+        .set("Cookie", userCookies)
+        .send({
+          password: residentUserData.password,
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toMatch(
+        "Invalid input: expected string, received undefined",
+      );
+    });
+  });
+
+  /**
+   * 관리자 정보 수정 테스트 (슈퍼 관리자 권한 필요)
+   */
+  describe("PATCH /api/v2/users/admins/:adminId", () => {
+    let superAdminCookies: string[];
+    let adminCookies: string[];
+    let targetAdminId: string;
+    let otherAdminId: string;
+
+    beforeAll(async () => {
+      const hashedPassword = await bcrypt.hash("password123!", 10);
+
+      const superLoginRes = await request(app).post("/api/v2/auth/login").send({
+        username: superAdminData.username,
+        password: superAdminData.password,
+      });
+      superAdminCookies = superLoginRes.headers[
+        "set-cookie"
+      ] as unknown as string[];
+
+      const adminLoginRes = await request(app).post("/api/v2/auth/login").send({
+        username: adminData.username,
+        password: newPassword,
+      });
+      adminCookies = adminLoginRes.headers["set-cookie"] as unknown as string[];
+
+      const targetAdmin = await prisma.user.create({
+        data: {
+          username: "edit_target_admin",
+          password: hashedPassword,
+          email: "target_edit@test.com",
+          contact: "01055556666",
+          name: "Original Target",
+          role: "ADMIN",
+          joinStatus: "APPROVED",
+          isActive: true,
+          adminOf: {
+            create: {
+              name: "Original Apt",
+              address: "Original City",
+              officeNumber: "025556666",
+              description: "Original Desc",
+              buildingNumberFrom: 1,
+              buildingNumberTo: 2,
+              floorCountPerBuilding: 5,
+              unitCountPerFloor: 2,
+            },
+          },
+        },
+        include: { adminOf: true },
+      });
+      targetAdminId = targetAdmin.id;
+
+      const otherAdmin = await prisma.user.create({
+        data: {
+          username: "other_existing_admin",
+          password: hashedPassword,
+          email: "other_existing@test.com",
+          contact: "01099998888",
+          name: "Other Admin",
+          role: "ADMIN",
+          joinStatus: "APPROVED",
+          isActive: true,
+          adminOf: {
+            create: {
+              name: "Existing Apt",
+              address: "Existing City",
+              officeNumber: "029998888",
+              description: "Existing Desc",
+              buildingNumberFrom: 1,
+              buildingNumberTo: 2,
+              floorCountPerBuilding: 5,
+              unitCountPerFloor: 2,
+            },
+          },
+        },
+        include: { adminOf: true },
+      });
+      otherAdminId = otherAdmin.id;
+    });
+
+    test("성공: 슈퍼 관리자가 관리자의 기본 정보(이름, 이메일, 연락처 등)를 수정하면 DB에 반영되고 상태 코드 204를 반환해야 한다.", async () => {
+      const res = await request(app)
+        .patch(`/api/v2/users/admins/${targetAdminId}`)
+        .set("Cookie", superAdminCookies)
+        .send({
+          name: "Updated Name",
+          email: "updated_email@naver.com",
+          contact: "01008088888",
+        });
+
+      expect(res.status).toBe(204);
+
+      const updatedAdmin = await prisma.user.findUnique({
+        where: { id: targetAdminId },
+      });
+      expect(updatedAdmin!.name).toBe("Updated Name");
+      expect(updatedAdmin!.email).toBe("updated_email@naver.com");
+      expect(updatedAdmin!.contact).toBe("01008088888");
+    });
+
+    test("성공: 이미 존재하는 다른 아파트 정보(이름, 주소, 번호 등)로 수정을 시도하지만, 해당 아파트의 관리자가 수정하는 관리자와 동일하다면 정상적으로 수정된다.", async () => {
+      const res = await request(app)
+        .patch(`/api/v2/users/admins/${targetAdminId}`)
+        .set("Cookie", superAdminCookies)
+        .send({
+          adminOf: {
+            name: "Original Apt",
+            address: "Original City",
+            officeNumber: "025556666",
+            description: "Try Duplicate Same Admin",
+          },
+        });
+
+      expect(res.status).toBe(204);
+
+      const updatedAdmin = await prisma.user.findUnique({
+        where: { id: targetAdminId },
+        include: { adminOf: true },
+      });
+
+      expect(updatedAdmin!.adminOf!.name).toBe("Original Apt");
+      expect(updatedAdmin!.adminOf!.address).toBe("Original City");
+      expect(updatedAdmin!.adminOf!.officeNumber).toBe("025556666");
+      expect(updatedAdmin!.adminOf!.description).toBe(
+        "Try Duplicate Same Admin",
+      );
+    });
+
+    test("성공: 슈퍼 관리자가 관리자의 아파트 정보를 수정하면 DB에 반영되어야 한다.", async () => {
+      const res = await request(app)
+        .patch(`/api/v2/users/admins/${targetAdminId}`)
+        .set("Cookie", superAdminCookies)
+        .send({
+          adminOf: {
+            name: "New Apt Name",
+            address: "New City",
+            officeNumber: "021231234",
+            description: "New Description",
+          },
+        });
+
+      expect(res.status).toBe(204);
+
+      const updatedAdmin = await prisma.user.findUnique({
+        where: { id: targetAdminId },
+        include: { adminOf: true },
+      });
+
+      expect(updatedAdmin!.adminOf!.name).toBe("New Apt Name");
+      expect(updatedAdmin!.adminOf!.address).toBe("New City");
+      expect(updatedAdmin!.adminOf!.officeNumber).toBe("021231234");
+      expect(updatedAdmin!.adminOf!.description).toBe("New Description");
+    });
+
+    test("실패: 이미 존재하는 다른 아파트 정보(이름, 주소, 번호 등)로 수정을 시도하면 상태 코드 400 DUPLICATE_APARTMENT 에러를 반환해야 한다.", async () => {
+      const res = await request(app)
+        .patch(`/api/v2/users/admins/${targetAdminId}`)
+        .set("Cookie", superAdminCookies)
+        .send({
+          adminOf: {
+            name: "Existing Apt",
+            address: "Existing City",
+            officeNumber: "029998888",
+            description: "Try Duplicate",
+          },
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toMatch("이미 관리자가 존재하는 아파트입니다.");
+    });
+
+    test("실패: 슈퍼 관리자가 아닌 계정이 수정을 시도하면 상태 코드 401 FORBIDDEN 에러를 반환해야 한다.", async () => {
+      const res = await request(app)
+        .patch(`/api/v2/users/admins/${targetAdminId}`)
+        .set("Cookie", adminCookies)
+        .send({ name: "Hacker Name" });
+
+      expect(res.status).toBe(401);
+      expect(res.body.message).toMatch("권한과 관련된 오류입니다.");
+    });
+
+    test("실패: 존재하지 않는 관리자 ID로 수정 요청 시 상태 코드 404 USER_NOT_FOUND 에러를 반환해야 한다.", async () => {
+      const nonExistentId = "00000000-0000-0000-0000-000000000000";
+      const res = await request(app)
+        .patch(`/api/v2/users/admins/${nonExistentId}`)
+        .set("Cookie", superAdminCookies)
+        .send({ name: "Ghost Admin" });
+
+      expect(res.status).toBe(404);
+      expect(res.body.message).toMatch(
+        "해당되는 유저를 찾을 수 없습니다. 다시 확인해 주세요.",
+      );
+    });
+  });
+
+  /**
+   * 관리자 개별 삭제 테스트 (슈퍼 관리자 권한 필요)
+   */
+  describe("DELETE /api/v2/users/admins/:adminId", () => {
+    let superAdminCookies: string[];
+    let adminCookies: string[];
+    let approvedAdminId: string;
+    let approvedApartmentId: string;
+    let pendingAdminId: string;
+    let pendingApartmentId: string;
+    let rejectedAdminId: string;
+    let rejectedApartmentId: string;
+
+    beforeAll(async () => {
+      const hashedPassword = await bcrypt.hash("password123!", 10);
+
+      const superLoginRes = await request(app).post("/api/v2/auth/login").send({
+        username: superAdminData.username,
+        password: superAdminData.password,
+      });
+      superAdminCookies = superLoginRes.headers[
+        "set-cookie"
+      ] as unknown as string[];
+
+      const adminLoginRes = await request(app).post("/api/v2/auth/login").send({
+        username: adminData.username,
+        password: newPassword,
+      });
+      adminCookies = adminLoginRes.headers["set-cookie"] as unknown as string[];
+
+      const approvedAdmin = await prisma.user.create({
+        data: {
+          username: "delete_approved",
+          password: hashedPassword,
+          email: "del_app@naver.com",
+          contact: "01048627593",
+          name: "Delete Approved",
+          role: "ADMIN",
+          joinStatus: "APPROVED",
+          isActive: true,
+          adminOf: {
+            create: {
+              name: "Approved Delete TEST Apt",
+              address: "Del TEST City 1",
+              officeNumber: "021019889",
+              description: "Should Remain",
+              buildingNumberFrom: 1,
+              buildingNumberTo: 1,
+              floorCountPerBuilding: 1,
+              unitCountPerFloor: 1,
+            },
+          },
+        },
+        include: { adminOf: true },
+      });
+      approvedAdminId = approvedAdmin.id;
+      approvedApartmentId = approvedAdmin.adminOf!.id;
+
+      await prisma.household.create({
+        data: { apartmentId: approvedApartmentId, building: 1, unit: 101 },
+      });
+
+      const pendingAdmin = await prisma.user.create({
+        data: {
+          username: "delete_pending",
+          password: hashedPassword,
+          email: "del_pending@naver.com",
+          contact: "01048627597",
+          name: "Delete Pending",
+          role: "ADMIN",
+          joinStatus: "PENDING",
+          isActive: false,
+          adminOf: {
+            create: {
+              name: "Pending Delete TEST Apt",
+              address: "Del TEST City 2",
+              officeNumber: "021019887",
+              description: "Should Remain",
+              buildingNumberFrom: 1,
+              buildingNumberTo: 1,
+              floorCountPerBuilding: 1,
+              unitCountPerFloor: 1,
+            },
+          },
+        },
+        include: { adminOf: true },
+      });
+      pendingAdminId = pendingAdmin.id;
+      pendingApartmentId = pendingAdmin.adminOf!.id;
+
+      await prisma.household.create({
+        data: { apartmentId: pendingApartmentId, building: 1, unit: 101 },
+      });
+
+      const rejectedAdmin = await prisma.user.create({
+        data: {
+          username: "delete_rejected",
+          password: hashedPassword,
+          email: "del_rej@naver.com",
+          contact: "01028029089",
+          name: "Delete Rejected",
+          role: "ADMIN",
+          joinStatus: "REJECTED",
+          isActive: false,
+          adminOf: {
+            create: {
+              name: "Rejected Delete TEST Apt",
+              address: "Del TEST City 3",
+              officeNumber: "022029889",
+              description: "Should be Deleted",
+              buildingNumberFrom: 1,
+              buildingNumberTo: 1,
+              floorCountPerBuilding: 1,
+              unitCountPerFloor: 1,
+            },
+          },
+        },
+        include: { adminOf: true },
+      });
+      rejectedAdminId = rejectedAdmin.id;
+      rejectedApartmentId = rejectedAdmin.adminOf!.id;
+
+      await prisma.household.create({
+        data: { apartmentId: rejectedApartmentId, building: 1, unit: 101 },
+      });
+    });
+
+    test("성공: 슈퍼 관리자가 '활동이 승인된(APPROVED)' 관리자를 삭제하면, 관리자 정보는 삭제되지만 아파트와 세대 정보는 유지되어야 한다.", async () => {
+      const res = await request(app)
+        .delete(`/api/v2/users/admins/${approvedAdminId}`)
+        .set("Cookie", superAdminCookies);
+
+      expect(res.status).toBe(204);
+
+      const deletedUser = await prisma.user.findUnique({
+        where: { id: approvedAdminId },
+      });
+
+      expect(deletedUser).toBeNull();
+
+      const apartment = await prisma.apartment.findUnique({
+        where: { id: approvedApartmentId },
+      });
+
+      expect(apartment).not.toBeNull();
+      expect(apartment!.adminId).toBeNull();
+
+      const householdCount = await prisma.household.count({
+        where: { apartmentId: approvedApartmentId },
+      });
+
+      expect(householdCount).toBe(1);
+    });
+
+    test("성공: 슈퍼 관리자가 '활동 대기중인(PENDING)' 관리자를 삭제하면, 관리자 정보는 삭제되지만 아파트와 세대 정보는 유지되어야 한다.", async () => {
+      const res = await request(app)
+        .delete(`/api/v2/users/admins/${pendingAdminId}`)
+        .set("Cookie", superAdminCookies);
+
+      expect(res.status).toBe(204);
+
+      const deletedUser = await prisma.user.findUnique({
+        where: { id: pendingAdminId },
+      });
+
+      expect(deletedUser).toBeNull();
+
+      const apartment = await prisma.apartment.findUnique({
+        where: { id: pendingApartmentId },
+      });
+
+      expect(apartment).not.toBeNull();
+      expect(apartment!.adminId).toBeNull();
+
+      const householdCount = await prisma.household.count({
+        where: { apartmentId: pendingApartmentId },
+      });
+
+      expect(householdCount).toBe(1);
+    });
+
+    test("성공: 슈퍼 관리자가 '활동이 거절된(REJECTED)' 관리자를 삭제하면, 관리자 정보는 삭제되지만 아파트와 세대 정보는 유지되어야 한다.", async () => {
+      const res = await request(app)
+        .delete(`/api/v2/users/admins/${rejectedAdminId}`)
+        .set("Cookie", superAdminCookies);
+
+      expect(res.status).toBe(204);
+
+      const deletedUser = await prisma.user.findUnique({
+        where: { id: rejectedAdminId },
+      });
+
+      expect(deletedUser).toBeNull();
+
+      const apartment = await prisma.apartment.findUnique({
+        where: { id: rejectedApartmentId },
+      });
+
+      expect(apartment).not.toBeNull();
+      expect(apartment!.adminId).toBeNull();
+
+      const householdCount = await prisma.household.count({
+        where: { apartmentId: rejectedApartmentId },
+      });
+
+      expect(householdCount).toBe(1);
+    });
+
+    test("실패: 슈퍼 관리자가 아닌 계정이 삭제를 시도하면 상태 코드 401 FORBIDDEN 에러를 반환해야 한다.", async () => {
+      const randomId = "00000000-0000-0000-0000-000000000000";
+      const res = await request(app)
+        .delete(`/api/v2/users/admins/${randomId}`)
+        .set("Cookie", adminCookies);
+
+      expect(res.status).toBe(401);
+      expect(res.body.message).toMatch("권한과 관련된 오류입니다.");
+    });
+
+    test("멱등성 보장 성공: 존재하지 않는 관리자 ID 이더라도, 삭제 요청은 에러를 반환하지 않는다.", async () => {
+      const nonExistentId = "00000000-0000-0000-0000-000000000000";
+      const res = await request(app)
+        .delete(`/api/v2/users/admins/${nonExistentId}`)
+        .set("Cookie", superAdminCookies);
+
+      expect(res.status).toBe(204);
+    });
+  });
+
+  /**
+   * 관리자 일괄 삭제 테스트 (슈퍼 관리자 권한 필요)
+   */
+  describe("DELETE /api/v2/users/admins/rejected", () => {
+    let superAdminCookies: string[];
+    let adminCookies: string[];
+    let rejectedAdminId1: string;
+    let rejectedApartmentId1: string;
+    let rejectedAdminId2: string;
+    let rejectedApartmentId2: string;
+    let approvedAdminId: string;
+
+    beforeAll(async () => {
+      const hashedPassword = await bcrypt.hash("password123!", 10);
+
+      const superLoginRes = await request(app).post("/api/v2/auth/login").send({
+        username: superAdminData.username,
+        password: superAdminData.password,
+      });
+      superAdminCookies = superLoginRes.headers[
+        "set-cookie"
+      ] as unknown as string[];
+
+      const adminLoginRes = await request(app).post("/api/v2/auth/login").send({
+        username: adminData.username,
+        password: newPassword,
+      });
+      adminCookies = adminLoginRes.headers["set-cookie"] as unknown as string[];
+
+      const rejected1 = await prisma.user.create({
+        data: {
+          username: "batch_rej_1_for_test",
+          password: hashedPassword,
+          email: "batch_rej_1@naver.com",
+          contact: "01011110079",
+          name: "Batch Reject 1",
+          role: "ADMIN",
+          joinStatus: "REJECTED",
+          isActive: false,
+          adminOf: {
+            create: {
+              name: "Batch Rej TEST Apt 1",
+              address: "Rej TEST City 1",
+              officeNumber: "021110079",
+              description: "Must be Deleted",
+              buildingNumberFrom: 1,
+              buildingNumberTo: 1,
+              floorCountPerBuilding: 1,
+              unitCountPerFloor: 1,
+            },
+          },
+        },
+        include: { adminOf: true },
+      });
+      rejectedAdminId1 = rejected1.id;
+      rejectedApartmentId1 = rejected1.adminOf!.id;
+      await prisma.household.create({
+        data: { apartmentId: rejectedApartmentId1, building: 1, unit: 101 },
+      });
+
+      const rejected2 = await prisma.user.create({
+        data: {
+          username: "batch_rej_2_for_test",
+          password: hashedPassword,
+          email: "batch_rej_2@naver.com",
+          contact: "01011110097",
+          name: "Batch Reject 2",
+          role: "ADMIN",
+          joinStatus: "REJECTED",
+          isActive: false,
+          adminOf: {
+            create: {
+              name: "Batch Rej TEST Apt 2",
+              address: "Rej TEST City 2",
+              officeNumber: "021110097",
+              description: "Must be Deleted too",
+              buildingNumberFrom: 1,
+              buildingNumberTo: 1,
+              floorCountPerBuilding: 1,
+              unitCountPerFloor: 1,
+            },
+          },
+        },
+        include: { adminOf: true },
+      });
+      rejectedAdminId2 = rejected2.id;
+      rejectedApartmentId2 = rejected2.adminOf!.id;
+      await prisma.household.create({
+        data: { apartmentId: rejectedApartmentId2, building: 1, unit: 101 },
+      });
+
+      const approved = await prisma.user.create({
+        data: {
+          username: "batch_app_safe_for_test",
+          password: hashedPassword,
+          email: "batch_safe@naver.com",
+          contact: "01011110058",
+          name: "Batch Safe",
+          role: "ADMIN",
+          joinStatus: "APPROVED",
+          isActive: true,
+          adminOf: {
+            create: {
+              name: "Safe Apt",
+              address: "Safe City",
+              officeNumber: "021110058",
+              description: "Should NOT be Deleted",
+              buildingNumberFrom: 1,
+              buildingNumberTo: 1,
+              floorCountPerBuilding: 1,
+              unitCountPerFloor: 1,
+            },
+          },
+        },
+        include: { adminOf: true },
+      });
+      approvedAdminId = approved.id;
+    });
+
+    test("성공: 슈퍼 관리자가 일괄 삭제를 요청하면, 모든 REJECTED 상태의 관리자와 연관된 아파트, 세대 정보가 모두 삭제되어야 한다.", async () => {
+      const res = await request(app)
+        .delete("/api/v2/users/admins/rejected")
+        .set("Cookie", superAdminCookies);
+
+      expect(res.status).toBe(204);
+
+      const deletedAdmins = await prisma.user.findMany({
+        where: { id: { in: [rejectedAdminId1, rejectedAdminId2] } },
+      });
+      expect(deletedAdmins.length).toBe(0);
+
+      const deletedApartments = await prisma.apartment.findMany({
+        where: { id: { in: [rejectedApartmentId1, rejectedApartmentId2] } },
+      });
+      expect(deletedApartments.length).toBe(0);
+
+      const deletedHouseholds = await prisma.household.findMany({
+        where: {
+          apartmentId: { in: [rejectedApartmentId1, rejectedApartmentId2] },
+        },
+      });
+      expect(deletedHouseholds.length).toBe(0);
+
+      const safeAdmin = await prisma.user.findUnique({
+        where: { id: approvedAdminId },
+      });
+      expect(safeAdmin).not.toBeNull();
+    });
+
+    test("실패: 슈퍼 관리자가 아닌 계정이 요청 시 401 FORBIDDEN 에러를 반환해야 한다.", async () => {
+      const res = await request(app)
+        .delete("/api/v2/users/admins/rejected")
+        .set("Cookie", adminCookies);
+
+      expect(res.status).toBe(401);
+      expect(res.body.message).toMatch("권한과 관련된 오류입니다.");
+    });
+  });
+
+  /**
+   * 입주민 일괄 삭제 테스트 (관리자 권한 필요)
+   */
+  describe("DELETE /api/v2/users/residents/rejected", () => {
+    let superAdminCookies: string[];
+    let adminCookies: string[];
+    let userCookies: string[];
+    let myApartmentId: string;
+    let myRejectedUserId: string;
+    let myApprovedUserId: string;
+    let otherRejectedUserId: string;
+
+    beforeAll(async () => {
+      const hashedPassword = await bcrypt.hash("password123!", 10);
+
+      const superLoginRes = await request(app).post("/api/v2/auth/login").send({
+        username: superAdminData.username,
+        password: superAdminData.password,
+      });
+      superAdminCookies = superLoginRes.headers[
+        "set-cookie"
+      ] as unknown as string[];
+
+      const adminLoginRes = await request(app).post("/api/v2/auth/login").send({
+        username: adminData.username,
+        password: newPassword,
+      });
+      adminCookies = adminLoginRes.headers["set-cookie"] as unknown as string[];
+
+      const userLoginRes = await request(app).post("/api/v2/auth/login").send({
+        username: residentUserData.username,
+        password: newPassword,
+      });
+      userCookies = userLoginRes.headers["set-cookie"] as unknown as string[];
+
+      const myAdmin = await prisma.user.findUnique({
+        where: { username: adminData.username },
+        include: { adminOf: true },
+      });
+      myApartmentId = myAdmin!.adminOf!.id;
+
+      const otherAdmin = await prisma.user.create({
+        data: {
+          username: "dirty_admin_for_test",
+          password: hashedPassword,
+          email: "dirty@naver.com",
+          contact: "01066664040",
+          name: "Other Admin",
+          role: "ADMIN",
+          joinStatus: "APPROVED",
+          isActive: true,
+          adminOf: {
+            create: {
+              name: "Dirty TEST Apt",
+              address: "Dirty TEST City",
+              officeNumber: "026664040",
+              description: "Should Not Be Cleaned",
+              buildingNumberFrom: 1,
+              buildingNumberTo: 1,
+              floorCountPerBuilding: 1,
+              unitCountPerFloor: 1,
+            },
+          },
+        },
+        include: { adminOf: true },
+      });
+      const otherApartmentId = otherAdmin.adminOf!.id;
+
+      const otherHousehold = await prisma.household.create({
+        data: { apartmentId: otherApartmentId, building: 1, unit: 101 },
+      });
+
+      const myRejected = await prisma.user.create({
+        data: {
+          username: "my_rejected_res_for_test",
+          password: hashedPassword,
+          email: "my_rej@naver.com",
+          contact: "01011117070",
+          name: "My Rejected",
+          role: "USER",
+          joinStatus: "REJECTED",
+          isActive: false,
+          resident: {
+            create: {
+              household: {
+                connect: {
+                  apartmentId_building_unit: {
+                    apartmentId: myApartmentId,
+                    building: 1,
+                    unit: 101,
+                  },
+                },
+              },
+              name: "My Rejected",
+              contact: "01011117070",
+              email: "my_rej@naver.com",
+            },
+          },
+        },
+      });
+      myRejectedUserId = myRejected.id;
+
+      const myApproved = await prisma.user.create({
+        data: {
+          username: "my_approved_res_for_test",
+          password: hashedPassword,
+          email: "my_app@naver.com",
+          contact: "01022229797",
+          name: "My Approved",
+          role: "USER",
+          joinStatus: "APPROVED",
+          isActive: true,
+          resident: {
+            create: {
+              household: {
+                connect: {
+                  apartmentId_building_unit: {
+                    apartmentId: myApartmentId,
+                    building: 1,
+                    unit: 101,
+                  },
+                },
+              },
+              name: "My Approved",
+              contact: "01022229797",
+              email: "my_app@naver.com",
+            },
+          },
+        },
+      });
+      myApprovedUserId = myApproved.id;
+
+      const otherRejected = await prisma.user.create({
+        data: {
+          username: "other_rejected_res_for_test",
+          password: hashedPassword,
+          email: "other_rej@naver.com",
+          contact: "01079795454",
+          name: "Other Rejected",
+          role: "USER",
+          joinStatus: "REJECTED",
+          isActive: false,
+          resident: {
+            create: {
+              household: { connect: { id: otherHousehold.id } },
+              name: "Other Rejected",
+              contact: "01079795454",
+              email: "other_rej@naver.com",
+            },
+          },
+        },
+      });
+      otherRejectedUserId = otherRejected.id;
+    });
+
+    test("성공: 관리자가 일괄 삭제를 요청하면, '자신의 아파트'에 속한 '거절된(REJECTED)' 입주민만 모두 삭제되어야 한다.", async () => {
+      const res = await request(app)
+        .delete("/api/v2/users/residents/rejected")
+        .set("Cookie", adminCookies);
+
+      expect(res.status).toBe(204);
+
+      const deletedUser = await prisma.user.findUnique({
+        where: { id: myRejectedUserId },
+      });
+
+      expect(deletedUser).toBeNull();
+
+      const approvedUser = await prisma.user.findUnique({
+        where: { id: myApprovedUserId },
+      });
+
+      expect(approvedUser).not.toBeNull();
+
+      const otherUser = await prisma.user.findUnique({
+        where: { id: otherRejectedUserId },
+      });
+
+      expect(otherUser).not.toBeNull();
+    });
+
+    test("실패: 슈퍼 관리자가 요청 시 상태 코드 401 FORBIDDEN 에러를 반환해야 한다.", async () => {
+      const res = await request(app)
+        .delete("/api/v2/users/residents/rejected")
+        .set("Cookie", superAdminCookies);
+
+      expect(res.status).toBe(401);
+      expect(res.body.message).toMatch("권한과 관련된 오류입니다.");
+    });
+
+    test("실패: 일반 입주민이 요청 시 상태 코드 401 FORBIDDEN 에러를 반환해야 한다.", async () => {
+      const res = await request(app)
+        .delete("/api/v2/users/residents/rejected")
+        .set("Cookie", userCookies);
 
       expect(res.status).toBe(401);
       expect(res.body.message).toMatch("권한과 관련된 오류입니다.");
