@@ -16,48 +16,60 @@ export const adminOfSchema = z.object({
     .max(11, "전화번호는 최대 11자리까지만 입력 가능합니다.")
     .regex(PHONE_REGEX, "숫자만 입력해주세요. 하이픈(-)은 제외해주세요."),
   buildingNumberFrom: z.coerce.number().default(1),
-  buildingNumberTo: z
-    .string()
-    .trim()
-    .nonempty("동을 입력해주세요.")
-    .transform((v) => Number(v))
-    .pipe(
-      z
-        .number({
-          message: "동은 0으로 시작할 수 없고 숫자만 입력 가능합니다.",
-        })
-        .int()
-        .min(1, "동은 0으로 시작할 수 없고 숫자만 입력 가능합니다.")
-        .max(99, "동은 두 자리까지만 입력 가능합니다."),
-    ),
-  floorCountPerBuilding: z
-    .string()
-    .trim()
-    .nonempty("층을 입력해주세요.")
-    .transform((v) => Number(v))
-    .pipe(
-      z
-        .number({
-          message: "동은 0으로 시작할 수 없고 숫자만 입력 가능합니다.",
-        })
-        .int()
-        .min(1, "층은 0으로 시작할 수 없고 숫자만 입력 가능합니다.")
-        .max(99, "층은 두 자리까지만 입력 가능합니다."),
-    ),
-  unitCountPerFloor: z
-    .string()
-    .trim()
-    .nonempty("호를 입력해주세요.")
-    .transform((v) => Number(v))
-    .pipe(
-      z
-        .number({
-          message: "호는 0으로 시작할 수 없고 숫자만 입력 가능합니다.",
-        })
-        .int()
-        .min(1, "호는 0으로 시작할 수 없고 숫자만 입력 가능합니다.")
-        .max(99, "호는 두 자리까지만 입력 가능합니다."),
-    ),
+  buildingNumberTo: z.coerce
+    .number()
+    .min(1, "동은 0으로 시작할 수 없고 숫자만 입력 가능합니다.")
+    .max(99, "동은 두 자리까지만 입력 가능합니다."),
+  // 만일을 대비하여 남김
+  // .string()
+  // .trim()
+  // .nonempty("동을 입력해주세요.")
+  // .transform((v) => Number(v))
+  // .pipe(
+  //   z
+  //     .number({
+  //       message: "동은 0으로 시작할 수 없고 숫자만 입력 가능합니다.",
+  //     })
+  //     .int()
+  //     .min(1, "동은 0으로 시작할 수 없고 숫자만 입력 가능합니다.")
+  //     .max(99, "동은 두 자리까지만 입력 가능합니다."),
+  // ),
+  floorCountPerBuilding: z.coerce
+    .number()
+    .min(1, "층은 0으로 시작할 수 없고 숫자만 입력 가능합니다.")
+    .max(99, "층은 두 자리까지만 입력 가능합니다."),
+  // 만일을 대비하여 남김
+  // .string()
+  // .trim()
+  // .nonempty("층을 입력해주세요.")
+  // .transform((v) => Number(v))
+  // .pipe(
+  //   z
+  //     .number({
+  //       message: "동은 0으로 시작할 수 없고 숫자만 입력 가능합니다.",
+  //     })
+  //     .int()
+  //     .min(1, "층은 0으로 시작할 수 없고 숫자만 입력 가능합니다.")
+  //     .max(99, "층은 두 자리까지만 입력 가능합니다."),
+  // ),
+  unitCountPerFloor: z.coerce
+    .number()
+    .min(1, "호는 0으로 시작할 수 없고 숫자만 입력 가능합니다.")
+    .max(99, "호는 두 자리까지만 입력 가능합니다."),
+  // 만일을 대비하여 남김
+  // .string()
+  // .trim()
+  // .nonempty("호를 입력해주세요.")
+  // .transform((v) => Number(v))
+  // .pipe(
+  //   z
+  //     .number({
+  //       message: "호는 0으로 시작할 수 없고 숫자만 입력 가능합니다.",
+  //     })
+  //     .int()
+  //     .min(1, "호는 0으로 시작할 수 없고 숫자만 입력 가능합니다.")
+  //     .max(99, "호는 두 자리까지만 입력 가능합니다."),
+  // ),
 });
 
 export const residentSchema = z.object({
