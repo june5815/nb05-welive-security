@@ -33,8 +33,11 @@ describe("Resident API E2E Tests", () => {
     id: testMemberId,
     householdId: testHouseholdId,
     userId: testUserId,
+    userType: "RESIDENT",
+    email: "resident@test.com",
+    contact: "010-3333-3333",
+    name: "입주민",
     isHouseholder: true,
-    householdMemberStatus: "ACTIVE",
     movedInAt: new Date("2026-01-01"),
     createdAt: new Date("2026-01-01"),
     updatedAt: new Date("2026-01-01"),
@@ -45,6 +48,328 @@ describe("Resident API E2E Tests", () => {
   });
 
   afterAll(async () => {});
+
+  // POST /api/v2/residents 테스트
+
+  describe("POST /api/v2/residents - 입주민 등록", () => {
+    const validResidentRegistrationPayload = {
+      building: 101,
+      unit: 505,
+      email: "newresident@test.com",
+      contact: "010-9999-9999",
+      name: "신규입주민",
+    };
+
+    /**
+     * 성공: 정상적인 입주민 등록 (ADMIN)
+     */
+    it("should create household member successfully when ADMIN registers with valid data", async () => {
+      const response = await request(app)
+        .post(`/api/v2/residents`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .set("X-User-ID", mockAdminUser.id)
+        .set("X-User-Role", mockAdminUser.role)
+        .send(validResidentRegistrationPayload);
+
+      expect(response.status).toBe(201);
+      expect(response.body).toEqual({
+        statusCode: 201,
+        message: expect.stringContaining("등록"),
+        data: expect.objectContaining({
+          id: expect.any(String),
+          email: validResidentRegistrationPayload.email,
+          contact: validResidentRegistrationPayload.contact,
+          name: validResidentRegistrationPayload.name,
+          isHouseholder: true,
+          createdAt: expect.any(String),
+        }),
+      });
+    });
+
+    /**
+     * 성공: 응답 데이터 포맷 검증 (201 Created)
+     */
+    it("should return correct response format with 201 status code", async () => {
+      const response = await request(app)
+        .post(`/api/v2/residents`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .set("X-User-ID", mockAdminUser.id)
+        .set("X-User-Role", mockAdminUser.role)
+        .send(validResidentRegistrationPayload);
+
+      expect(response.status).toBe(201);
+      expect(response.body).toHaveProperty("statusCode", 201);
+      expect(response.body).toHaveProperty("message");
+      expect(response.body).toHaveProperty("data");
+      expect(typeof response.body.message).toBe("string");
+    });
+
+    /**
+     * 실패: 인증 없음 (401 Unauthorized)
+     */
+    it("should return 401 when Authorization header is missing", async () => {
+      const response = await request(app)
+        .post(`/api/v2/residents`)
+        .send(validResidentRegistrationPayload);
+
+      expect(response.status).toBe(401);
+      expect(response.body).toEqual(
+        expect.objectContaining({
+          statusCode: 401,
+          message: expect.stringContaining("인증"),
+        }),
+      );
+    });
+
+    /**
+     * 실패: 권한 없음 (403 Forbidden - USER 역할)
+     */
+    it("should return 403 when user has insufficient permission (USER role)", async () => {
+      const response = await request(app)
+        .post(`/api/v2/residents`)
+        .set("Authorization", `Bearer ${userToken}`)
+        .set("X-User-ID", mockRegularUser.id)
+        .set("X-User-Role", mockRegularUser.role) // USER (ADMIN 아님)
+        .send(validResidentRegistrationPayload);
+
+      expect(response.status).toBe(403);
+      expect(response.body).toEqual(
+        expect.objectContaining({
+          statusCode: 403,
+          message: expect.stringContaining("권한|관리자"),
+        }),
+      );
+    });
+
+    /**
+     * 실패: 필수 필드 누락 - email
+     */
+    it("should return 400 when email is missing", async () => {
+      const { email, ...payload } = validResidentRegistrationPayload;
+
+      const response = await request(app)
+        .post(`/api/v2/residents`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .set("X-User-ID", mockAdminUser.id)
+        .set("X-User-Role", mockAdminUser.role)
+        .send(payload);
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual(
+        expect.objectContaining({
+          statusCode: 400,
+          message: expect.stringContaining("email"),
+        }),
+      );
+    });
+
+    /**
+     * 실패: 필수 필드 누락 - building
+     */
+    it("should return 400 when building is missing", async () => {
+      const { building, ...payload } = validResidentRegistrationPayload;
+
+      const response = await request(app)
+        .post(`/api/v2/residents`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .set("X-User-ID", mockAdminUser.id)
+        .set("X-User-Role", mockAdminUser.role)
+        .send(payload);
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual(
+        expect.objectContaining({
+          statusCode: 400,
+          message: expect.stringContaining("building"),
+        }),
+      );
+    });
+
+    /**
+     * 실패: 필수 필드 누락 - unit
+     */
+    it("should return 400 when unit is missing", async () => {
+      const { unit, ...payload } = validResidentRegistrationPayload;
+
+      const response = await request(app)
+        .post(`/api/v2/residents`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .set("X-User-ID", mockAdminUser.id)
+        .set("X-User-Role", mockAdminUser.role)
+        .send(payload);
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual(
+        expect.objectContaining({
+          statusCode: 400,
+          message: expect.stringContaining("unit"),
+        }),
+      );
+    });
+
+    /**
+     * 실패: 필수 필드 누락 - contact
+     */
+    it("should return 400 when contact is missing", async () => {
+      const { contact, ...payload } = validResidentRegistrationPayload;
+
+      const response = await request(app)
+        .post(`/api/v2/residents`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .set("X-User-ID", mockAdminUser.id)
+        .set("X-User-Role", mockAdminUser.role)
+        .send(payload);
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual(
+        expect.objectContaining({
+          statusCode: 400,
+          message: expect.stringContaining("contact"),
+        }),
+      );
+    });
+
+    /**
+     * 실패: 필수 필드 누락 - name
+     */
+    it("should return 400 when name is missing", async () => {
+      const { name, ...payload } = validResidentRegistrationPayload;
+
+      const response = await request(app)
+        .post(`/api/v2/residents`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .set("X-User-ID", mockAdminUser.id)
+        .set("X-User-Role", mockAdminUser.role)
+        .send(payload);
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual(
+        expect.objectContaining({
+          statusCode: 400,
+          message: expect.stringContaining("name"),
+        }),
+      );
+    });
+
+    /**
+     * 실패: 유효하지 않은 이메일 형식
+     */
+    it("should return 400 when email format is invalid", async () => {
+      const response = await request(app)
+        .post(`/api/v2/residents`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .set("X-User-ID", mockAdminUser.id)
+        .set("X-User-Role", mockAdminUser.role)
+        .send({
+          ...validResidentRegistrationPayload,
+          email: "invalid-email",
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual(
+        expect.objectContaining({
+          statusCode: 400,
+          message: expect.stringContaining("email"),
+        }),
+      );
+    });
+
+    /**
+     * 실패: 중복된 이메일
+     */
+    it("should return 400 when email already exists", async () => {
+      const response = await request(app)
+        .post(`/api/v2/residents`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .set("X-User-ID", mockAdminUser.id)
+        .set("X-User-Role", mockAdminUser.role)
+        .send({
+          ...validResidentRegistrationPayload,
+          email: mockHouseholdMember.email, // 이미 존재하는 이메일
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual(
+        expect.objectContaining({
+          statusCode: 400,
+          message: expect.stringContaining("중복|이미"),
+        }),
+      );
+    });
+
+    /**
+     * 실패: 존재하지 않는 household (building + unit 조합)
+     */
+    it("should return 400 when household not found for given building and unit", async () => {
+      const response = await request(app)
+        .post(`/api/v2/residents`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .set("X-User-ID", mockAdminUser.id)
+        .set("X-User-Role", mockAdminUser.role)
+        .send({
+          ...validResidentRegistrationPayload,
+          building: 999,
+          unit: 999, // 존재하지 않는 조합
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual(
+        expect.objectContaining({
+          statusCode: 400,
+          message: expect.stringContaining(
+            "찾을 수 없음|존재하지 않음|household",
+          ),
+        }),
+      );
+    });
+
+    /**
+     * 성공: createdAt 포맷 검증 (ISO 8601)
+     */
+    it("should return createdAt in ISO 8601 format", async () => {
+      const response = await request(app)
+        .post(`/api/v2/residents`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .set("X-User-ID", mockAdminUser.id)
+        .set("X-User-Role", mockAdminUser.role)
+        .send(validResidentRegistrationPayload);
+
+      expect(response.status).toBe(201);
+      const createdAt = response.body.data.createdAt;
+      expect(typeof createdAt).toBe("string");
+      expect(createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/); // ISO 8601
+    });
+
+    /**
+     * 성공: 반환된 데이터에 필수 필드 포함 확인
+     */
+    it("should return all required fields in response data", async () => {
+      const response = await request(app)
+        .post(`/api/v2/residents`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .set("X-User-ID", mockAdminUser.id)
+        .set("X-User-Role", mockAdminUser.role)
+        .send(validResidentRegistrationPayload);
+
+      expect(response.status).toBe(201);
+      const data = response.body.data;
+      expect(data).toHaveProperty("id");
+      expect(data).toHaveProperty(
+        "email",
+        validResidentRegistrationPayload.email,
+      );
+      expect(data).toHaveProperty(
+        "contact",
+        validResidentRegistrationPayload.contact,
+      );
+      expect(data).toHaveProperty(
+        "name",
+        validResidentRegistrationPayload.name,
+      );
+      expect(data).toHaveProperty("isHouseholder");
+      expect(data).toHaveProperty("createdAt");
+    });
+  });
 
   // GET /api/v2/residents/:apartmentId 테스트
 
@@ -480,15 +805,28 @@ describe("Resident API E2E Tests", () => {
     });
 
     /**
-     *  HTTP 메서드 검증 (POST, DELETE 등 불허)
+     * HTTP 메서드 검증 (DELETE, PATCH 등 불허)
      */
-    it("should not allow POST method on resident endpoints", async () => {
+    it("should not allow DELETE method on resident endpoints", async () => {
       const response = await request(app)
-        .post(`/api/v2/residents/${testApartmentId}`)
+        .delete(`/api/v2/residents/${testApartmentId}/${testMemberId}`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .set("X-User-ID", mockAdminUser.id)
+        .set("X-User-Role", mockAdminUser.role);
+
+      expect(response.status).toBe(404);
+    });
+
+    /**
+     * HTTP 메서드 검증 (PUT 불허)
+     */
+    it("should not allow PUT method on resident endpoints", async () => {
+      const response = await request(app)
+        .put(`/api/v2/residents/${testApartmentId}/${testMemberId}`)
         .set("Authorization", `Bearer ${adminToken}`)
         .set("X-User-ID", mockAdminUser.id)
         .set("X-User-Role", mockAdminUser.role)
-        .send({ data: "test" });
+        .send({ name: "Updated" });
 
       expect(response.status).toBe(404);
     });

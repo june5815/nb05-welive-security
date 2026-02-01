@@ -41,7 +41,7 @@ import { NotFoundErrorMiddleware } from "./_common/middlewares/not-found-error.m
 import { RoleMiddleware } from "./_common/middlewares/role.middleware";
 import { StaticServeMiddleware } from "./_common/middlewares/static-serve.middleware";
 
-import { HttpServer, IHttpServer } from "./_servers/http-server";
+import { HttpServer, IHttpServer } from "./servers/http-server";
 
 export const Injector = () => {
   const configUtil = ConfigUtil();

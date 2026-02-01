@@ -18,6 +18,13 @@ export const ResidentRouter = (
   const catchError = baseRouter.catchError;
   const PATH = "/api/v2/residents";
 
+  router.post(
+    "/",
+    authMiddleware.checkAuth,
+    roleMiddleware.hasRole(["ADMIN"]),
+    catchError(residentController.createResidentHouseholdMember),
+  );
+
   router.get(
     "/:apartmentId",
     authMiddleware.checkAuth,

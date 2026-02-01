@@ -1,14 +1,65 @@
 import { Request, Response, NextFunction } from "express";
 import { IResidentQueryService } from "./usecases/resident-query.usecase";
+import { IResidentCommandService } from "./usecases/resident-command.usecase";
 import {
   householdMembersListReqSchema,
   householdMemberDetailReqSchema,
+  createResidentReqSchema,
 } from "./dtos/req/resident.request";
 import {
   HouseholdMembersListResponseView,
   HouseholdMemberDetailView,
 } from "./dtos/res/resident.view";
 
+const createResidentHouseholdMember =
+  (residentCommandService: IResidentCommandService) =>
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const validatedReq = createResidentReqSchema.parse({
+        role: (req as any).user?.role,
+        body: {
+          apartmentId: req.body.apartmentId,
+          email: req.body.email,
+          contact: req.body.contact,
+          name: req.body.name,
+          building: req.body.building,
+          unit: req.body.unit,
+          isHouseholder: req.body.isHouseholder ?? false,
+        },
+      });
+
+      const result =
+        await residentCommandService.registerHouseholdMemberByAdmin(
+          {
+            email: validatedReq.body.email,
+            contact: validatedReq.body.contact,
+            name: validatedReq.body.name,
+            building: validatedReq.body.building,
+            unit: validatedReq.body.unit,
+            isHouseholder: validatedReq.body.isHouseholder,
+          },
+          (req as any).user?.id,
+          validatedReq.body.apartmentId,
+          validatedReq.role,
+        );
+
+      res.status(201).json({
+        statusCode: 201,
+        message: "입주민 등록 성공",
+        data: {
+          id: result.id,
+          createdAt: result.createdAt.toISOString(),
+          email: result.email,
+          contact: result.contact,
+          name: result.name,
+          isHouseholder: result.isHouseholder,
+          userId: result.userId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 const getListHouseholdMembers =
   (residentQueryService: IResidentQueryService) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -70,6 +121,11 @@ const getHouseholdMemberDetail =
   };
 
 export interface IResidentController {
+  createResidentHouseholdMember: (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => Promise<void>;
   getListHouseholdMembers: (
     req: Request,
     res: Response,
@@ -81,10 +137,15 @@ export interface IResidentController {
     next: NextFunction,
   ) => Promise<void>;
 }
+
 export const createResidentController = (
+  residentCommandService: IResidentCommandService,
   residentQueryService: IResidentQueryService,
 ): IResidentController => {
   return {
+    createResidentHouseholdMember: createResidentHouseholdMember(
+      residentCommandService,
+    ),
     getListHouseholdMembers: getListHouseholdMembers(residentQueryService),
     getHouseholdMemberDetail: getHouseholdMemberDetail(residentQueryService),
   };

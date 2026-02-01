@@ -1,4 +1,7 @@
-import { HouseholdMemberWithRelations } from "../../../../_modules/residents/domain/resident.type";
+import {
+  HouseholdMemberWithRelations,
+  Household,
+} from "../../../../_modules/residents/domain/resident.type";
 
 export interface HouseholdMembersFilter {
   searchKeyword?: string;
@@ -18,5 +21,15 @@ export interface IResidentQueryRepo {
 
   findHouseholdMemberById: (
     id: string,
+  ) => Promise<HouseholdMemberWithRelations | null>;
+
+  findHouseholdByBuildingAndUnit: (
+    apartmentId: string,
+    building: number,
+    unit: number,
+  ) => Promise<Household | null>;
+
+  findHouseholdMemberByEmail: (
+    email: string,
   ) => Promise<HouseholdMemberWithRelations | null>;
 }
