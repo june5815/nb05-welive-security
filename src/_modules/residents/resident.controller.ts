@@ -5,6 +5,7 @@ import {
   householdMembersListReqSchema,
   householdMemberDetailReqSchema,
   createResidentReqSchema,
+  updateResidentReqSchema,
 } from "./dtos/req/resident.request";
 import {
   HouseholdMembersListResponseView,
@@ -120,6 +121,58 @@ const getHouseholdMemberDetail =
     }
   };
 
+const updateResidentHouseholdMember =
+  (residentCommandService: IResidentCommandService) =>
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const validatedReq = updateResidentReqSchema.parse({
+        role: (req as any).user?.role,
+        params: {
+          id: req.params.id,
+        },
+        body: {
+          email: req.body.email,
+          contact: req.body.contact,
+          name: req.body.name,
+          building: req.body.building,
+          unit: req.body.unit,
+          isHouseholder: req.body.isHouseholder,
+        },
+      });
+
+      const result = await residentCommandService.updateHouseholdMemberByAdmin(
+        validatedReq.params.id,
+        {
+          email: validatedReq.body.email,
+          contact: validatedReq.body.contact,
+          name: validatedReq.body.name,
+          building: validatedReq.body.building,
+          unit: validatedReq.body.unit,
+          isHouseholder: validatedReq.body.isHouseholder,
+        },
+        (req as any).user?.id,
+        req.body.apartmentId,
+        validatedReq.role,
+      );
+
+      res.status(200).json({
+        statusCode: 200,
+        message: "입주민 정보 수정 성공",
+        data: {
+          id: result.id,
+          updatedAt: result.updatedAt.toISOString(),
+          email: result.email,
+          contact: result.contact,
+          name: result.name,
+          isHouseholder: result.isHouseholder,
+          userId: result.userId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
 export interface IResidentController {
   createResidentHouseholdMember: (
     req: Request,
@@ -136,6 +189,11 @@ export interface IResidentController {
     res: Response,
     next: NextFunction,
   ) => Promise<void>;
+  updateResidentHouseholdMember: (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => Promise<void>;
 }
 
 export const createResidentController = (
@@ -148,5 +206,8 @@ export const createResidentController = (
     ),
     getListHouseholdMembers: getListHouseholdMembers(residentQueryService),
     getHouseholdMemberDetail: getHouseholdMemberDetail(residentQueryService),
+    updateResidentHouseholdMember: updateResidentHouseholdMember(
+      residentCommandService,
+    ),
   };
 };

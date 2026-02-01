@@ -18,12 +18,12 @@ export const createResidentReqSchema = z.object({
       .max(11, "전화번호는 최대 11자리까지만 입력 가능합니다.")
       .regex(PHONE_REGEX, "숫자만 입력해주세요."),
     name: z.string().trim().nonempty("이름을 입력해주세요."),
-    building: z
+    building: z.coerce
       .number()
       .int()
       .min(1, "건물번호는 1 이상이어야 합니다.")
       .max(99, "건물번호는 99 이하여야 합니다."),
-    unit: z
+    unit: z.coerce
       .number()
       .int()
       .min(1, "호수는 1 이상이어야 합니다.")
@@ -99,3 +99,36 @@ export const householdMemberDetailReqSchema = z.object({
 export type HouseholdMemberDetailReqDTO = z.infer<
   typeof householdMemberDetailReqSchema
 >;
+
+// 수정
+export const updateResidentReqSchema = z.object({
+  role: z.enum(["ADMIN"], { message: "관리자만 수정 가능합니다." }),
+  params: z.object({
+    id: z.string().uuid({ message: "유효한 UUID 형식이어야 합니다." }),
+  }),
+  body: z.object({
+    email: z.email("이메일 형식이 올바르지 않습니다.").trim().optional(),
+    contact: z
+      .string()
+      .trim()
+      .max(11, "전화번호는 최대 11자리까지만 입력 가능합니다.")
+      .regex(PHONE_REGEX, "숫자만 입력해주세요.")
+      .optional(),
+    name: z.string().trim().optional(),
+    building: z.coerce
+      .number()
+      .int()
+      .min(1, "건물번호는 1 이상이어야 합니다.")
+      .max(99, "건물번호는 99 이하여야 합니다.")
+      .optional(),
+    unit: z.coerce
+      .number()
+      .int()
+      .min(1, "호수는 1 이상이어야 합니다.")
+      .max(99, "호수는 99 이하여야 합니다.")
+      .optional(),
+    isHouseholder: z.boolean().optional(),
+  }),
+});
+
+export type UpdateResidentReqDTO = z.infer<typeof updateResidentReqSchema>;

@@ -5,16 +5,20 @@ import { ApartmentRouter } from "./_modules/apartments/apartment.router";
 import { NoticeRouter } from "./_modules/notices/notice.routes";
 import { CommentRouter } from "./_modules/comments/routes";
 import { EventRouter } from "./_modules/events/routes";
+import { ResidentRouter } from "./_modules/residents/resident.router";
 
 import { BaseController } from "./_modules/_base/base.controller";
 import { AuthController } from "./_modules/auth/auth.controller";
 import { UserController } from "./_modules/users/user.controller";
 import { ApartmentController } from "./_modules/apartments/apartment.controller";
+import { createResidentController } from "./_modules/residents/resident.controller";
 
 import { AuthCommandService } from "./_modules/auth/service/auth-command.service";
 import { UserCommandService } from "./_modules/users/service/user-command.service";
 import { UserQueryService } from "./_modules/users/service/user-query.service";
 import { ApartmentQueryUsecase } from "./_modules/apartments/usecases/query/apartment-query.usecase";
+import { ResidentCommandService } from "./_modules/residents/usecases/resident-command.usecase";
+import { ResidentQueryService } from "./_modules/residents/usecases/resident-query.usecase";
 
 import { AuthCommandRepo } from "./_infra/repos/auth/auth-command.repo";
 import { BaseCommandRepo } from "./_infra/repos/_base/base-command.repo";
@@ -22,6 +26,8 @@ import { UserCommandRepo } from "./_infra/repos/user/user-command.repo";
 import { BaseQueryRepo } from "./_infra/repos/_base/base-query.repo";
 import { UserQueryRepo } from "./_infra/repos/user/user-query.repo";
 import { ApartmentQueryRepo } from "./_infra/repos/apartment/apartment-query.repo";
+import { ResidentCommandRepository } from "./_infra/repos/resident/resident-command.repo";
+import { ResidentQueryRepository } from "./_infra/repos/resident/resident-query.repo";
 
 import { UOW } from "./_infra/db/unit-of-work";
 import { HashManager } from "./_infra/manager/bcrypt-hash.manager";
@@ -51,9 +57,11 @@ export const Injector = () => {
   const baseCommandRepo = BaseCommandRepo(prisma);
   const authCommandRepo = AuthCommandRepo(baseCommandRepo);
   const userCommandRepo = UserCommandRepo(baseCommandRepo);
+  const residentCommandRepo = ResidentCommandRepository(baseCommandRepo);
   const baseQueryRepo = BaseQueryRepo(prisma);
   const userQueryRepo = UserQueryRepo(baseQueryRepo);
   const apartmentQueryRepo = ApartmentQueryRepo(baseQueryRepo);
+  const residentQueryRepo = ResidentQueryRepository(baseQueryRepo);
 
   const unitOfWork = UOW(prisma, configUtil);
   const hashManager = HashManager(configUtil);
@@ -71,6 +79,11 @@ export const Injector = () => {
   );
   const userQueryService = UserQueryService(userQueryRepo);
   const apartmentQueryUsecase = ApartmentQueryUsecase(apartmentQueryRepo);
+  const residentCommandService = ResidentCommandService(
+    residentCommandRepo,
+    residentQueryRepo,
+  );
+  const residentQueryService = ResidentQueryService(residentQueryRepo);
 
   const authMiddleware = AuthMiddleware(tokenUtil);
   const cookieMiddleware = CookieMiddleware(configUtil);
@@ -94,6 +107,10 @@ export const Injector = () => {
     baseController,
     apartmentQueryUsecase,
   );
+  const residentController = createResidentController(
+    residentCommandService,
+    residentQueryService,
+  );
 
   const baseRouter = BaseRouter();
   const authRouter = AuthRouter(baseRouter, authController);
@@ -105,6 +122,12 @@ export const Injector = () => {
     multerMiddleware,
   );
   const apartmentRouter = ApartmentRouter(baseRouter, apartmentController);
+  const residentRouter = ResidentRouter(
+    baseRouter,
+    residentController,
+    authMiddleware,
+    roleMiddleware,
+  );
 
   const noticeRouter = NoticeRouter(
     baseRouter,
@@ -142,6 +165,7 @@ export const Injector = () => {
     authRouter,
     userRouter,
     apartmentRouter,
+    residentRouter,
     noticeRouter,
     commentRouter,
     eventRouter,

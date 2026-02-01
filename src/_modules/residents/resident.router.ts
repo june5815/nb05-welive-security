@@ -39,6 +39,13 @@ export const ResidentRouter = (
     catchError(residentController.getHouseholdMemberDetail),
   );
 
+  router.patch(
+    "/:id",
+    authMiddleware.checkAuth,
+    roleMiddleware.hasRole(["ADMIN"]),
+    catchError(residentController.updateResidentHouseholdMember),
+  );
+
   return {
     router,
     PATH,
