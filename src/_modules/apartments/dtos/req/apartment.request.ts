@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 export const ApartmentListQuerySchema = z.object({
-  page: z.number().int().positive("page는 양수여야 합니다").default(1),
-  limit: z.number().int().min(1).max(100).default(20),
+  page: z.coerce.number().int().positive("page는 양수여야 합니다").default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
   searchKeyword: z.string().optional(),
   sortBy: z.enum(["name", "createdAt"]).optional(),
   sortOrder: z.enum(["asc", "desc"]).optional(),

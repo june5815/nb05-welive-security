@@ -3,6 +3,7 @@ import {
   HouseholdMember,
   ResidentImportLog,
   HouseholdStatus,
+  UserType,
 } from "./resident.type";
 
 export const HouseholdEntity = {
@@ -103,6 +104,7 @@ export const HouseholdEntity = {
     return {
       id: crypto.randomUUID(),
       householdId: props.householdId,
+      userType: UserType.PRE_RESIDENT,
       email: props.email,
       contact: props.contact,
       name: props.name,
@@ -185,18 +187,6 @@ export const HouseholdEntity = {
     return household.members.find((m) => m.userId === userId);
   },
 
-  // 입주민
-  // 등록 /api/v2/residents
-  /**
-   * 입주민은 householdMember이다. 
-   * housholdMember는 ishouseholder(세대주)여부가 관리자(admin)이 입주민 정보 등록시 등록된다. 
-   * 관리자(admin)이 입주민을 등록하면, 유저 타입이 부여된다. 
-   * enum UserType {
-  PRE_RESIDENT //가등록 (관리자가 CSV파일로 일괄 등록했을 경우)
-  RESIDENT //등록 (관리자 등록 후, 입주민이 개별 회원가입한 경우)
-  * 이미 등록된 유저는 이메일로 체크한다. 중복된 유저(입주민)은 가입불가이다. 
-}
-   */
   createHouseholdMemberByAdmin(props: {
     householdId: string;
     email: string;
@@ -207,6 +197,7 @@ export const HouseholdEntity = {
     return {
       id: crypto.randomUUID(),
       householdId: props.householdId,
+      userType: UserType.PRE_RESIDENT,
       email: props.email,
       contact: props.contact,
       name: props.name,

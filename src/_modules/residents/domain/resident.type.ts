@@ -28,6 +28,7 @@ export interface HouseholdMember {
   readonly id: string;
   readonly householdId: string;
   readonly userId?: string;
+  readonly userType: UserType;
   readonly email: string;
   readonly contact: string;
   readonly name: string;

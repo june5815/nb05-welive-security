@@ -18,6 +18,13 @@ export const ResidentRouter = (
   const catchError = baseRouter.catchError;
   const PATH = "/api/v2/residents";
 
+  router.post(
+    "/",
+    authMiddleware.checkAuth,
+    roleMiddleware.hasRole(["ADMIN"]),
+    catchError(residentController.createResidentHouseholdMember),
+  );
+
   router.get(
     "/:apartmentId",
     authMiddleware.checkAuth,
@@ -30,6 +37,13 @@ export const ResidentRouter = (
     authMiddleware.checkAuth,
     roleMiddleware.hasRole(["ADMIN"]),
     catchError(residentController.getHouseholdMemberDetail),
+  );
+
+  router.patch(
+    "/:id",
+    authMiddleware.checkAuth,
+    roleMiddleware.hasRole(["ADMIN"]),
+    catchError(residentController.updateResidentHouseholdMember),
   );
 
   return {

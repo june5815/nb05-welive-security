@@ -22,7 +22,16 @@ export interface HouseholdMembersListResponseView {
   hasNext: boolean;
 }
 
-export interface CreateResidentResView extends HouseholdMemberView {}
+export interface CreateResidentResView extends HouseholdMemberView {
+  id: string;
+  email: string;
+  contact: string;
+  name: string;
+  building: number;
+  unit: number;
+  isHouseholder: boolean;
+  userId: string;
+}
 
 export interface CreateResidentResponseView {
   data: CreateResidentResView;

@@ -58,8 +58,53 @@ export const ResidentQueryRepository = (
     return member;
   };
 
+  const findHouseholdByBuildingAndUnit = async (
+    apartmentId: string,
+    building: number,
+    unit: number,
+  ): Promise<any | null> => {
+    try {
+      const household = await prisma.household.findUnique({
+        where: {
+          apartment_building_unit: {
+            apartmentId,
+            building,
+            unit,
+          },
+        },
+        include: {
+          members: true,
+        },
+      });
+
+      return household;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const findHouseholdMemberByEmail = async (
+    email: string,
+  ): Promise<HouseholdMemberWithRelations | null> => {
+    try {
+      const member = await prisma.householdMember.findUnique({
+        where: { email },
+        include: {
+          user: true,
+          household: true,
+        },
+      });
+
+      return member;
+    } catch (error) {
+      throw error;
+    }
+  };
+
   return {
     findHouseholdMembers,
     findHouseholdMemberById,
+    findHouseholdByBuildingAndUnit,
+    findHouseholdMemberByEmail,
   };
 };

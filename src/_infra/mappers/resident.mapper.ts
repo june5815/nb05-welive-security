@@ -31,6 +31,7 @@ export const ResidentMapper = {
       id: raw.id,
       householdId: raw.householdId,
       userId: raw.userId || undefined,
+      userType: raw.userType,
       email: raw.email,
       contact: raw.contact,
       name: raw.name,
@@ -52,6 +53,7 @@ export const ResidentMapper = {
     member: HouseholdMember,
   ): Prisma.HouseholdMemberCreateInput => ({
     id: member.id,
+    userType: member.userType,
     isHouseholder: member.isHouseholder,
     movedInAt: member.movedInAt,
     movedOutAt: member.movedOutAt,

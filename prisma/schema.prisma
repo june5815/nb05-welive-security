@@ -131,6 +131,7 @@ model HouseholdMember {
   contact       String
   name          String
   isHouseholder Boolean   @default(false)
+  userType      UserType @default(PRE_RESIDENT)
   movedInAt     DateTime? //전입 날짜
   movedOutAt    DateTime? //전출 날짜
 
