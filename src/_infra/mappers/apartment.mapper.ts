@@ -95,6 +95,8 @@ export class ApartmentMapper {
       return {
         ...apartment,
         totalUnits: ApartmentEntity.getTotalUnits(apartmentWithoutAdmin),
+        buildings: ApartmentEntity.getBuildings(apartmentWithoutAdmin),
+        units: ApartmentEntity.getUnits(apartmentWithoutAdmin),
       };
     });
 
@@ -122,6 +124,8 @@ export class ApartmentMapper {
       householdCountPerBuilding: ApartmentEntity.getHouseholdCountPerBuilding(
         apartmentWithoutAdmin,
       ),
+      buildings: ApartmentEntity.getBuildings(apartmentWithoutAdmin),
+      units: ApartmentEntity.getUnits(apartmentWithoutAdmin),
     };
   }
 
