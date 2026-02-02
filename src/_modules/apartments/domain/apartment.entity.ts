@@ -133,6 +133,28 @@ export const ApartmentEntity = {
     return apartment.floorCountPerBuilding * apartment.unitCountPerFloor;
   },
 
+  getBuildings(apartment: Apartment): number[] {
+    const buildings: number[] = [];
+    for (
+      let building = apartment.buildingNumberFrom;
+      building <= apartment.buildingNumberTo;
+      building++
+    ) {
+      buildings.push(building);
+    }
+    return buildings;
+  },
+
+  getUnits(apartment: Apartment): number[] {
+    const units: number[] = [];
+    const maxUnits =
+      apartment.floorCountPerBuilding * apartment.unitCountPerFloor;
+    for (let unit = 1; unit <= maxUnits; unit++) {
+      units.push(unit);
+    }
+    return units;
+  },
+
   isValidBuilding(apartment: Apartment, building: number): boolean {
     return (
       building >= apartment.buildingNumberFrom &&

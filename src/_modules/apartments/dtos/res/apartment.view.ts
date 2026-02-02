@@ -15,6 +15,8 @@ export interface ApartmentListItemResView {
   readonly unitCountPerFloor: number;
   readonly totalUnits: number;
   readonly adminId?: string | null;
+  readonly buildings: number[];
+  readonly units: number[];
 }
 
 /**
@@ -44,6 +46,8 @@ export interface ApartmentDetailResView {
   readonly buildingNumberFrom: number;
   readonly buildingNumberTo: number;
   readonly floorCountPerBuilding: number;
+  readonly buildings: number[]; // 동 목록
+  readonly units: number[];
   readonly unitCountPerFloor: number;
   readonly totalUnits: number;
   readonly buildingCount: number;
