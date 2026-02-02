@@ -26,11 +26,11 @@ jobs:
       - name: install node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "20"
+          node-version: "lts/*"
           cache: "npm"
 
       - name: install dependencies
-        run: npm ci --verbose
+        run: npm ci
 
       - name: check types
         run: npm run type:check
