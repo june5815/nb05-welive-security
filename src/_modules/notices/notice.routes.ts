@@ -57,10 +57,6 @@ export const NoticeRouter = (
 
   router.post(
     "/",
-    (req, res, next) => {
-      console.log("✅ HIT NOTICE POST /api/v2/notices");
-      next();
-    },
     authMiddleware.checkAuth,
     roleMiddleware.hasRole(["ADMIN"]),
     catchError(controller.createNotice),
