@@ -22,18 +22,15 @@ export const NotificationController = (
   const validate = baseController.validate;
 
   const getUnreadNotificationsSse = async (req: Request, res: Response) => {
-    const reqDto = validate(getUnreadNotificationsSseReqSchema, {
-      userId: req.userId,
-    });
+    const userId = req.userId!;
 
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
     res.setHeader("X-Accel-Buffering", "no");
 
-    const notifications = await notificationQueryUsecase.getUnreadNotifications(
-      reqDto.userId,
-    );
+    const notifications =
+      await notificationQueryUsecase.getUnreadNotifications(userId);
 
     const sseMessage = `data: ${JSON.stringify({
       type: "alarm",

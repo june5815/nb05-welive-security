@@ -6,8 +6,7 @@ const UUID_V4_REGEX =
 export const userIdSchema = z
   .string()
   .trim()
-  .nonempty("사용자 ID는 필수입니다.")
-  .regex(UUID_V4_REGEX, "유효한 사용자 ID가 아닙니다.");
+  .nonempty("사용자 ID는 필수입니다.");
 
 export const notificationReceiptIdSchema = z
   .string()
@@ -28,9 +27,7 @@ export const limitSchema = z.coerce
   .max(100, "limit은 100 이하여야 합니다.")
   .default(20);
 
-export const getUnreadNotificationsSseReqSchema = z.object({
-  userId: userIdSchema,
-});
+export const getUnreadNotificationsSseReqSchema = z.object({});
 export type GetUnreadNotificationsSseReq = z.infer<
   typeof getUnreadNotificationsSseReqSchema
 >;

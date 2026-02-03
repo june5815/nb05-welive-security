@@ -50,14 +50,14 @@ export const HttpServer = (
   app.use(cookieMiddleware.cookieHandler());
 
   // routers
+  app.use(notificationRouter.PATH, notificationRouter.router);
+  app.use(apartmentRouter.PATH, apartmentRouter.router);
   app.use(authRouter.PATH, authRouter.router);
   app.use(userRouter.PATH, userRouter.router);
-  app.use(apartmentRouter.PATH, apartmentRouter.router);
   app.use(residentRouter.PATH, residentRouter.router);
   app.use(noticeRouter.PATH, noticeRouter.router);
   app.use(commentRouter.PATH, commentRouter.router);
   app.use(eventRouter.PATH, eventRouter.router);
-  app.use(notificationRouter.PATH, notificationRouter.router);
 
   // static
   app.use(staticServeMiddleware.staticServeHandler());

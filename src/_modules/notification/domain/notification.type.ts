@@ -5,6 +5,7 @@ export enum NotificationType {
   POLL_ENDED = "POLL_ENDED",
   NOTICE_POSTED = "NOTICE_POSTED",
   COMMENT_ADDED = "COMMENT_ADDED",
+  ADMIN_SIGNUP_REQUESTED = "ADMIN_SIGNUP_REQUESTED",
 }
 
 export enum NotificationTargetType {

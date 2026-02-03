@@ -23,6 +23,7 @@ import { ResidentCommandService } from "./_modules/residents/usecases/resident-c
 import { ResidentQueryService } from "./_modules/residents/usecases/resident-query.usecase";
 import { NotificationQueryUsecase } from "./_modules/notification/usecases/notification-query.usecase";
 import { NotificationCommandUsecase } from "./_modules/notification/usecases/notification-command.usecase";
+import { SendNotificationUsecase } from "./_modules/notification/usecases/send-notification.usecase";
 
 import { AuthCommandRepo } from "./_infra/repos/auth/auth-command.repo";
 import { BaseCommandRepo } from "./_infra/repos/_base/base-command.repo";
@@ -73,6 +74,13 @@ export const Injector = () => {
 
   const unitOfWork = UOW(prisma, configUtil);
   const hashManager = HashManager(configUtil);
+
+  // 알림 발송 서비스 먼저 생성 (DI 순서 중요)
+  const sendNotificationUsecase = SendNotificationUsecase(
+    prisma,
+    notificationCommandRepo,
+  );
+
   const authCommandService = AuthCommandService(
     unitOfWork,
     hashManager,
@@ -132,24 +140,24 @@ export const Injector = () => {
   );
 
   const baseRouter = BaseRouter();
-  const authRouter = AuthRouter(baseRouter, authController);
+  const authRouter = AuthRouter(BaseRouter(), authController);
   const userRouter = UserRouter(
-    baseRouter,
+    BaseRouter(),
     userController,
     authMiddleware,
     roleMiddleware,
     multerMiddleware,
   );
-  const apartmentRouter = ApartmentRouter(baseRouter, apartmentController);
+  const apartmentRouter = ApartmentRouter(BaseRouter(), apartmentController);
   const residentRouter = ResidentRouter(
-    baseRouter,
+    BaseRouter(),
     residentController,
     authMiddleware,
     roleMiddleware,
   );
 
   const noticeRouter = NoticeRouter(
-    baseRouter,
+    BaseRouter(),
     baseController,
     prisma,
     authMiddleware,
@@ -157,7 +165,7 @@ export const Injector = () => {
   );
 
   const commentRouter = CommentRouter(
-    baseRouter,
+    BaseRouter(),
     baseController,
     prisma,
     authMiddleware,
@@ -165,7 +173,7 @@ export const Injector = () => {
   );
 
   const eventRouter = EventRouter(
-    baseRouter,
+    BaseRouter(),
     baseController,
     prisma,
     authMiddleware,
@@ -173,7 +181,7 @@ export const Injector = () => {
   );
 
   const notificationRouter = NotificationRouter(
-    baseRouter,
+    BaseRouter(),
     notificationController,
     authMiddleware,
   );

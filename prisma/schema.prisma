@@ -309,6 +309,8 @@ enum NotificationType {
   POLL_ENDED
   NOTICE_POSTED
   COMMENT_ADDED
+  ADMIN_SIGNUP_REQUESTED
+  RESIDENT_SIGNUP_REQUESTED
 }
 
 enum NotificationTargetType {
@@ -316,6 +318,8 @@ enum NotificationTargetType {
   POLL
   NOTICE
   COMMENT
+  APARTMENT
+  USER
 }
 
 model NotificationEvent {
