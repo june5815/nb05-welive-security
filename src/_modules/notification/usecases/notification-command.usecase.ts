@@ -7,7 +7,7 @@ import {
   TechnicalExceptionType,
 } from "../../../_common/exceptions/technical.exception";
 import { INotificationCommandRepo } from "../../../_common/ports/repos/notification/notification-command.repo.interface";
-import { MarkNotificationAsReadReq } from "../dtos/req/notificatio.request";
+import { MarkNotificationAsReadReq } from "../dtos/req/notification.request";
 
 export interface INotificationCommandUsecase {
   markAsRead(req: MarkNotificationAsReadReq): Promise<void>;

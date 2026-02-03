@@ -9,7 +9,11 @@ export const LoggerMiddleware = (
     configUtil.parsed().NODE_ENV === "development" ? "dev" : "combined";
 
   const loggerHandler = () => {
-    return morgan(format);
+    const skip = (req: any, res: any) => {
+      return req.path === "/api/v2/notifications/sse";
+    };
+
+    return morgan(format, { skip });
   };
 
   return {

@@ -6,7 +6,7 @@ import {
   getUnreadNotificationsSseReqSchema,
   createGetNotificationListReqSchema,
   createMarkNotificationAsReadReqSchema,
-} from "./dtos/req/notificatio.request";
+} from "./dtos/req/notification.request";
 
 export interface INotificationController {
   getUnreadNotificationsSse: (req: Request, res: Response) => Promise<void>;
@@ -39,7 +39,13 @@ export const NotificationController = (
 
     res.write(sseMessage);
 
-    res.end();
+    const heartbeatInterval = setInterval(() => {
+      res.write(": ping\n\n");
+    }, 30000);
+
+    res.on("close", () => {
+      clearInterval(heartbeatInterval);
+    });
   };
 
   const getNotificationList = async (req: Request, res: Response) => {

@@ -12,7 +12,7 @@ import {
   NotificationDetail,
   NotificationListResponse,
 } from "../../../_common/ports/repos/notification/notification-query.repo.interface";
-import { GetNotificationListReq } from "../dtos/req/notificatio.request";
+import { GetNotificationListReq } from "../dtos/req/notification.request";
 
 export interface INotificationQueryUsecase {
   getUnreadNotifications(userId: string): Promise<Notification[]>;
