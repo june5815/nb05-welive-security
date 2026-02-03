@@ -1,5 +1,4 @@
-// 개발 초기, 주석사용
-// 중간 발표 전, 주석 제거예정
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,20 +9,20 @@ datasource db {
 }
 
 enum UserRole {
-  SUPER_ADMIN // 슈퍼 관리자
-  ADMIN // 관리자
-  USER // 입주민
+  SUPER_ADMIN 
+  ADMIN 
+  USER 
 }
 
 enum JoinStatus {
-  PENDING // 대기
-  APPROVED // 승인
-  REJECTED // 거절
+  PENDING 
+  APPROVED 
+  REJECTED 
 }
 
 enum UserType {
-  PRE_RESIDENT //가등록 (관리자가 CSV파일로 일괄 등록했을 경우)
-  RESIDENT //등록 (관리자 등록 후, 입주민이 개별 회원가입한 경우)
+  PRE_RESIDENT 
+  RESIDENT 
 }
 
 model User {
@@ -34,26 +33,26 @@ model User {
   contact      String           @unique
   name         String
   role         UserRole
-  avatar       String? // 프로필 이미지
+  avatar       String? 
   joinStatus   JoinStatus @default(PENDING)
-  isActive     Boolean    @default(false) // 계정 활성화 여부
+  isActive     Boolean    @default(false)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   version      Int        @default(1)
   
-  // 1:1 관계
+  
   refreshToken       RefreshToken?
   adminOf            Apartment?
   resident           HouseholdMember?
 
-  notices            Notice[] // 공지사항
-  complaints         Complaint[] // 민원
-  polls              Poll[] // 투표
-  pollVotes          PollVote[] // 투표용
-  comments           Comment[] // 댓글
-  residentImportLogs ResidentImportLog[] // 입주민 일괄등록 로그
+  notices            Notice[] 
+  complaints         Complaint[]
+  polls              Poll[] 
+  pollVotes          PollVote[]
+  comments           Comment[] 
+  residentImportLogs ResidentImportLog[] 
 
-  notificationReceipts NotificationReceipt[] // 알림 수신
+  notificationReceipts NotificationReceipt[] 
 }
 
 model RefreshToken {
@@ -81,10 +80,10 @@ model Apartment {
   updatedAt DateTime @updatedAt
   version   Int      @default(1)
 
-  // 1:1 관계
+  
   admin User? @relation(fields: [adminId], references: [id], onDelete: SetNull)
 
-  // 1:n 관계
+  
   household          Household[]
   complaints         Complaint[]
   polls              Poll[]
@@ -96,12 +95,12 @@ model Apartment {
   @@index([adminId])
 }
 
-//세대
+
 
 enum HouseholdStatus {
-  EMPTY // 공실  
-  ACTIVE // 거주중인 상태
-  MOVE_OUT // 이사한 상태
+  EMPTY
+  ACTIVE
+  MOVE_OUT
 }
 
 model Household {
@@ -122,7 +121,7 @@ model Household {
   @@index([apartmentId])
 }
 
-//세대원
+
 model HouseholdMember {
   id            String    @id @default(uuid())
   householdId   String
@@ -132,8 +131,8 @@ model HouseholdMember {
   name          String
   isHouseholder Boolean   @default(false)
   userType      UserType @default(PRE_RESIDENT)
-  movedInAt     DateTime? //전입 날짜
-  movedOutAt    DateTime? //전출 날짜
+  movedInAt     DateTime?
+  movedOutAt    DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -141,17 +140,16 @@ model HouseholdMember {
   household Household @relation(fields: [householdId], references: [id])
   user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
+@@index([userId])
 }
 
-// 엑셀/csv파일로 여러 입주민 데이터를 한번에 등록하기 위한 모델
 model ResidentImportLog {
   id           String   @id
   fileName     String
   totalCount   Int
   successCount Int
   failCount    Int
-  status       String   @default("pending") // pending, success, failed
+  status       String   @default("pending") 
   errorMessage String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -167,9 +165,9 @@ model ResidentImportLog {
 }
 
 enum ComplaintStatus {
-  PENDING // 접수
-  IN_PROGRESS // 처리중
-  RESOLVED // 처리 완료
+  PENDING 
+  IN_PROGRESS 
+  RESOLVED 
 }
 
 model Complaint {
@@ -177,19 +175,19 @@ model Complaint {
   title   String
   content String
 
-  status     ComplaintStatus @default(PENDING) // enum 적용
-  isPublic   Boolean         @default(true) // 공개, 비공개 민원
-  viewsCount Int             @default(0) // 조회수
+  status     ComplaintStatus @default(PENDING) 
+  isPublic   Boolean         @default(true) 
+  viewsCount Int             @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   version   Int      @default(1)
 
-  // 작성자
+
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // 아파트
+
   apartmentId String
   apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
 
@@ -199,30 +197,27 @@ model Complaint {
 }
 
 enum PollStatus {
-  PENDING // 투표 전
-  IN_PROGRESS // 투표 진행 중
-  CLOSED // 투표 종료
+  PENDING 
+  IN_PROGRESS 
+  CLOSED
 }
 
 model Poll {
   id        String     @id @default(uuid())
   title     String
   content   String
-  status    PollStatus @default(PENDING) // enum 적용
+  status    PollStatus @default(PENDING) 
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   endDate   DateTime?
   version   Int        @default(1)
 
-  // User 삭제 => Poll 삭제 O (투표 작성자)
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Apartment 삭제 => Poll 삭제 O
   apartmentId String
   apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
 
-  // 1:n
   options PollOption[]
   votes   PollVote[]
 
@@ -237,11 +232,11 @@ model PollOption {
   order     Int
   voteCount Int    @default(0)
 
-  // Poll 삭제 => PollOption 삭제 O
+ 
   pollId String
   poll   Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
 
-  // 1:n
+
   votes PollVote[]
 
   @@unique([pollId, order])
@@ -251,15 +246,15 @@ model PollOption {
 model PollVote {
   createdAt DateTime @default(now())
 
-  // User 삭제 => PollVote 삭제 O
+
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Poll 삭제 => PollVote 삭제 O
+
   pollId String
   poll   Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
 
-  // PollOption 삭제 => PollVote 삭제 O
+
   optionId String
   option   PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
 
@@ -270,12 +265,12 @@ model PollVote {
 }
 
 enum NoticeCategory {
-  MAINTENANCE // 정기검진
-  EMERGENCY // 긴급사항
-  COMMUNITY // 커뮤니티
-  RESIDENT_VOTE // 주민투표
-  RESIDENT_COUNCIL // 민원
-  ETC // 기타
+  MAINTENANCE 
+  EMERGENCY 
+  COMMUNITY 
+  RESIDENT_VOTE 
+  RESIDENT_COUNCIL
+  ETC
 }
 
 enum NoticeType {
@@ -295,15 +290,13 @@ model Notice {
   updatedAt DateTime @updatedAt
   version   Int      @default(1)
 
-  // 작성자
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // 아파트
   apartmentId String
   apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
 
-  event Event? // 1:1 (공지 일정)
+  event Event? 
 
   @@index([apartmentId])
   @@index([category])
@@ -371,13 +364,13 @@ model Event {
   startDate DateTime
   endDate   DateTime
 
-  // 공지와 1:1 관계
+
   noticeId String @unique
   notice   Notice @relation(fields: [noticeId], references: [id], onDelete: Cascade)
 
   resourceType EventResourceType @default(NOTICE)
 
-  // 아파트
+
   apartmentId String
   apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
 
@@ -400,11 +393,11 @@ model Comment {
   updatedAt DateTime @updatedAt
   version   Int      @default(1)
 
-  // 작성자
+
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // 리소스 추상화
+
   resourceId   String
   resourceType CommentResourceType
 

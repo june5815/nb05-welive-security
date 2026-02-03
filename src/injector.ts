@@ -6,12 +6,14 @@ import { NoticeRouter } from "./_modules/notices/notice.routes";
 import { CommentRouter } from "./_modules/comments/routes";
 import { EventRouter } from "./_modules/events/routes";
 import { ResidentRouter } from "./_modules/residents/resident.router";
+import { NotificationRouter } from "./_modules/notification/notification.router";
 
 import { BaseController } from "./_modules/_base/base.controller";
 import { AuthController } from "./_modules/auth/auth.controller";
 import { UserController } from "./_modules/users/user.controller";
 import { ApartmentController } from "./_modules/apartments/apartment.controller";
 import { createResidentController } from "./_modules/residents/resident.controller";
+import { NotificationController } from "./_modules/notification/notification.controller";
 
 import { AuthCommandService } from "./_modules/auth/service/auth-command.service";
 import { UserCommandService } from "./_modules/users/service/user-command.service";
@@ -19,6 +21,8 @@ import { UserQueryService } from "./_modules/users/service/user-query.service";
 import { ApartmentQueryUsecase } from "./_modules/apartments/usecases/query/apartment-query.usecase";
 import { ResidentCommandService } from "./_modules/residents/usecases/resident-command.usecase";
 import { ResidentQueryService } from "./_modules/residents/usecases/resident-query.usecase";
+import { NotificationQueryUsecase } from "./_modules/notification/usecases/notification-query.usecase";
+import { NotificationCommandUsecase } from "./_modules/notification/usecases/notification-command.usecase";
 
 import { AuthCommandRepo } from "./_infra/repos/auth/auth-command.repo";
 import { BaseCommandRepo } from "./_infra/repos/_base/base-command.repo";
@@ -28,6 +32,8 @@ import { UserQueryRepo } from "./_infra/repos/user/user-query.repo";
 import { ApartmentQueryRepo } from "./_infra/repos/apartment/apartment-query.repo";
 import { ResidentCommandRepository } from "./_infra/repos/resident/resident-command.repo";
 import { ResidentQueryRepository } from "./_infra/repos/resident/resident-query.repo";
+import { NotificationQueryRepo } from "./_infra/repos/notification/notification-query.repo";
+import { NotificationCommandRepo } from "./_infra/repos/notification/notification-command.repo";
 
 import { UOW } from "./_infra/db/unit-of-work";
 import { HashManager } from "./_infra/manager/bcrypt-hash.manager";
@@ -62,6 +68,8 @@ export const Injector = () => {
   const userQueryRepo = UserQueryRepo(baseQueryRepo);
   const apartmentQueryRepo = ApartmentQueryRepo(baseQueryRepo);
   const residentQueryRepo = ResidentQueryRepository(baseQueryRepo);
+  const notificationQueryRepo = NotificationQueryRepo(prisma);
+  const notificationCommandRepo = NotificationCommandRepo(prisma);
 
   const unitOfWork = UOW(prisma, configUtil);
   const hashManager = HashManager(configUtil);
@@ -84,6 +92,12 @@ export const Injector = () => {
     residentQueryRepo,
   );
   const residentQueryService = ResidentQueryService(residentQueryRepo);
+  const notificationQueryUsecase = NotificationQueryUsecase(
+    notificationQueryRepo,
+  );
+  const notificationCommandUsecase = NotificationCommandUsecase(
+    notificationCommandRepo,
+  );
 
   const authMiddleware = AuthMiddleware(tokenUtil);
   const cookieMiddleware = CookieMiddleware(configUtil);
@@ -110,6 +124,11 @@ export const Injector = () => {
   const residentController = createResidentController(
     residentCommandService,
     residentQueryService,
+  );
+  const notificationController = NotificationController(
+    baseController,
+    notificationQueryUsecase,
+    notificationCommandUsecase,
   );
 
   const baseRouter = BaseRouter();
@@ -153,6 +172,12 @@ export const Injector = () => {
     roleMiddleware,
   );
 
+  const notificationRouter = NotificationRouter(
+    baseRouter,
+    notificationController,
+    authMiddleware,
+  );
+
   const httpServer: IHttpServer = HttpServer(
     configUtil,
     cookieMiddleware,
@@ -169,6 +194,7 @@ export const Injector = () => {
     noticeRouter,
     commentRouter,
     eventRouter,
+    notificationRouter,
   );
 
   return {

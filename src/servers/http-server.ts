@@ -15,6 +15,7 @@ import { IResidentRouter } from "../_modules/residents/resident.router";
 import { INoticeRouter } from "../_modules/notices/notice.routes";
 import { ICommentRouter } from "../_modules/comments/routes";
 import { IEventRouter } from "../_modules/events/routes";
+import { INotificationRouter } from "../_modules/notification/notification.router";
 
 export interface IHttpServer {
   start: () => void;
@@ -37,6 +38,7 @@ export const HttpServer = (
   noticeRouter: INoticeRouter,
   commentRouter: ICommentRouter,
   eventRouter: IEventRouter,
+  notificationRouter: INotificationRouter,
 ): IHttpServer => {
   const app: Application = express();
   const defaultHttpServer: DefaultHttpServer = http.createServer(app);
@@ -55,6 +57,7 @@ export const HttpServer = (
   app.use(noticeRouter.PATH, noticeRouter.router);
   app.use(commentRouter.PATH, commentRouter.router);
   app.use(eventRouter.PATH, eventRouter.router);
+  app.use(notificationRouter.PATH, notificationRouter.router);
 
   // static
   app.use(staticServeMiddleware.staticServeHandler());
