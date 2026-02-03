@@ -223,7 +223,11 @@ export const UserCommandRepo = (
       const prisma = baseCommandRepo.getPrismaClient();
       const foundUser = await prisma.user.findUnique({
         where: { username },
-        include: superAdminInclude,
+        include: {
+          ...superAdminInclude,
+          ...adminInclude,
+          ...residentInclude,
+        },
       });
 
       if (!foundUser) {
@@ -278,7 +282,11 @@ export const UserCommandRepo = (
 
       const foundUser = await prisma.user.findUnique({
         where: { id: userId },
-        include: superAdminInclude,
+        include: {
+          ...superAdminInclude,
+          ...adminInclude,
+          ...residentInclude,
+        },
       });
 
       if (!foundUser) {

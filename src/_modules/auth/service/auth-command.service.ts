@@ -94,8 +94,19 @@ export const AuthCommandService = (
           useOptimisticLock: false,
         },
       );
+      const resolveApartmentId = (user: any): string | undefined => {
+        if (!user) return undefined;
+        if (user.role === "ADMIN") return user.adminOf?.id;
+        if (user.role === "USER") return user.resident?.household?.apartmentId;
+        return undefined;
+      };
 
-      const accessToken = tokenUtil.generateAccessToken({ userId, role });
+      const apartmentId = resolveApartmentId(foundUser);
+      const accessToken = tokenUtil.generateAccessToken({
+        userId,
+        role,
+        apartmentId,
+      });
       const csrfValue = tokenUtil.generateCsrfValue();
 
       const tokenResDto: TokenResDto = { accessToken, refreshToken, csrfValue };
@@ -174,8 +185,15 @@ export const AuthCommandService = (
       type: "REFRESH",
     });
 
+    const resolveApartmentId = (user: any): string | undefined => {
+      if (!user) return undefined;
+      if (user.role === "ADMIN") return user.adminOf?.id;
+      if (user.role === "USER") return user.resident?.household?.apartmentId;
+      return undefined;
+    };
+
     try {
-      const { newRefreshToken, role } = await unitOfWork.doTx(
+      const { newRefreshToken, role, apartmentId } = await unitOfWork.doTx(
         async () => {
           const foundUser = await userCommandRepo.findById(userId, "update");
           if (!foundUser) {
@@ -183,6 +201,7 @@ export const AuthCommandService = (
               type: BusinessExceptionType.INVALID_AUTH,
             });
           }
+
           if (
             foundUser.joinStatus === "PENDING" &&
             foundUser.isActive === false
@@ -201,7 +220,6 @@ export const AuthCommandService = (
           }
 
           const tokenData = await authCommandRepo.findByUserId(userId);
-
           await AuthEntity.isRefreshTokenMatched(
             tokenData,
             oldRefreshToken,
@@ -216,10 +234,13 @@ export const AuthCommandService = (
             newRefreshToken,
             hashManager,
           );
-
           await authCommandRepo.upsertRefreshToken(tokenEntity);
 
-          return { newRefreshToken, role: foundUser.role! };
+          return {
+            newRefreshToken,
+            role: foundUser.role!,
+            apartmentId: resolveApartmentId(foundUser),
+          };
         },
         {
           transactionOptions: {
@@ -230,7 +251,11 @@ export const AuthCommandService = (
         },
       );
 
-      const newAccessToken = tokenUtil.generateAccessToken({ userId, role });
+      const newAccessToken = tokenUtil.generateAccessToken({
+        userId,
+        role,
+        apartmentId,
+      });
       const newCsrfValue = tokenUtil.generateCsrfValue();
 
       return {
