@@ -94,8 +94,7 @@ export const residentSchema = z.object({
   // ),
   unit: z.coerce
     .number()
-    .min(1, "호는 0으로 시작할 수 없고 숫자만 입력 가능합니다.")
-    .max(99, "호는 두 자리까지만 입력 가능합니다."),
+    .min(1, "호는 0으로 시작할 수 없고 숫자만 입력 가능합니다."),
   // 만일을 대비하여 남김
   // .string()
   // .trim()
