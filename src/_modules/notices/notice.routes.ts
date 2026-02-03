@@ -22,7 +22,8 @@ export const NoticeRouter = (
   authMiddleware: IAuthMiddleware,
   roleMiddleware: IRoleMiddleware,
 ): INoticeRouter => {
-  const { router, catchError } = baseRouter;
+  const router = Router();
+  const { catchError } = baseRouter;
   const PATH = "/api/v2/notices";
 
   const queryRepo = noticeQueryRepository(prismaClient);
@@ -40,10 +41,6 @@ export const NoticeRouter = (
     commandService,
   );
 
-  /**
-   * 목록 조회 (관리자/입주민)
-   * GET /api/v2/notices
-   */
   router.get(
     "/",
     authMiddleware.checkAuth,
@@ -51,10 +48,6 @@ export const NoticeRouter = (
     catchError(controller.getNoticeList),
   );
 
-  /**
-   * 상세 조회 (관리자/입주민)
-   * GET /api/v2/notices/:noticeId
-   */
   router.get(
     "/:noticeId",
     authMiddleware.checkAuth,
@@ -62,10 +55,6 @@ export const NoticeRouter = (
     catchError(controller.getNoticeDetail),
   );
 
-  /**
-   * 공지 생성 (관리자)
-   * POST /api/v2/notices
-   */
   router.post(
     "/",
     authMiddleware.checkAuth,
@@ -73,10 +62,6 @@ export const NoticeRouter = (
     catchError(controller.createNotice),
   );
 
-  /**
-   * 공지 수정 (관리자)
-   * PATCH /api/v2/notices/:noticeId
-   */
   router.patch(
     "/:noticeId",
     authMiddleware.checkAuth,
@@ -84,10 +69,6 @@ export const NoticeRouter = (
     catchError(controller.updateNotice),
   );
 
-  /**
-   * 공지 삭제 (관리자)
-   * DELETE /api/v2/notices/:noticeId
-   */
   router.delete(
     "/:noticeId",
     authMiddleware.checkAuth,

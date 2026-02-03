@@ -34,12 +34,17 @@ export enum BusinessExceptionType {
   NOT_FOUND,
 
   VALIDATION_ERROR,
+  UNAUTHORIZED,
 }
 
 const BusinessExceptionTable: Record<
   BusinessExceptionType,
   { statusCode: number; message: string }
 > = {
+  [BusinessExceptionType.UNAUTHORIZED]: {
+    statusCode: 401,
+    message: "인증 정보가 유효하지 않습니다.",
+  },
   [BusinessExceptionType.FORBIDDEN]: {
     statusCode: 401,
     message: "권한과 관련된 오류입니다.",
