@@ -1,14 +1,19 @@
 import { PrismaClient, NoticeType } from "@prisma/client";
 import { NoticeCommandRepository } from "../../../_infra/repos/notice/notice-command.repo";
 import {
-  CreateNoticeReqDto,
+  CreateNoticeBodyDto,
   DeleteNoticeReqDto,
   UpdateNoticeReqDto,
 } from "../dtos/req/notice.request";
 import { asyncContextStorage } from "../../../_common/utils/async-context-storage";
 
 export interface INoticeCommandService {
-  createNotice: (dto: CreateNoticeReqDto) => Promise<any>;
+  createNotice: (dto: {
+    userId: string;
+    apartmentId: string;
+    body: CreateNoticeBodyDto;
+  }) => Promise<any>;
+
   updateNotice: (dto: UpdateNoticeReqDto) => Promise<void>;
   deleteNotice: (dto: DeleteNoticeReqDto) => Promise<void>;
 }
@@ -19,10 +24,13 @@ export const NoticeCommandService = (deps: {
 }): INoticeCommandService => {
   const { prisma, noticeCommandRepo } = deps;
 
-  const createNotice = async (dto: CreateNoticeReqDto) => {
-    const { userId, userApartmentId, body } = dto;
+  const createNotice = async (dto: {
+    userId: string;
+    apartmentId: string;
+    body: CreateNoticeBodyDto;
+  }) => {
+    const { userId, apartmentId, body } = dto;
 
-    // 트랜잭션 (중요공지사항 생성시 => 알림 )
     return prisma.$transaction(async (tx) => {
       return asyncContextStorage.run(tx as any, async () => {
         return noticeCommandRepo.create({
@@ -30,8 +38,8 @@ export const NoticeCommandService = (deps: {
           content: body.content,
           category: body.category,
           type: body.isPinned ? NoticeType.IMPORTANT : NoticeType.NORMAL,
-          apartmentId: userApartmentId,
-          userId: userId,
+          apartmentId,
+          userId,
           event: body.event
             ? {
                 startDate: new Date(body.event.startDate),
@@ -39,8 +47,7 @@ export const NoticeCommandService = (deps: {
               }
             : undefined,
         });
-
-        // TODO: 알림(Notification) 발송 로직 추가 위치
+        // todo
       });
     });
   };

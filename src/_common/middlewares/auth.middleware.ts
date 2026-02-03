@@ -42,7 +42,7 @@ export const AuthMiddleware = (tokenUtil: ITokenUtil): IAuthMiddleware => {
     req.user = {
       id: payload.userId,
       role: payload.role,
-      apartmentId: (payload as any).apartmentId,
+      apartmentId: payload.apartmentId,
     };
     if (!req.userId) {
       throw new BusinessException({
