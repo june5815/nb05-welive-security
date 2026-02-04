@@ -34,27 +34,25 @@ export const NoticeController = (
     const body = validate(createNoticeBodySchema, req.body);
 
     const userId = req.user?.id;
-    const userApartmentId = req.user?.apartmentId;
+    const role = req.user?.role;
+    const tokenApartmentId = req.user?.apartmentId;
 
-    if (!userId) {
-      throw new BusinessException({
-        type: BusinessExceptionType.UNAUTHORIZED,
-        message: "인증 정보가 없습니다.",
-      });
-    }
+    const resolvedApartmentId = await noticeQueryService.resolveApartmentId({
+      userId,
+      role,
+      tokenApartmentId,
+    });
 
-    if (userApartmentId && userApartmentId !== body.apartmentId) {
+    if (body.apartmentId && body.apartmentId !== resolvedApartmentId) {
       throw new BusinessException({
         type: BusinessExceptionType.UNAUTHORIZED,
         message: "해당 아파트에 공지를 등록할 수 없습니다.",
       });
     }
 
-    const apartmentId = userApartmentId ?? body.apartmentId;
-
     const created = await noticeCommandService.createNotice({
-      userId,
-      apartmentId,
+      userId: userId!,
+      apartmentId: resolvedApartmentId,
       body,
     });
 
@@ -71,17 +69,11 @@ export const NoticeController = (
    * 공지 목록 조회
    */
   const getNoticeList = async (req: Request, res: Response): Promise<void> => {
-    console.log("🧾 getNoticeList req.user =", req.user);
-    console.log("🧾 getNoticeList req.query =", req.query);
-    const apartmentId = req.user?.apartmentId;
-
-    if (!apartmentId) {
-      throw new BusinessException({
-        type: BusinessExceptionType.UNAUTHORIZED,
-        message:
-          "apartmentId가 토큰/세션에 없습니다. 로그인 정보를 확인해주세요.",
-      });
-    }
+    const apartmentId = await noticeQueryService.resolveApartmentId({
+      userId: req.user?.id,
+      role: req.user?.role,
+      tokenApartmentId: req.user?.apartmentId,
+    });
 
     const reqDto = validate(getNoticeListReqSchema, {
       userApartmentId: apartmentId,
