@@ -11,9 +11,7 @@ type ApartmentWithHousehold = ApartmentPrisma & {
 };
 
 const getBuildings = (households: Household[]): number[] =>
-  Array.from(new Set(households.map((h) => h.building + 100))).sort(
-    (a, b) => a - b,
-  );
+  Array.from(new Set(households.map((h) => h.building))).sort((a, b) => a - b);
 
 const getUnits = (households: Household[]): number[] =>
   Array.from(new Set(households.map((h) => h.unit))).sort((a, b) => a - b);
@@ -130,11 +128,11 @@ const createHouseholdRange = (
   floor: number,
   sequence: number,
 ): HouseholdListItem => ({
-  building: buildingNumber + 100,
+  building: buildingNumber,
   unit: floor * 100 + sequence,
   floor,
   sequence,
-  displayName: `${buildingNumber + 100}동 ${floor}층 ${sequence}호`,
+  displayName: `${buildingNumber}동 ${floor}층 ${sequence}호`,
 });
 
 const generateHouseholdsForBuilding = (
