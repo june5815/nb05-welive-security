@@ -1,10 +1,12 @@
+import { Poll } from "../domain/poll.entity";
+
 export interface IPollQueryRepo {
-  findById(pollId: string): Promise<any | null>;
-  findList(query: {
+  findList(options: {
     apartmentId: string;
     status?: string;
-    keyword?: string;
     skip: number;
     take: number;
-  }): Promise<{ data: any[]; totalCount: number }>;
+  }): Promise<{ data: Poll[]; totalCount: number }>;
+
+  findById(id: string): Promise<Poll | null>;
 }
