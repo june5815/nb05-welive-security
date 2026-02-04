@@ -151,7 +151,7 @@ export const UserCommandRepo = (
     try {
       const prisma = baseCommandRepo.getPrismaClient();
       const [existingResident, household] = await Promise.all([
-        await prisma.householdMember.findUnique({
+        prisma.householdMember.findUnique({
           where: {
             email: entity.email,
           },
@@ -159,7 +159,7 @@ export const UserCommandRepo = (
             id: true,
           },
         }),
-        await prisma.household.findUnique({
+        prisma.household.findUnique({
           where: {
             apartmentId_building_unit: {
               apartmentId: entity.resident!.household.apartmentId,
