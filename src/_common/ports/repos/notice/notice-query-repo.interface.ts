@@ -13,4 +13,5 @@ export interface NoticeQueryRepository {
   }>;
 
   findDetail(noticeId: string): Promise<any>;
+  findApartmentIdByAdminId: (adminId: string) => Promise<string | null>;
 }

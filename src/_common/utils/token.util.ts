@@ -16,6 +16,7 @@ export type TUserRole = (typeof UserRole)[keyof typeof UserRole];
 export type AccessTokenPayload = {
   userId: string;
   role: TUserRole;
+  apartmentId?: string;
   exp?: number;
 };
 export type RefreshTokenPayload = {

@@ -18,17 +18,15 @@ const eventSchema = z
     }
   });
 
-// 1. 공지 생성 (POST)
-export const createNoticeReqSchema = z.object({
-  userId: z.string().uuid(),
-  userApartmentId: z.string().uuid(),
-  body: z.object({
-    title: z.string().min(1, "제목을 입력해주세요"),
-    content: z.string().min(1, "내용을 입력해주세요"),
-    category: z.nativeEnum(NoticeCategory),
-    isPinned: z.boolean().optional().default(false),
-    event: eventSchema.optional(),
-  }),
+export const createNoticeBodySchema = z.object({
+  title: z.string().min(1, "제목을 입력해주세요"),
+  content: z.string().min(1, "내용을 입력해주세요"),
+  category: z.nativeEnum(NoticeCategory),
+  isPinned: z.boolean().optional().default(false),
+
+  apartmentId: z.string().uuid(),
+
+  event: eventSchema.nullable().optional(),
 });
 
 // 2. 공지 목록 조회 (GET List)
@@ -38,7 +36,7 @@ export const getNoticeListReqSchema = z.object({
     page: z.coerce.number().min(1).default(1),
     limit: z.coerce.number().min(1).default(20),
     category: z.nativeEnum(NoticeCategory).optional(),
-    searchKeyword: z.string().optional(),
+    searchKeyword: z.string().optional().default(""),
   }),
 });
 
@@ -70,7 +68,7 @@ export const deleteNoticeReqSchema = z.object({
   }),
 });
 
-export type CreateNoticeReqDto = z.infer<typeof createNoticeReqSchema>;
+export type CreateNoticeBodyDto = z.infer<typeof createNoticeBodySchema>;
 export type GetNoticeListReqDto = z.infer<typeof getNoticeListReqSchema>;
 export type GetNoticeDetailReqDto = z.infer<typeof getNoticeDetailReqSchema>;
 export type UpdateNoticeReqDto = z.infer<typeof updateNoticeReqSchema>;

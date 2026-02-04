@@ -119,9 +119,22 @@ export const noticeQueryRepository = (prismaClient: PrismaClient) => {
       commentCount,
     };
   };
+  const findApartmentIdByAdminId = async (
+    adminId: string,
+  ): Promise<string | null> => {
+    const prisma = base.getPrismaClient();
+
+    const apt = await prisma.apartment.findUnique({
+      where: { adminId },
+      select: { id: true },
+    });
+
+    return apt?.id ?? null;
+  };
 
   return {
     findList,
     findDetail,
+    findApartmentIdByAdminId,
   };
 };
