@@ -1,6 +1,7 @@
 import request from "supertest";
 import { PrismaClient, NoticeCategory } from "@prisma/client";
 import { Injector } from "../../../injector";
+import bcrypt from "bcrypt";
 
 jest.setTimeout(30000);
 
@@ -8,7 +9,7 @@ describe("Event API (E2E)", () => {
   let server: any;
   let prisma: PrismaClient;
 
-  let adminAccessToken: string;
+  let agentAdmin: any;
   let apartmentId: string;
   let noticeId: string;
 
@@ -19,6 +20,7 @@ describe("Event API (E2E)", () => {
 
     await prisma.event.deleteMany();
     await prisma.notice.deleteMany();
+    await prisma.refreshToken.deleteMany().catch(() => {});
     await prisma.user.deleteMany();
     await prisma.apartment.deleteMany();
 
@@ -38,10 +40,13 @@ describe("Event API (E2E)", () => {
     apartmentId = apartment.id;
 
     // 관리자 생성
+    const adminPlainPw = "password";
+    const adminHashedPw = await bcrypt.hash(adminPlainPw, 10);
+
     const admin = await prisma.user.create({
       data: {
         username: "admin_evt",
-        password: "password",
+        password: adminHashedPw,
         name: "관리자",
         email: "admin_evt@test.com",
         contact: "010-0000-0000",
@@ -52,14 +57,14 @@ describe("Event API (E2E)", () => {
       },
     });
 
-    // 로그인 (토큰 발급)
-    const res = await request(server)
+    agentAdmin = request.agent(server);
+    const loginRes = await agentAdmin
       .post("/api/v2/auth/login")
-      .send({ username: "admin_evt", password: "password" });
+      .send({ username: "admin_evt", password: adminPlainPw });
 
-    adminAccessToken = res.body.accessToken;
+    expect(loginRes.status).toBe(200);
 
-    // 공지사항 + 이벤트 생성 (API 요구사항에 따라 이벤트는 Notice 생성 시 옵션)
+    // 공지+이벤트 seed
     const notice = await prisma.notice.create({
       data: {
         title: "긴급 점검 일정 안내",
@@ -88,14 +93,11 @@ describe("Event API (E2E)", () => {
 
   describe("GET /api/v2/events", () => {
     it("해당 월 아파트 이벤트 목록을 조회한다 (200)", async () => {
-      const res = await request(server)
-        .get("/api/v2/events")
-        .query({
-          apartmentId,
-          year: 2023,
-          month: 2,
-        })
-        .set("Authorization", `Bearer ${adminAccessToken}`);
+      const res = await agentAdmin.get("/api/v2/events").query({
+        apartmentId,
+        year: 2023,
+        month: 2,
+      });
 
       expect(res.status).toBe(200);
       expect(Array.isArray(res.body)).toBe(true);
@@ -113,13 +115,11 @@ describe("Event API (E2E)", () => {
     });
 
     it("필수 파라미터 누락 시 400 에러", async () => {
-      const res = await request(server)
-        .get("/api/v2/events")
-        .query({
-          apartmentId,
-          year: 2023,
-        })
-        .set("Authorization", `Bearer ${adminAccessToken}`);
+      const res = await agentAdmin.get("/api/v2/events").query({
+        apartmentId,
+        year: 2023,
+        // month 누락시킴
+      });
 
       expect(res.status).toBe(400);
     });

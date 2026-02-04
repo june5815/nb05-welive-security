@@ -10,7 +10,6 @@ describe("Notice API (E2E)", () => {
   let app: any;
   let agentAdmin: any;
   let agentUser: any;
-
   let apartmentId: string;
   let adminId: string;
   let userId: string;
@@ -156,16 +155,16 @@ describe("Notice API (E2E)", () => {
     expect([401, 403]).toContain(res.status);
   });
 
-  // it("공지 목록 조회 GET /api/v2/notices (200)", async () => {
-  //   const res = await agentUser.get("/api/v2/notices").query({
-  //     page: 1,
-  //     limit: 10,
-  //     searchKeyword: "",
-  //   });
+  it("공지 목록 조회 GET /api/v2/notices (200)", async () => {
+    const res = await agentUser.get("/api/v2/notices").query({
+      page: 1,
+      limit: 10,
+      searchKeyword: "",
+    });
 
-  //   expect(res.status).toBe(200);
-  //   expect(Array.isArray(res.body.data)).toBe(true);
-  // });
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.data)).toBe(true);
+  });
 
   it("공지 상세 조회 GET /api/v2/notices/:id (200)", async () => {
     const res = await agentUser.get(`/api/v2/notices/${noticeId}`);
@@ -194,16 +193,17 @@ describe("Notice API (E2E)", () => {
     expect(updated?.event).toBeNull();
   });
 
-  // it("공지 삭제 DELETE /api/v2/notices/:id (204) + 실제 삭제 확인", async () => {
-  //   const res = await agentAdmin.delete(`/api/v2/notices/${noticeId}`);
-  //   expect(res.status).toBe(204);
+  it("공지 삭제 DELETE /api/v2/notices/:id (204) + 실제 삭제 확인", async () => {
+    const res = await agentAdmin.delete(`/api/v2/notices/${noticeId}`);
+    expect(res.status).toBe(204);
 
-  //   // DB에서 삭제됐는지 확인
-  //   const deleted = await prisma.notice.findUnique({ where: { id: noticeId } });
-  //   expect(deleted).toBeNull();
+    // DB에서 삭제됐는지 확인
+    const deleted = await prisma.notice.findUnique({ where: { id: noticeId } });
+    expect(deleted).toBeNull();
 
-  //   // API로도 조회가 안 되는지 확인
-  //   const detailRes = await agentUser.get(`/api/v2/notices/${noticeId}`);
-  //   expect([404, 400]).toContain(detailRes.status);
-  // });
+    // API로도 조회가 안 되는지 확인
+
+    const detailRes = await agentUser.get(`/api/v2/notices/${noticeId}`);
+    expect([404, 400, 401]).toContain(detailRes.status);
+  });
 });
