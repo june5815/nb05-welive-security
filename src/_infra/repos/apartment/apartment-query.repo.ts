@@ -13,6 +13,25 @@ export const ApartmentQueryRepo = (
 ): IApartmentQueryRepo => {
   const prismaClient = baseQueryRepo.getPrismaClient();
 
+  const apartmentInclude = {
+    admin: {
+      select: {
+        id: true,
+        username: true,
+        name: true,
+        email: true,
+        contact: true,
+      },
+    },
+    household: {
+      select: {
+        building: true,
+        unit: true,
+        householdStatus: true,
+      },
+    },
+  };
+
   const findApartmentList = async (
     query: ApartmentListQueryReq,
   ): Promise<ApartmentListResView> => {
@@ -35,17 +54,7 @@ export const ApartmentQueryRepo = (
           skip: (page - 1) * limit,
           take: limit,
           where: whereCondition,
-          include: {
-            admin: {
-              select: {
-                id: true,
-                username: true,
-                name: true,
-                email: true,
-                contact: true,
-              },
-            },
-          },
+          include: apartmentInclude,
           orderBy: { createdAt: "desc" },
         }),
       ]);
@@ -66,17 +75,7 @@ export const ApartmentQueryRepo = (
     try {
       const rawData = await prismaClient.apartment.findUnique({
         where: { id: apartmentId },
-        include: {
-          admin: {
-            select: {
-              id: true,
-              username: true,
-              name: true,
-              email: true,
-              contact: true,
-            },
-          },
-        },
+        include: apartmentInclude,
       });
 
       if (!rawData) return null;
@@ -96,17 +95,7 @@ export const ApartmentQueryRepo = (
         where: {
           name: { contains: name, mode: queryMode },
         },
-        include: {
-          admin: {
-            select: {
-              id: true,
-              username: true,
-              name: true,
-              email: true,
-              contact: true,
-            },
-          },
-        },
+        include: apartmentInclude,
       });
 
       if (!rawData) return null;
@@ -115,6 +104,7 @@ export const ApartmentQueryRepo = (
       throw error;
     }
   };
+
   const findApartmentByAddress = async (
     address: string,
   ): Promise<ApartmentDetailResView | null> => {
@@ -125,17 +115,7 @@ export const ApartmentQueryRepo = (
         where: {
           address: { contains: address, mode: queryMode },
         },
-        include: {
-          admin: {
-            select: {
-              id: true,
-              username: true,
-              name: true,
-              email: true,
-              contact: true,
-            },
-          },
-        },
+        include: apartmentInclude,
       });
 
       if (!rawData) return null;
@@ -156,17 +136,7 @@ export const ApartmentQueryRepo = (
         where: {
           description: { contains: description, mode: queryMode },
         },
-        include: {
-          admin: {
-            select: {
-              id: true,
-              username: true,
-              name: true,
-              email: true,
-              contact: true,
-            },
-          },
-        },
+        include: apartmentInclude,
         orderBy: { createdAt: "desc" },
       });
 
@@ -186,17 +156,7 @@ export const ApartmentQueryRepo = (
         where: {
           officeNumber: { contains: officeNumber, mode: queryMode },
         },
-        include: {
-          admin: {
-            select: {
-              id: true,
-              username: true,
-              name: true,
-              email: true,
-              contact: true,
-            },
-          },
-        },
+        include: apartmentInclude,
       });
 
       if (!rawData) return null;

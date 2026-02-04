@@ -32,7 +32,13 @@ export interface IApartmentQueryUsecase {
   ): Promise<ApartmentDetailResView | null>;
   getApartmentWithHouseholds(apartmentId: string): Promise<{
     apartment: ApartmentDetailResView;
-    households: Array<{ building: number; unit: number }>;
+    households: Array<{
+      building: number;
+      unit: number;
+      floor: number;
+      sequence: number;
+      displayName: string;
+    }>;
   } | null>;
   validateHousehold(
     apartmentId: string,
@@ -47,9 +53,7 @@ export interface IApartmentQueryUsecase {
 export const ApartmentQueryUsecase = (
   apartmentQueryRepo: IApartmentQueryRepo,
 ): IApartmentQueryUsecase => {
-  /**
-   * 아파트 목록 조회 (페이징)
-   */
+  // list apartment
   const getApartmentList = async (
     query: ApartmentListQueryReq,
   ): Promise<ApartmentListResView> => {
@@ -63,9 +67,7 @@ export const ApartmentQueryUsecase = (
     }
   };
 
-  /**
-   * 상세 조회 (ID)
-   */
+  // by detail, apartment
   const getApartmentDetailById = async (
     apartmentId: string,
   ): Promise<ApartmentDetailResView | null> => {
@@ -86,9 +88,7 @@ export const ApartmentQueryUsecase = (
     }
   };
 
-  /**
-   * 조회(이름)
-   */
+  // search by name
   const searchApartmentByName = async (
     name: string,
   ): Promise<ApartmentDetailResView | null> => {
@@ -103,9 +103,7 @@ export const ApartmentQueryUsecase = (
     }
   };
 
-  /**
-   * 조회(주소)
-   */
+  // by address
   const searchApartmentByAddress = async (
     address: string,
   ): Promise<ApartmentDetailResView | null> => {
@@ -121,9 +119,7 @@ export const ApartmentQueryUsecase = (
     }
   };
 
-  /**
-   * 조회(설명)
-   */
+  // by description
   const searchApartmentByDescription = async (
     description: string,
   ): Promise<ApartmentDetailResView[]> => {
@@ -139,9 +135,7 @@ export const ApartmentQueryUsecase = (
     }
   };
 
-  /**
-   * 전화번호
-   */
+  //by officenumber
   const searchApartmentByOfficeNumber = async (
     officeNumber: string,
   ): Promise<ApartmentDetailResView | null> => {
@@ -157,14 +151,18 @@ export const ApartmentQueryUsecase = (
     }
   };
 
-  /**
-   * 아파트 동호조합
-   */
+  // apartment.household = createadmin.apartment
   const getApartmentWithHouseholds = async (
     apartmentId: string,
   ): Promise<{
     apartment: ApartmentDetailResView;
-    households: Array<{ building: number; unit: number }>;
+    households: Array<{
+      building: number;
+      unit: number;
+      floor: number;
+      sequence: number;
+      displayName: string;
+    }>;
   } | null> => {
     try {
       const apartment =
@@ -173,11 +171,8 @@ export const ApartmentQueryUsecase = (
       if (!apartment) {
         return null;
       }
-      const apartmentEntity: Apartment = ApartmentMapper.toDomain(
-        apartment as any,
-      );
-      const households =
-        ApartmentEntity.getAllPossibleHouseholds(apartmentEntity);
+
+      const households = ApartmentMapper.toHouseholdList(apartment as any);
 
       return { apartment, households };
     } catch (error) {
@@ -188,9 +183,7 @@ export const ApartmentQueryUsecase = (
     }
   };
 
-  /**
-   * 특정 세대(동/호)의 유효성 검증
-   */
+  // vali. household
   const validateHousehold = async (
     apartmentId: string,
     building: number,

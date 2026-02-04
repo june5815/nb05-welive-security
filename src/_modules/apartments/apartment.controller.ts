@@ -32,10 +32,7 @@ export const ApartmentController = (
 ): IApartmentController => {
   const validate = baseController.validate;
 
-  /**
-   * 아파트 목록 조회 (페이지네이션)
-   * GET /api/v1/apartments
-   */
+  // 아파트 목록 조회 (페이지네이션)
   const getApartmentList = async (
     req: Request,
     res: Response,
@@ -45,33 +42,27 @@ export const ApartmentController = (
     res.status(200).json(apartmentList);
   };
 
-  /**
-   * 아파트 상세 조회
-   * GET /api/v1/apartments/:id
-   */
+  //아파트 세대 목록 조회
   const getApartmentDetail = async (
     req: Request,
     res: Response,
   ): Promise<void> => {
     const params = validate(ApartmentDetailParamSchema, req.params);
-    const apartment = await apartmentQueryUsecase.getApartmentDetailById(
+    const result = await apartmentQueryUsecase.getApartmentWithHouseholds(
       params.id,
     );
 
-    if (!apartment) {
+    if (!result) {
       throw new BusinessException({
         type: BusinessExceptionType.NOT_FOUND,
         message: "아파트를 찾을 수 없습니다.",
       });
     }
 
-    res.status(200).json(apartment);
+    res.status(200).json(result.households);
   };
 
-  /**
-   * 아파트명으로 검색
-   * GET /api/v1/apartments/search/name?name=...
-   */
+  // serarch by apartmnet name
   const searchApartmentByName = async (
     req: Request,
     res: Response,
@@ -90,10 +81,7 @@ export const ApartmentController = (
     res.status(200).json(apartment);
   };
 
-  /**
-   * 주소로 검색
-   * GET /api/v1/apartments/search/address?address=...
-   */
+  // by address
   const searchApartmentByAddress = async (
     req: Request,
     res: Response,
@@ -113,10 +101,7 @@ export const ApartmentController = (
     res.status(200).json(apartment);
   };
 
-  /**
-   * 설명으로 검색 (다중 결과)
-   * GET /api/v1/apartments/search/description?description=...
-   */
+  // by description
   const searchApartmentByDescription = async (
     req: Request,
     res: Response,
@@ -135,10 +120,7 @@ export const ApartmentController = (
     });
   };
 
-  /**
-   * 관리소 전화번호로 검색
-   * GET /api/v1/apartments/search/office-number?officeNumber=...
-   */
+  // by contact
   const searchApartmentByOfficeNumber = async (
     req: Request,
     res: Response,
@@ -161,10 +143,7 @@ export const ApartmentController = (
     res.status(200).json(apartment);
   };
 
-  /**
-   * 아파트 + 가능한 모든 세대(동/호) 조합 조회
-   * GET /api/v1/apartments/:id/households
-   */
+  //apartment.household
   const getApartmentWithHouseholds = async (
     req: Request,
     res: Response,
@@ -185,10 +164,7 @@ export const ApartmentController = (
     res.status(200).json(result);
   };
 
-  /**
-   * 특정 세대(동/호)의 유효성 검증
-   * POST /api/v1/apartments/:id/validate-household
-   */
+  // vali.houshhold
   const validateHousehold = async (
     req: Request,
     res: Response,

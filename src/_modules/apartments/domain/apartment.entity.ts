@@ -188,6 +188,34 @@ export const ApartmentEntity = {
     return households;
   },
 
+  // household=create admin
+  getAllHouseholdsLikeCreation(apartment: Apartment): Array<{
+    building: number;
+    unit: number;
+  }> {
+    const households: Array<{ building: number; unit: number }> = [];
+    const floorCount = apartment.floorCountPerBuilding;
+    const unitCount = apartment.unitCountPerFloor;
+
+    for (
+      let b = apartment.buildingNumberFrom;
+      b <= apartment.buildingNumberTo;
+      b++
+    ) {
+      for (let f = 1; f <= floorCount; f++) {
+        for (let u = 1; u <= unitCount; u++) {
+          const householdUnit = Number(f) * 100 + Number(u);
+          households.push({
+            building: b,
+            unit: householdUnit,
+          });
+        }
+      }
+    }
+
+    return households;
+  },
+
   isValidHousehold(
     apartment: Apartment,
     building: number,
