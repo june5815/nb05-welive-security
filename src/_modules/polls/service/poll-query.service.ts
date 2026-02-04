@@ -1,5 +1,5 @@
 import { IPollQueryRepo } from "../ports/poll-query.repo";
-import { GetPollListDto } from "../dto/poll-list.dto";
+import { GetPollListDto } from "../dtos/poll-list.dto";
 import { PollView } from "../view/poll.view";
 import { PollDetailView } from "../view/poll-detail.view";
 import {
@@ -15,7 +15,6 @@ export const PollQueryService = (repo: IPollQueryRepo) => ({
     const { data, totalCount } = await repo.findList({
       apartmentId: dto.query.apartmentId,
       status: dto.query.status,
-      keyword: dto.query.keyword,
       skip: (page - 1) * limit,
       take: limit,
     });
