@@ -388,5 +388,5 @@ model Comment {
   resourceType CommentResourceType
 
   @@index([userId])
-  @@index([resourceType, resourceId])
+  @@index([resourceType, resourceId])    ////
 }
