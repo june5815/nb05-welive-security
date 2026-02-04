@@ -87,24 +87,33 @@ export const UserCommandRepo = (
           unitCountPerFloor: unit,
         } = adminOf;
 
-        const householdsToCreate = [];
+        let householdBuffer: Prisma.HouseholdCreateManyInput[] = [];
+        const BATCH_SIZE = 2000;
 
         for (let b = 1; b <= building; b++) {
           for (let f = 1; f <= floor; f++) {
             for (let u = 1; u <= unit; u++) {
               const householdUnit = Number(f) * 100 + Number(u);
-              householdsToCreate.push({
+              householdBuffer.push({
                 apartmentId: apartmentId,
                 building: b,
                 unit: householdUnit,
               });
+
+              if (householdBuffer.length >= BATCH_SIZE) {
+                await prisma.household.createMany({
+                  data: householdBuffer,
+                  skipDuplicates: true,
+                });
+                householdBuffer = [];
+              }
             }
           }
         }
 
-        if (householdsToCreate.length > 0) {
+        if (householdBuffer.length > 0) {
           await prisma.household.createMany({
-            data: householdsToCreate,
+            data: householdBuffer,
             skipDuplicates: true,
           });
         }
@@ -586,9 +595,47 @@ export const UserCommandRepo = (
   const deleteManyAdmin = async (): Promise<void> => {
     try {
       const prisma = baseCommandRepo.getPrismaClient();
-      await prisma.apartment.deleteMany({
+
+      const targetApartments = await prisma.apartment.findMany({
         where: {
           admin: { role: "ADMIN", joinStatus: "REJECTED" },
+        },
+        select: { id: true },
+      });
+
+      const targetApartmentIds = targetApartments.map((apt) => apt.id);
+
+      if (targetApartmentIds.length === 0) {
+        return;
+      }
+
+      const BATCH_SIZE = 5000;
+
+      while (true) {
+        const householdsToDelete = await prisma.household.findMany({
+          where: {
+            apartmentId: { in: targetApartmentIds },
+          },
+          select: { id: true },
+          take: BATCH_SIZE,
+        });
+
+        if (householdsToDelete.length === 0) {
+          break;
+        }
+
+        const idsToDelete = householdsToDelete.map((h) => h.id);
+
+        await prisma.household.deleteMany({
+          where: {
+            id: { in: idsToDelete },
+          },
+        });
+      }
+
+      await prisma.apartment.deleteMany({
+        where: {
+          id: { in: targetApartmentIds },
         },
       });
       await prisma.user.deleteMany({

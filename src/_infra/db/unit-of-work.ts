@@ -45,7 +45,7 @@ export const UOW = (
           {
             isolationLevel: transactionOptions.isolationLevel,
             maxWait: 5000,
-            timeout: 5000,
+            timeout: transactionOptions.timeout ?? 5000,
           },
         );
       } catch (error) {

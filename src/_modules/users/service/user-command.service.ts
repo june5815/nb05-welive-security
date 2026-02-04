@@ -117,6 +117,8 @@ export const UserCommandService = (
   };
 
   const signUpAdmin = async (dto: createUserReqDTO): Promise<IUser> => {
+    const timeOut = 120000; // 2 minutes
+
     try {
       return await unitOfWork.doTx<IUser>(
         async () => {
@@ -155,6 +157,7 @@ export const UserCommandService = (
           transactionOptions: {
             useTransaction: true,
             isolationLevel: "RepeatableRead",
+            timeout: timeOut,
           },
           useOptimisticLock: false,
         },
@@ -611,6 +614,8 @@ export const UserCommandService = (
   const deleteRejectedAdmins = async (
     dto: deleteRejectedUsersReqDTO,
   ): Promise<void> => {
+    const timeOut = 120000; // 2 minutes
+
     try {
       return await unitOfWork.doTx(
         async () => {
@@ -634,6 +639,7 @@ export const UserCommandService = (
           transactionOptions: {
             useTransaction: true,
             isolationLevel: "ReadCommitted",
+            timeout: timeOut,
           },
           useOptimisticLock: false,
         },

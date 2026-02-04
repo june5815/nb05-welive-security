@@ -5,6 +5,7 @@ export type TransactionOptions =
   | {
       useTransaction: true;
       isolationLevel: "ReadCommitted" | "RepeatableRead" | "Serializable";
+      timeout?: number;
     };
 
 export type UnitOfWorkOptions = {
