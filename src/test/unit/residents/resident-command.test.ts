@@ -38,6 +38,12 @@ describe("ResidentCommandService Unit Test - 입주민 등록", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // 의도적 에러 테스트에서 불필요한 출력 제거
+    jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   afterAll(() => {

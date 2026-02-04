@@ -315,7 +315,7 @@ describe("ResidentQueryService - Unit Tests", () => {
     /**
      * 실패 : page < 1 (음수 페이지)
      */
-    it("should set page to 1 when page is less than 1", async () => {
+    it("should throw error when page is negative", async () => {
       await expect(
         residentQueryService.getListHouseholdMembers(
           "apartment-1",
@@ -350,7 +350,7 @@ describe("ResidentQueryService - Unit Tests", () => {
         email: "test@example.com",
         contact: "010-1234-5678",
         name: "홍길동",
-        building: 1,
+        building: 1, // DB값 그대로 반환
         unit: 101,
         isHouseholder: true,
         userId: "user-1",
@@ -469,7 +469,7 @@ describe("ResidentQueryService - Unit Tests", () => {
       expect(result).toHaveProperty("email", "test@example.com");
       expect(result).toHaveProperty("contact", "010-1234-5678");
       expect(result).toHaveProperty("name", "홍길동");
-      expect(result).toHaveProperty("building", 1);
+      expect(result).toHaveProperty("building", 1); // DB값 그대로 반환
       expect(result).toHaveProperty("unit", 101);
       expect(result).toHaveProperty("isHouseholder", true);
       expect(result).toHaveProperty("userId", "user-1");
@@ -607,6 +607,116 @@ describe("ResidentQueryService - Unit Tests", () => {
         1,
         1,
       );
+    });
+
+    /**
+     * 추가: 빌딩 번호 반환 검증 (DB값 그대로)
+     */
+    it("should return building number as-is from DB", async () => {
+      mockRepository.findHouseholdMembers.mockResolvedValue({
+        members: [mockHouseholdMember],
+        total: 1,
+      });
+
+      const result = await residentQueryService.getListHouseholdMembers(
+        "apartment-1",
+        1,
+        20,
+        "admin-user-1",
+        "ADMIN",
+      );
+
+      expect(result.data[0].building).toBe(1); // DB값 그대로
+    });
+
+    /**
+     * 추가: 상세 조회에서 빌딩 번호 반환 검증
+     */
+    it("should return building number as-is in detail", async () => {
+      mockRepository.findHouseholdMemberById.mockResolvedValue(
+        mockHouseholdMember,
+      );
+
+      const result = await residentQueryService.getHouseholdMemberDetail(
+        "member-1",
+        "admin-user-1",
+        "ADMIN",
+      );
+
+      expect(result.building).toBe(1); // DB값 그대로
+    });
+
+    /**
+     * 추가: 여러 입주민의 건물 정보 검증
+     */
+    it("should return correct building numbers for multiple members", async () => {
+      mockRepository.findHouseholdMembers.mockResolvedValue({
+        members: [mockHouseholdMember, mockHouseholdMember2],
+        total: 2,
+      });
+
+      const result = await residentQueryService.getListHouseholdMembers(
+        "apartment-1",
+        1,
+        20,
+        "admin-user-1",
+        "ADMIN",
+      );
+
+      expect(result.data[0].building).toBe(1);
+      expect(result.data[1].building).toBe(2);
+    });
+
+    /**
+     * 추가: 페이지 계산 정확도 검증
+     */
+    it("should calculate page boundaries correctly", async () => {
+      mockRepository.findHouseholdMembers.mockResolvedValue({
+        members: [mockHouseholdMember],
+        total: 105, // 105개, limit 20
+      });
+
+      const result = await residentQueryService.getListHouseholdMembers(
+        "apartment-1",
+        6, // page 6 (offset 100)
+        20,
+        "admin-user-1",
+        "ADMIN",
+      );
+
+      // page 6, limit 20 → offset 100, loaded 1 item, total 105
+      // hasNext: 100 + 20 = 120 > 105 ? false
+      expect(result.page).toBe(6);
+      expect(result.hasNext).toBe(false); // 마지막 페이지
+      expect(result.total).toBe(105);
+    });
+
+    /**
+     * 추가: 권한 검증 - SUPER_ADMIN 거부
+     */
+    it("should throw FORBIDDEN when user is SUPER_ADMIN", async () => {
+      await expect(
+        residentQueryService.getListHouseholdMembers(
+          "apartment-1",
+          1,
+          20,
+          "super-admin-1",
+          "SUPER_ADMIN", // SUPER_ADMIN은 허용 안 됨
+        ),
+      ).rejects.toThrow(BusinessException);
+    });
+
+    /**
+     * 추가: 권한 검증 - 상세 조회에서도 SUPER_ADMIN 거부
+     */
+    it("should throw FORBIDDEN when user is SUPER_ADMIN in detail", async () => {
+      await expect(
+        residentQueryService.getHouseholdMemberDetail(
+          "member-1",
+          "super-admin-1",
+          "SUPER_ADMIN",
+        ),
+      ).rejects.toThrow(BusinessException);
     });
   });
 });

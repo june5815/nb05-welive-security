@@ -1,40 +1,21 @@
-/**
- * 목록 항목
- */
 export interface ApartmentListItemResView {
   readonly id: string;
-  readonly createdAt: Date;
-  readonly updatedAt: Date;
   readonly name: string;
   readonly address: string;
   readonly description: string;
   readonly officeNumber: string;
-  readonly buildingNumberFrom: number;
-  readonly buildingNumberTo: number;
-  readonly floorCountPerBuilding: number;
-  readonly unitCountPerFloor: number;
-  readonly totalUnits: number;
-  readonly adminId?: string | null;
   readonly buildings: number[];
   readonly units: number[];
 }
 
-/**
- * 목록 조회 (페이지네이션))
- */
 export interface ApartmentListResView {
   readonly data: ApartmentListItemResView[];
-  readonly pagination: {
-    readonly page: number;
-    readonly limit: number;
-    readonly total: number;
-    readonly totalPages: number;
-  };
+  readonly totalCount: number;
+  readonly page: number;
+  readonly limit: number;
+  readonly hasNext: boolean;
 }
 
-/**
- * 상세 조회
- */
 export interface ApartmentDetailResView {
   readonly id: string;
   readonly createdAt: Date;
@@ -46,7 +27,7 @@ export interface ApartmentDetailResView {
   readonly buildingNumberFrom: number;
   readonly buildingNumberTo: number;
   readonly floorCountPerBuilding: number;
-  readonly buildings: number[]; // 동 목록
+  readonly buildings: number[];
   readonly units: number[];
   readonly unitCountPerFloor: number;
   readonly totalUnits: number;
