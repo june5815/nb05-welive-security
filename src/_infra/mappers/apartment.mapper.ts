@@ -3,6 +3,7 @@ import { generateId } from "../../_common/utils/id-generator.util";
 import {
   ApartmentDetailResView,
   ApartmentListResView,
+  ApartmentListItemResView,
 } from "../../_modules/apartments/dtos/res/apartment.view";
 
 type Household = { building: number; unit: number };
@@ -64,7 +65,9 @@ export const toPersistence = (entity: Apartment): Partial<ApartmentPrisma> => ({
   ...basePersistenceData(entity),
 });
 
-const toListApartmentItem = (apartment: ApartmentWithHousehold) => {
+const toListApartmentItem = (
+  apartment: ApartmentWithHousehold,
+): ApartmentListItemResView => {
   const households = extractHouseholds(apartment);
   return {
     id: apartment.id,
@@ -178,6 +181,7 @@ export const ApartmentMapper = {
   toPersistenceUpdate,
   toPersistence,
   toListPresentation,
+  toListApartmentItem,
   toDetailPresentation,
   toDetailPresentationArray,
   toHouseholdList,

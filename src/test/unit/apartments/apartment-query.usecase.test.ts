@@ -141,11 +141,11 @@ describe("ApartmentQueryUsecase", () => {
 
       // Assert
       expect(households[0]).toEqual({
-        building: 101,
+        building: 1,
         unit: 101,
         floor: 1,
         sequence: 1,
-        displayName: "101동 1층 1호",
+        displayName: "1동 1층 1호",
       });
     });
 
@@ -155,11 +155,11 @@ describe("ApartmentQueryUsecase", () => {
 
       // Assert
       expect(households[households.length - 1]).toEqual({
-        building: 103,
+        building: 3,
         unit: 403,
         floor: 4,
         sequence: 3,
-        displayName: "103동 4층 3호",
+        displayName: "3동 4층 3호",
       });
     });
 
@@ -191,7 +191,7 @@ describe("ApartmentQueryUsecase", () => {
             floorCountPerBuilding: 3,
             unitCountPerFloor: 2,
           },
-          expected: 12, // 2 × 3 × 2
+          expected: 12,
         },
         {
           data: {
@@ -200,7 +200,7 @@ describe("ApartmentQueryUsecase", () => {
             floorCountPerBuilding: 2,
             unitCountPerFloor: 4,
           },
-          expected: 40, // 5 × 2 × 4
+          expected: 40,
         },
         {
           data: {
@@ -209,7 +209,7 @@ describe("ApartmentQueryUsecase", () => {
             floorCountPerBuilding: 1,
             unitCountPerFloor: 1,
           },
-          expected: 1, // 1 × 1 × 1
+          expected: 1,
         },
       ];
 
@@ -227,10 +227,8 @@ describe("ApartmentQueryUsecase", () => {
       const households = ApartmentMapper.toHouseholdList(mockApartmentData);
 
       // Assert
-      const sample = households.find(
-        (h) => h.building === 102 && h.unit === 203,
-      );
-      expect(sample?.displayName).toBe("102동 2층 3호");
+      const sample = households.find((h) => h.building === 2 && h.unit === 203);
+      expect(sample?.displayName).toBe("2동 2층 3호");
     });
   });
 
@@ -275,7 +273,7 @@ describe("ApartmentQueryUsecase", () => {
       const result = ApartmentMapper.toListPresentation(apartments, 1, 1, 10);
 
       // Assert
-      expect(result.data[0].buildings).toEqual([101, 102]);
+      expect(result.data[0].buildings).toEqual([1, 2]);
     });
 
     it("페이징 정보를 올바르게 계산해야 한다", () => {
@@ -313,7 +311,7 @@ describe("ApartmentQueryUsecase", () => {
       // Assert
       expect(result.totalUnits).toBe(3);
       expect(result.buildingCount).toBe(2);
-      expect(result.buildings).toEqual([101, 102]);
+      expect(result.buildings).toEqual([1, 2]);
       expect(result.units).toContain(101);
       expect(result.units).toContain(201);
     });
@@ -383,7 +381,7 @@ describe("ApartmentQueryUsecase", () => {
   });
 
   describe("Building Number Transformation", () => {
-    it("DB 동 번호 1을 클라이언트에 101로 변환해야 한다", () => {
+    it("DB 동 번호 1을 그대로 반환해야 한다 (변환 안 함)", () => {
       // Arrange
       const apartment: any = {
         ...mockApartmentData,
@@ -394,11 +392,11 @@ describe("ApartmentQueryUsecase", () => {
       const result = ApartmentMapper.toDetailPresentation(apartment);
 
       // Assert
-      expect(result.buildings).toContain(101);
-      expect(result.buildings).not.toContain(1);
+      expect(result.buildings).toContain(1);
+      expect(result.buildings).not.toContain(101);
     });
 
-    it("DB 동 번호 2를 클라이언트에 102로 변환해야 한다", () => {
+    it("DB 동 번호 2를 그대로 반환해야 한다 (변환 안 함)", () => {
       // Arrange
       const apartment: any = {
         ...mockApartmentData,
@@ -409,11 +407,11 @@ describe("ApartmentQueryUsecase", () => {
       const result = ApartmentMapper.toDetailPresentation(apartment);
 
       // Assert
-      expect(result.buildings).toContain(102);
-      expect(result.buildings).not.toContain(2);
+      expect(result.buildings).toContain(2);
+      expect(result.buildings).not.toContain(102);
     });
 
-    it("여러 동 번호를 올바르게 변환해야 한다", () => {
+    it("여러 동 번호를 그대로 반환해야 한다 (변환 안 함)", () => {
       // Arrange
       const apartment: any = {
         ...mockApartmentData,
@@ -428,7 +426,7 @@ describe("ApartmentQueryUsecase", () => {
       const result = ApartmentMapper.toDetailPresentation(apartment);
 
       // Assert
-      expect(result.buildings).toEqual([101, 102, 103]);
+      expect(result.buildings).toEqual([1, 2, 3]);
     });
   });
 
@@ -463,7 +461,7 @@ describe("ApartmentQueryUsecase", () => {
       const result = ApartmentMapper.toDetailPresentation(apartment);
 
       // Assert
-      expect(result.buildings).toEqual([101]);
+      expect(result.buildings).toEqual([1]);
       expect(result.buildingCount).toBe(1);
     });
 

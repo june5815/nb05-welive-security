@@ -43,13 +43,23 @@ export interface IResidentCommandService {
     apartmentId: string,
     role: string,
   ): Promise<HouseholdMember[]>;
+  registerManyHouseholdMembersFromCsv(
+    fileBuffer: Buffer,
+    adminId: string,
+    apartmentId: string,
+    role: string,
+  ): Promise<number>;
   updateHouseholdMemberByAdmin(
     memberId: string,
     dto: UpdateResidentDTO,
     adminId: string,
-    apartmentId: string,
     role: string,
   ): Promise<HouseholdMember>;
+  deleteHouseholdMemberByAdmin(
+    memberId: string,
+    adminId: string,
+    role: string,
+  ): Promise<void>;
 }
 
 export const ResidentCommandService = (
@@ -179,9 +189,7 @@ export const ResidentCommandService = (
             role,
           );
           results.push(member);
-        } catch (error) {
-          console.error(`입주민 등록 실패: ${dto.email}`, error);
-        }
+        } catch (error) {}
       }
 
       return results;
@@ -205,7 +213,6 @@ export const ResidentCommandService = (
     memberId: string,
     dto: UpdateResidentDTO,
     adminId: string,
-    apartmentId: string,
     role: string,
   ): Promise<HouseholdMember> => {
     try {
@@ -232,7 +239,6 @@ export const ResidentCommandService = (
         });
       }
 
-      // 이메일 중복 검사 (다른 사람의 이메일로 변경하는 경우만)
       if (dto.email && dto.email !== existingMember.email) {
         const duplicateEmail = await queryRepo.findHouseholdMemberByEmail(
           dto.email,
@@ -252,7 +258,7 @@ export const ResidentCommandService = (
         const newUnit = dto.unit ?? existingMember.household.unit;
 
         const newHousehold = await queryRepo.findHouseholdByBuildingAndUnit(
-          apartmentId,
+          existingMember.household.apartmentId,
           newBuilding,
           newUnit,
         );
@@ -302,9 +308,144 @@ export const ResidentCommandService = (
     }
   };
 
+  const deleteHouseholdMemberByAdmin = async (
+    memberId: string,
+    adminId: string,
+    role: string,
+  ): Promise<void> => {
+    try {
+      if (role !== UserRole.ADMIN) {
+        throw new BusinessException({
+          type: BusinessExceptionType.FORBIDDEN,
+          error: new Error("입주민 삭제는 관리자(ADMIN)만 가능합니다."),
+        });
+      }
+
+      if (!memberId?.trim()) {
+        throw new BusinessException({
+          type: BusinessExceptionType.FORBIDDEN,
+          error: new Error("입주민 ID는 필수입니다."),
+        });
+      }
+
+      // 기존 입주민 조회
+      const existingMember = await queryRepo.findHouseholdMemberById(memberId);
+      if (!existingMember) {
+        throw new BusinessException({
+          type: BusinessExceptionType.FORBIDDEN,
+          error: new Error("존재하지 않는 입주민입니다."),
+        });
+      }
+
+      // movedOutAt
+      await commandRepo.deleteHouseholdMember(memberId);
+    } catch (error) {
+      if (error instanceof BusinessException) {
+        throw error;
+      }
+      if (error instanceof TechnicalException) {
+        throw error;
+      }
+
+      throw new TechnicalException({
+        type: TechnicalExceptionType.UNKNOWN_SERVER_ERROR,
+        error: error instanceof Error ? error : new Error(String(error)),
+      });
+    }
+  };
+
+  const registerManyHouseholdMembersFromCsv = async (
+    fileBuffer: Buffer,
+    adminId: string,
+    apartmentId: string,
+    role: string,
+  ): Promise<number> => {
+    try {
+      if (role !== UserRole.ADMIN) {
+        throw new BusinessException({
+          type: BusinessExceptionType.FORBIDDEN,
+          error: new Error("입주민 등록은 관리자(ADMIN)만 가능합니다."),
+        });
+      }
+
+      if (!fileBuffer || fileBuffer.length === 0) {
+        throw new BusinessException({
+          type: BusinessExceptionType.FORBIDDEN,
+          error: new Error("유효한 파일이 필요합니다."),
+        });
+      }
+
+      const { parse } = await import("csv-parse/sync");
+      const csvContent = fileBuffer.toString("utf-8");
+      const records = parse(csvContent, {
+        columns: true,
+        skip_empty_lines: true,
+        trim: true,
+      });
+
+      if (!Array.isArray(records) || records.length === 0) {
+        throw new BusinessException({
+          type: BusinessExceptionType.FORBIDDEN,
+          error: new Error("CSV 파일이 비어있습니다."),
+        });
+      }
+
+      const dtos: CreateResidentDTO[] = records.map((row: any) => ({
+        email: row.email?.trim(),
+        contact: row.contact?.trim(),
+        name: row.name?.trim(),
+        building: parseInt(row.building, 10),
+        unit: parseInt(row.unit, 10),
+        isHouseholder: row.isHouseholder?.toLowerCase() === "true",
+      }));
+
+      const validDtos: CreateResidentDTO[] = [];
+      for (const dto of dtos) {
+        if (
+          !dto.email ||
+          !dto.contact ||
+          !dto.name ||
+          !dto.building ||
+          !dto.unit
+        )
+          validDtos.push(dto);
+      }
+
+      if (validDtos.length === 0) {
+        throw new BusinessException({
+          type: BusinessExceptionType.FORBIDDEN,
+          error: new Error("유효한 데이터가 없습니다."),
+        });
+      }
+
+      const results = await registerManyHouseholdMembers(
+        validDtos,
+        adminId,
+        apartmentId,
+        role,
+      );
+
+      return results.length;
+    } catch (error) {
+      if (error instanceof BusinessException) {
+        throw error;
+      }
+      if (error instanceof TechnicalException) {
+        throw error;
+      }
+
+      throw new TechnicalException({
+        type: TechnicalExceptionType.UNKNOWN_SERVER_ERROR,
+        error: error instanceof Error ? error : new Error(String(error)),
+      });
+    }
+  };
+
   return {
     registerHouseholdMemberByAdmin,
     registerManyHouseholdMembers,
+    registerManyHouseholdMembersFromCsv,
     updateHouseholdMemberByAdmin,
+    deleteHouseholdMemberByAdmin,
   };
 };

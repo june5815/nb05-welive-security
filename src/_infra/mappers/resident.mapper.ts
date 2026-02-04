@@ -17,7 +17,15 @@ export const householdMemberFullInclude =
       select: { id: true, email: true, contact: true, name: true },
     },
     household: {
-      select: { id: true, building: true, unit: true, apartmentId: true },
+      select: {
+        id: true,
+        building: true,
+        unit: true,
+        apartmentId: true,
+        apartment: {
+          select: { id: true, name: true, address: true },
+        },
+      },
     },
   });
 
@@ -57,6 +65,9 @@ export const ResidentMapper = {
     isHouseholder: member.isHouseholder,
     movedInAt: member.movedInAt,
     movedOutAt: member.movedOutAt,
+    email: member.email,
+    contact: member.contact,
+    name: member.name,
     household: {
       connect: { id: member.householdId },
     },
@@ -65,9 +76,6 @@ export const ResidentMapper = {
           connect: { id: member.userId },
         }
       : undefined,
-    email: member.email,
-    contact: member.contact,
-    name: member.name,
   }),
 
   toHouseholdMemberCreateInputArray: (
@@ -80,14 +88,20 @@ export const ResidentMapper = {
 
   toHouseholdMemberUpdateInput: (
     member: HouseholdMember,
-  ): Prisma.HouseholdMemberUpdateInput => ({
-    isHouseholder: member.isHouseholder,
-    movedInAt: member.movedInAt,
-    movedOutAt: member.movedOutAt,
-    email: member.email,
-    contact: member.contact,
-    name: member.name,
-  }),
+  ): Prisma.HouseholdMemberUpdateInput => {
+    const input: Prisma.HouseholdMemberUpdateInput = {
+      household: {
+        connect: { id: member.householdId },
+      },
+      isHouseholder: member.isHouseholder,
+      movedInAt: member.movedInAt,
+      movedOutAt: member.movedOutAt,
+      email: member.email,
+      contact: member.contact,
+      name: member.name,
+    };
+    return input;
+  },
 
   toHouseholdMemberPartialUpdateInput: (
     updates: Partial<HouseholdMember>,
@@ -121,13 +135,18 @@ export const ResidentMapper = {
   ): HouseholdMemberView => ({
     id: member.id,
     createdAt: member.createdAt.toISOString(),
-    email: member.user.email,
-    contact: member.user.contact,
-    name: member.user.name,
+    email: member.user?.email ?? member.email,
+    contact: member.user?.contact ?? member.contact,
+    name: member.user?.name ?? member.name,
     building: member.household.building,
     unit: member.household.unit,
     isHouseholder: member.isHouseholder,
-    userId: member.user.id,
+    userId: member.user?.id,
+    apartment: {
+      id: member.household.apartment.id,
+      name: member.household.apartment.name,
+      address: member.household.apartment.address,
+    },
   }),
 
   toHouseholdMembersListDto: (

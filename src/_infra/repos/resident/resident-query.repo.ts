@@ -10,31 +10,73 @@ export const ResidentQueryRepository = (
 
   // 목록조회
   const findHouseholdMembers = async (
-    apartmentId: string,
-    page: number,
-    limit: number,
+    apartmentId?: string,
+    page?: number,
+    limit?: number,
+    filters?: any,
   ): Promise<{
     members: HouseholdMemberWithRelations[];
     total: number;
   }> => {
-    const skip = (page - 1) * limit;
+    const skip = ((page ?? 1) - 1) * (limit ?? 20);
+
+    const whereCondition: any = {};
+    if (apartmentId) {
+      whereCondition.household = { apartmentId };
+    } else {
+      whereCondition.household = {};
+    }
+
+    if (filters?.building !== undefined) {
+      whereCondition.household.building = filters.building;
+    }
+    if (filters?.unit !== undefined) {
+      whereCondition.household.unit = filters.unit;
+    }
+    if (filters?.searchKeyword) {
+      whereCondition.OR = [
+        {
+          user: {
+            name: { contains: filters.searchKeyword, mode: "insensitive" },
+          },
+        },
+        {
+          user: {
+            email: { contains: filters.searchKeyword, mode: "insensitive" },
+          },
+        },
+      ];
+    }
+    if (filters?.isHouseholder !== undefined) {
+      whereCondition.isHouseholder = filters.isHouseholder;
+    }
+    if (filters?.isRegistered !== undefined) {
+      whereCondition.user = {
+        ...whereCondition.user,
+        status: filters.isRegistered ? "APPROVED" : "PENDING",
+      };
+    }
 
     const total = await prisma.householdMember.count({
-      where: {
-        household: { apartmentId },
-      },
+      where: whereCondition,
     });
 
     const members = await prisma.householdMember.findMany({
-      where: {
-        household: { apartmentId },
-      },
+      where: whereCondition,
       include: {
-        user: true,
-        household: true,
+        user: {
+          select: { id: true, email: true, contact: true, name: true },
+        },
+        household: {
+          include: {
+            apartment: {
+              select: { id: true, name: true, address: true },
+            },
+          },
+        },
       },
       skip,
-      take: limit,
+      take: limit ?? 20,
       orderBy: { createdAt: "desc" },
     });
 
@@ -50,8 +92,16 @@ export const ResidentQueryRepository = (
     const member = await prisma.householdMember.findUnique({
       where: { id: householdMemberId },
       include: {
-        user: true,
-        household: true,
+        user: {
+          select: { id: true, email: true, contact: true, name: true },
+        },
+        household: {
+          include: {
+            apartment: {
+              select: { id: true, name: true, address: true },
+            },
+          },
+        },
       },
     });
 
@@ -66,7 +116,7 @@ export const ResidentQueryRepository = (
     try {
       const household = await prisma.household.findUnique({
         where: {
-          apartment_building_unit: {
+          apartmentId_building_unit: {
             apartmentId,
             building,
             unit,
@@ -90,8 +140,16 @@ export const ResidentQueryRepository = (
       const member = await prisma.householdMember.findUnique({
         where: { email },
         include: {
-          user: true,
-          household: true,
+          user: {
+            select: { id: true, email: true, contact: true, name: true },
+          },
+          household: {
+            include: {
+              apartment: {
+                select: { id: true, name: true, address: true },
+              },
+            },
+          },
         },
       });
 
