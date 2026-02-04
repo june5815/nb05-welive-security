@@ -76,8 +76,7 @@ export const residentSchema = z.object({
   apartmentId: z.string().trim().nonempty("아파트 명칭을 확인해주세요."),
   building: z.coerce
     .number()
-    .min(1, "동은 0으로 시작할 수 없고 숫자만 입력 가능합니다.")
-    .max(99, "동은 두 자리까지만 입력 가능합니다."),
+    .min(1, "동은 0으로 시작할 수 없고 숫자만 입력 가능합니다."),
   // 만일을 대비하여 남김
   // .string()
   // .trim()
