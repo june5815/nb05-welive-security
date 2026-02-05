@@ -44,13 +44,7 @@ export const ResidentQueryService = (
     userId?: string,
     role?: string,
   ): Promise<HouseholdMembersListResponseView> => {
-    if (!page || page < 1) {
-      throw new Error("page must be >= 1");
-    }
-    if (!limit || limit < 1) {
-      throw new Error("limit must be >= 1");
-    }
-
+    // 권한 검증
     if (!userId || !role) {
       throw new BusinessException({
         type: BusinessExceptionType.FORBIDDEN,
@@ -60,6 +54,13 @@ export const ResidentQueryService = (
       throw new BusinessException({
         type: BusinessExceptionType.FORBIDDEN,
       });
+    }
+
+    if (!page || page < 1) {
+      throw new Error("page must be >= 1");
+    }
+    if (!limit || limit < 1) {
+      throw new Error("limit must be >= 1");
     }
 
     const validatedPage = Math.max(1, page);

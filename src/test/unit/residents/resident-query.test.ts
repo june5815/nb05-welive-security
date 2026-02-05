@@ -6,19 +6,6 @@ import {
 } from "../../../_common/exceptions/business.exception";
 import { HouseholdMemberWithRelations } from "../../../_modules/residents/domain/resident.type";
 
-/**
- * ResidentQueryService Unit Tests
- *
- * 테스트 대상 엔드포인트:
- * 1. GET /api/v2/residents - 입주민 목록 조회 [관리자 권한 필요]
- *    - Request: page, limit, searchKeyword, building, unit, isHouseholder, isRegistered
- *    - Response: { data[], totalCount, page, limit, hasNext }
- *
- * 2. GET /api/v2/residents/{id} - 입주민 상세 조회 [관리자 권한 필요]
- *    - Request: id
- *    - Response: { id, createdAt, email, contact, name, building, unit, isHouseholder, userId }
- */
-
 describe("ResidentQueryService - Unit Tests", () => {
   let residentQueryService: ReturnType<typeof ResidentQueryService>;
   let mockRepository: jest.Mocked<IResidentQueryRepo>;
@@ -92,6 +79,10 @@ describe("ResidentQueryService - Unit Tests", () => {
       findHouseholdByBuildingAndUnit: jest.fn(),
       findHouseholdMemberByEmail: jest.fn(),
     } as unknown as jest.Mocked<IResidentQueryRepo>;
+
+    const mockUserRepository = {
+      findAdminById: jest.fn(),
+    } as unknown as jest.Mocked<any>;
 
     residentQueryService = ResidentQueryService(mockRepository);
   });
