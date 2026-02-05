@@ -6,7 +6,7 @@ export class PollView {
       id: poll.id,
       title: poll.title,
       status: poll.status,
-      startAt: poll.startAt,
+      startAt: poll.createdAt,
       endAt: poll.endAt,
     };
   }

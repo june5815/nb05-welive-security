@@ -1,14 +1,14 @@
+import { IUnitOfWork } from "../../db/u-o-w.interface";
 import { IPollCommandRepo } from "../../../_modules/polls/ports/poll-command.repo";
 import { Poll } from "../../../_modules/polls/domain/poll.entity";
-import { IUnitOfWork } from "../../db/u-o-w.interface";
-import { PrismaClient } from "@prisma/client";
+import { PollOption } from "../../../_modules/polls/domain/poll-option.entity";
 
-export class PollCommandRepo implements IPollCommandRepo {
-  constructor(private readonly uow: IUnitOfWork) {}
+export const PollCommandRepo = (uow: IUnitOfWork): IPollCommandRepo => {
+  const prisma = uow.getClient();
 
-  async save(poll: Poll): Promise<void> {
-    await this.uow.run(async (tx: PrismaClient) => {
-      await tx.poll.create({
+  return {
+    async save(poll: Poll) {
+      await prisma.poll.create({
         data: {
           id: poll.id,
           title: poll.title,
@@ -19,102 +19,110 @@ export class PollCommandRepo implements IPollCommandRepo {
           userId: poll.createdBy,
         },
       });
-    });
-  }
+    },
 
-  async update(poll: Poll): Promise<void> {
-    await this.uow.run(async (tx: PrismaClient) => {
-      await tx.poll.update({
+    async saveWithOptions(poll: Poll, options: PollOption[]) {
+      await uow.run(async (tx) => {
+        await tx.poll.create({
+          data: {
+            id: poll.id,
+            title: poll.title,
+            content: poll.description,
+            status: poll.status,
+            endDate: poll.endAt,
+            apartmentId: poll.apartmentId,
+            userId: poll.createdBy,
+          },
+        });
+
+        await tx.pollOption.createMany({
+          data: options.map((o) => ({
+            id: o.id,
+            pollId: o.pollId,
+            text: o.text,
+            order: o.order,
+          })),
+        });
+      });
+    },
+
+    async findById(id: string) {
+      const p = await prisma.poll.findUnique({ where: { id } });
+      if (!p) return null;
+
+      return new Poll(
+        p.id,
+        p.apartmentId,
+        p.title,
+        p.content,
+        p.status,
+        p.endDate!,
+        { type: "ALL" },
+        p.userId,
+        p.createdAt,
+        p.updatedAt,
+      );
+    },
+
+    async update(poll: Poll) {
+      await prisma.poll.update({
         where: { id: poll.id },
         data: {
           title: poll.title,
           content: poll.description,
-          status: poll.status,
           endDate: poll.endAt,
         },
       });
-    });
-  }
+    },
 
-  async delete(pollId: string): Promise<void> {
-    await this.uow.run(async (tx: PrismaClient) => {
-      await tx.poll.delete({
-        where: { id: pollId },
+    async delete(id: string) {
+      await prisma.poll.delete({ where: { id } });
+    },
+
+    async vote(pollId, optionId, userId) {
+      await prisma.pollVote.create({ data: { pollId, optionId, userId } });
+    },
+
+    async cancelVote(pollId, userId) {
+      await prisma.pollVote.delete({
+        where: { userId_pollId: { pollId, userId } },
       });
-    });
-  }
+    },
 
-  async findById(pollId: string): Promise<Poll | null> {
-    const prisma = this.uow.getClient();
-
-    const poll = await prisma.poll.findUnique({
-      where: { id: pollId },
-    });
-
-    if (!poll) return null;
-
-    return new Poll(
-      poll.id,
-      poll.apartmentId,
-      poll.title,
-      poll.content,
-      poll.status,
-      poll.createdAt,
-      poll.endDate!,
-      { type: "ALL" },
-      poll.userId,
-      poll.createdAt,
-      poll.updatedAt,
-    );
-  }
-
-  async vote(pollId: string, optionId: string, userId: string): Promise<void> {
-    await this.uow.run(async (tx) => {
-      await tx.pollVote.create({
-        data: {
-          pollId,
-          optionId,
-          userId,
-        },
+    async findAllActive() {
+      const list = await prisma.poll.findMany({
+        where: { status: { in: ["PENDING", "IN_PROGRESS"] } },
       });
 
-      await tx.pollOption.update({
-        where: { id: optionId },
-        data: {
-          voteCount: { increment: 1 },
-        },
-      });
-    });
-  }
+      return list.map(
+        (p) =>
+          new Poll(
+            p.id,
+            p.apartmentId,
+            p.title,
+            p.content,
+            p.status,
+            p.endDate!,
+            { type: "ALL" },
+            p.userId,
+            p.createdAt,
+            p.updatedAt,
+          ),
+      );
+    },
 
-  async cancelVote(pollId: string, userId: string): Promise<void> {
-    await this.uow.run(async (tx) => {
-      const vote = await tx.pollVote.findUnique({
-        where: {
-          userId_pollId: {
-            userId,
-            pollId,
-          },
-        },
+    async markInProgress(id) {
+      await prisma.poll.update({
+        where: { id },
+        data: { status: "IN_PROGRESS" },
       });
+    },
 
-      if (!vote) return;
-
-      await tx.pollVote.delete({
-        where: {
-          userId_pollId: {
-            userId,
-            pollId,
-          },
-        },
+    async markClosed(id) {
+      await prisma.poll.update({
+        where: { id },
+        data: { status: "CLOSED" },
       });
-
-      await tx.pollOption.update({
-        where: { id: vote.optionId },
-        data: {
-          voteCount: { decrement: 1 },
-        },
-      });
-    });
-  }
-}
+    },
+  };
+};
