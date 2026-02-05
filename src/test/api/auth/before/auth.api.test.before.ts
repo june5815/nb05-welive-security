@@ -1,19 +1,15 @@
+// redis를 도입하기 이전의 테스트용 코드
+
 import request from "supertest";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
-import Redis from "ioredis";
-import { Injector } from "../../../injector";
+import { Injector } from "../../../../injector";
 
 jest.setTimeout(30000);
 
 describe("Auth API 통합 테스트", () => {
   let app: any;
   const prisma = new PrismaClient();
-
-  const redisClient = new Redis({
-    host: process.env.REDIS_HOST || "localhost",
-    port: Number(process.env.REDIS_PORT) || 6379,
-  });
 
   const testUser = {
     username: "e2e_auth_user",
@@ -47,10 +43,8 @@ describe("Auth API 통합 테스트", () => {
     await prisma.householdMember.deleteMany();
     await prisma.household.deleteMany();
     await prisma.apartment.deleteMany();
+    await prisma.refreshToken.deleteMany();
     await prisma.user.deleteMany();
-
-    await redisClient.flushall();
-
     const hashedPassword = await bcrypt.hash(testUser.password, 10);
     await prisma.user.create({
       data: {
@@ -95,13 +89,13 @@ describe("Auth API 통합 테스트", () => {
     await prisma.householdMember.deleteMany();
     await prisma.household.deleteMany();
     await prisma.apartment.deleteMany();
+    await prisma.refreshToken.deleteMany();
     await prisma.user.deleteMany();
     await prisma.$disconnect();
-    await redisClient.quit();
   });
 
   describe("POST /api/v2/auth/login", () => {
-    test("성공: 유효한 정보로 로그인 시 쿠키에 토큰들을 설정하고, Redis에 리프레시 토큰이 저장되어야 한다.", async () => {
+    test("성공: 유효한 정보로 로그인 시 쿠키에 토큰들을 설정하고, DB에 리프레시 토큰이 '해싱'되어 저장되어야 한다.", async () => {
       const res = await request(app).post("/api/v2/auth/login").send({
         username: testUser.username,
         password: testUser.password,
@@ -140,10 +134,19 @@ describe("Auth API 통합 테스트", () => {
         2,
         decodedValue.lastIndexOf("."),
       );
-      const storedToken = await redisClient.get(userId);
+      const storedToken = await prisma.refreshToken.findUnique({
+        where: { userId },
+      });
 
       expect(storedToken).not.toBeNull();
-      expect(storedToken).toBe(plainRefreshToken);
+      expect(storedToken?.refreshToken).not.toBe(plainRefreshToken);
+
+      const isMatch = await bcrypt.compare(
+        plainRefreshToken,
+        storedToken!.refreshToken,
+      );
+
+      expect(isMatch).toBe(true);
     });
 
     test("실패: 아이디가 틀리면 상태 코드 400 INVALID_AUTH 에러를 반환해야 한다.", async () => {
@@ -194,11 +197,10 @@ describe("Auth API 통합 테스트", () => {
   });
 
   describe("POST /api/v2/auth/refresh", () => {
-    test("성공: 유효한 쿠키로 요청 시 토큰을 재발급하고(쿠키 갱신), Redis 토큰도 교체되어야 한다.", async () => {
-      const beforeToken = await redisClient.get(userId);
-
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-
+    test("성공: 유효한 쿠키로 요청 시 토큰을 재발급하고(쿠키 갱신), DB 토큰도 교체되어야 한다.", async () => {
+      const beforeToken = await prisma.refreshToken.findUnique({
+        where: { userId },
+      });
       const res = await request(app)
         .post("/api/v2/auth/refresh")
         .set("Cookie", tokenCookie)
@@ -216,9 +218,11 @@ describe("Auth API 통합 테스트", () => {
 
       expect(newRefreshCookie).toBeDefined();
 
-      const afterToken = await redisClient.get(userId);
+      const afterToken = await prisma.refreshToken.findUnique({
+        where: { userId },
+      });
 
-      expect(beforeToken).not.toBe(afterToken);
+      expect(beforeToken?.refreshToken).not.toBe(afterToken?.refreshToken);
 
       tokenCookie = newCookies;
     });
@@ -235,7 +239,7 @@ describe("Auth API 통합 테스트", () => {
   });
 
   describe("POST /api/v2/auth/logout", () => {
-    test("성공: 로그아웃 시 Redis에서 리프레시 토큰이 삭제되고 쿠키가 만료되어야 한다.", async () => {
+    test("성공: 로그아웃 시 DB에서 리프레시 토큰이 삭제되고 쿠키가 만료되어야 한다.", async () => {
       const res = await request(app)
         .post("/api/v2/auth/logout")
         .set("Cookie", tokenCookie)
@@ -243,7 +247,9 @@ describe("Auth API 통합 테스트", () => {
 
       expect(res.status).toBe(204);
 
-      const storedToken = await redisClient.get(userId);
+      const storedToken = await prisma.refreshToken.findUnique({
+        where: { userId },
+      });
 
       expect(storedToken).toBeNull();
 
@@ -263,14 +269,17 @@ describe("Auth API 통합 테스트", () => {
     expect(res.body.message).toMatch("권한이 없어요.");
   });
 
-  test("멱등성 보장: 로그아웃을 한 상태에서 다시 로그아웃 요청시 상태 코드 204를 반환해야 한다.", async () => {
-    await redisClient.del(userId);
+  test("실패: 로그아웃을 한 상태에서 다시 로그아웃 요청시 상태 코드 401 UNAUTHORIZED_REQUEST 에러를 반환해야 한다.", async () => {
+    await prisma.refreshToken.deleteMany({
+      where: { userId },
+    });
 
     const res = await request(app)
       .post("/api/v2/auth/logout")
       .set("Cookie", tokenCookie)
       .send();
 
-    expect(res.status).toBe(204);
+    expect(res.status).toBe(401);
+    expect(res.body.message).toMatch("권한이 없어요.");
   });
 });
