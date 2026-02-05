@@ -14,6 +14,7 @@ import {
   BusinessException,
   BusinessExceptionType,
 } from "../../_common/exceptions/business.exception";
+import { ApartmentMapper } from "../../_infra/mappers/apartment.mapper";
 
 export interface IApartmentController {
   getApartmentList: (req: Request, res: Response) => Promise<void>;
@@ -59,7 +60,10 @@ export const ApartmentController = (
       });
     }
 
-    res.status(200).json(result.households);
+    const apartmentListItem = ApartmentMapper.toListApartmentItem(
+      result.apartment as any,
+    );
+    res.status(200).json(apartmentListItem);
   };
 
   // serarch by apartmnet name

@@ -7,7 +7,12 @@ export interface HouseholdMemberView {
   building: number;
   unit: number;
   isHouseholder: boolean;
-  userId: string;
+  userId: string | undefined;
+  apartment: {
+    id: string;
+    name: string;
+    address: string;
+  };
 }
 
 export interface HouseholdMembersListView extends HouseholdMemberView {}

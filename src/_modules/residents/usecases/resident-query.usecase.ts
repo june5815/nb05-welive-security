@@ -10,11 +10,16 @@ import {
 
 export interface IResidentQueryService {
   getListHouseholdMembers(
-    apartmentId: string,
-    page: number,
-    limit: number,
-    userId: string,
-    role: string,
+    apartmentId?: string,
+    page?: number,
+    limit?: number,
+    building?: number,
+    unit?: number,
+    searchKeyword?: string,
+    isHouseholder?: boolean,
+    isRegistered?: boolean,
+    userId?: string,
+    role?: string,
   ): Promise<HouseholdMembersListResponseView>;
 
   getHouseholdMemberDetail(
@@ -28,19 +33,21 @@ export const ResidentQueryService = (
   residentQueryRepo: IResidentQueryRepo,
 ): IResidentQueryService => {
   const getListHouseholdMembers = async (
-    apartmentId: string,
-    page: number,
-    limit: number,
-    userId: string,
-    role: string,
+    apartmentId?: string,
+    page?: number,
+    limit?: number,
+    building?: number,
+    unit?: number,
+    searchKeyword?: string,
+    isHouseholder?: boolean,
+    isRegistered?: boolean,
+    userId?: string,
+    role?: string,
   ): Promise<HouseholdMembersListResponseView> => {
-    if (!apartmentId?.trim()) {
-      throw new Error("apartmentId is required");
-    }
-    if (page < 1) {
+    if (!page || page < 1) {
       throw new Error("page must be >= 1");
     }
-    if (limit < 1) {
+    if (!limit || limit < 1) {
       throw new Error("limit must be >= 1");
     }
 
@@ -58,10 +65,19 @@ export const ResidentQueryService = (
     const validatedPage = Math.max(1, page);
     const safeLimit = Math.min(Math.max(1, limit), 100);
 
+    const filters = {
+      building,
+      unit,
+      searchKeyword,
+      isHouseholder,
+      isRegistered,
+    };
+
     const { members, total } = await residentQueryRepo.findHouseholdMembers(
       apartmentId,
       validatedPage,
       safeLimit,
+      filters,
     );
 
     const totalPages = Math.ceil(total / safeLimit);
@@ -70,13 +86,18 @@ export const ResidentQueryService = (
     const data = members.map((member) => ({
       id: member.id,
       createdAt: member.createdAt.toISOString(),
-      email: member.user.email,
-      contact: member.user.contact,
-      name: member.user.name,
+      email: member.user?.email ?? member.email,
+      contact: member.user?.contact ?? member.contact,
+      name: member.user?.name ?? member.name,
       building: member.household.building,
       unit: member.household.unit,
       isHouseholder: member.isHouseholder,
-      userId: member.user.id,
+      userId: member.userId,
+      apartment: {
+        id: member.household.apartment.id,
+        name: member.household.apartment.name,
+        address: member.household.apartment.address,
+      },
     }));
 
     return {
@@ -120,13 +141,18 @@ export const ResidentQueryService = (
     const detail: HouseholdMemberDetailView = {
       id: member.id,
       createdAt: member.createdAt.toISOString(),
-      email: member.user.email,
-      contact: member.user.contact,
-      name: member.user.name,
+      email: member.user?.email ?? member.email,
+      contact: member.user?.contact ?? member.contact,
+      name: member.user?.name ?? member.name,
       building: member.household.building,
       unit: member.household.unit,
       isHouseholder: member.isHouseholder,
-      userId: member.user.id,
+      userId: member.userId,
+      apartment: {
+        id: member.household.apartment.id,
+        name: member.household.apartment.name,
+        address: member.household.apartment.address,
+      },
     };
 
     return detail;

@@ -13,9 +13,9 @@ export interface HouseholdMembersFilter {
 
 export interface IResidentQueryRepo {
   findHouseholdMembers: (
-    apartmentId: string,
-    page: number,
-    limit: number,
+    apartmentId?: string,
+    page?: number,
+    limit?: number,
     filters?: HouseholdMembersFilter,
   ) => Promise<{ members: HouseholdMemberWithRelations[]; total: number }>;
 

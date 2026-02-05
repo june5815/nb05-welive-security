@@ -1,3 +1,11 @@
+export interface ApartmentListResView {
+  readonly data: ApartmentListItemResView[];
+  readonly totalCount: number;
+  readonly page: number;
+  readonly limit: number;
+  readonly hasNext: boolean;
+}
+
 export interface ApartmentListItemResView {
   readonly id: string;
   readonly name: string;
@@ -6,14 +14,6 @@ export interface ApartmentListItemResView {
   readonly officeNumber: string;
   readonly buildings: number[];
   readonly units: number[];
-}
-
-export interface ApartmentListResView {
-  readonly data: ApartmentListItemResView[];
-  readonly totalCount: number;
-  readonly page: number;
-  readonly limit: number;
-  readonly hasNext: boolean;
 }
 
 export interface ApartmentDetailResView {

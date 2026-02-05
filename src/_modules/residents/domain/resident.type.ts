@@ -64,6 +64,12 @@ export interface HouseholdMemberWithRelations extends HouseholdMember {
     readonly id: string;
     readonly building: number;
     readonly unit: number;
+    readonly apartmentId: string;
+    readonly apartment: {
+      readonly id: string;
+      readonly name: string;
+      readonly address: string;
+    };
   };
 }
 
