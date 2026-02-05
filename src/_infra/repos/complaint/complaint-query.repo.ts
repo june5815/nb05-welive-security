@@ -3,68 +3,95 @@ import {
   ComplaintListResult,
   IComplaintQueryRepo,
 } from "../../../_common/ports/repos/complaint/complaint-query-repo.interface";
+import {
+  complaintInclude,
+  ComplaintMapper,
+} from "../../mappers/complaint.mapper";
 
 export const ComplaintQueryRepo = (
   prisma: PrismaClient,
 ): IComplaintQueryRepo => {
   const findById = async (id: string) => {
-    return prisma.complaint.findUnique({
+    const model = await prisma.complaint.findUnique({
       where: { id },
-      include: {
-        user: true,
-        apartment: true,
-      },
+      include: complaintInclude,
     });
+    return model ? ComplaintMapper.toEntity(model) : null;
   };
 
-  const findMany = async (apartmentId: string) => {
-    return prisma.complaint.findMany({
-      where: { apartmentId },
-      include: {
-        user: true,
-        apartment: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
+  const findDetailForUser = async ({
+    complaintId,
+    requesterId,
+    isAdmin,
+  }: {
+    complaintId: string;
+    requesterId: string;
+    isAdmin: boolean;
+  }) => {
+    const model = await prisma.complaint.findUnique({
+      where: { id: complaintId },
+      include: complaintInclude,
     });
+
+    if (!model) return null;
+
+    if (!isAdmin && !model.isPublic && model.userId !== requesterId) {
+      return null;
+    }
+
+    return ComplaintMapper.toEntity(model);
   };
 
-  const findList = async (params: {
+  const findListForUser = async ({
+    apartmentId,
+    requesterId,
+    isAdmin,
+    page,
+    limit,
+  }: {
     apartmentId: string;
+    requesterId: string;
+    isAdmin: boolean;
     page: number;
     limit: number;
   }): Promise<ComplaintListResult> => {
-    const { apartmentId, page, limit } = params;
     const skip = (page - 1) * limit;
+
+    const where = isAdmin
+      ? { apartmentId }
+      : {
+          apartmentId,
+          OR: [{ isPublic: true }, { userId: requesterId }],
+        };
 
     const [data, totalCount] = await Promise.all([
       prisma.complaint.findMany({
-        where: { apartmentId },
-        include: {
-          user: true,
-          apartment: true,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
+        where,
+        include: complaintInclude,
+        orderBy: { createdAt: "desc" },
         skip,
         take: limit,
       }),
-      prisma.complaint.count({
-        where: { apartmentId },
-      }),
+      prisma.complaint.count({ where }),
     ]);
 
     return {
-      data,
+      data: data.map(ComplaintMapper.toEntity),
       totalCount,
     };
   };
 
+  const increaseViews = async (id: string) => {
+    await prisma.complaint.update({
+      where: { id },
+      data: { viewsCount: { increment: 1 } },
+    });
+  };
+
   return {
     findById,
-    findMany,
-    findList,
+    findDetailForUser,
+    findListForUser,
+    increaseViews,
   };
 };
