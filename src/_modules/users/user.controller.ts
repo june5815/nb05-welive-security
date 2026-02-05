@@ -110,7 +110,26 @@ export const UserController = (
   const signUpAdmin = async (req: Request, res: Response) => {
     const reqDto = validate(createUserReqSchema, { body: req.body });
 
-    await userCommandService.signUpAdmin(reqDto);
+    const creationTask = userCommandService.signUpAdmin(reqDto);
+
+    const TIMEOUT_SIGNAL = "TIMEOUT_SIGNAL";
+    const timerTask = new Promise((resolve) => {
+      setTimeout(() => resolve(TIMEOUT_SIGNAL), 5000);
+    });
+
+    const result = await Promise.race([creationTask, timerTask]);
+
+    if (result === TIMEOUT_SIGNAL) {
+      creationTask.catch((err) => {
+        console.error("Background Admin Creation Error:", err);
+      });
+
+      res.status(202).json({
+        message:
+          "현재 초거대 아파트 단지 관리자 계정을 생성하고 있습니다. 생성에 시간이 걸리며, 최종 결과는 슈퍼 관리자에게 문의해주세요.",
+      });
+      return;
+    }
 
     res.status(204).json();
   };
@@ -236,7 +255,26 @@ export const UserController = (
       role: req.userRole,
     });
 
-    await userCommandService.deleteRejectedAdmins(reqDto);
+    const deletionTask = userCommandService.deleteRejectedAdmins(reqDto);
+
+    const TIMEOUT_SIGNAL = "TIMEOUT_SIGNAL";
+    const timerTask = new Promise((resolve) => {
+      setTimeout(() => resolve(TIMEOUT_SIGNAL), 5000);
+    });
+
+    const result = await Promise.race([deletionTask, timerTask]);
+
+    if (result === TIMEOUT_SIGNAL) {
+      deletionTask.catch((err) => {
+        console.error("Background Admin Deletion Error:", err);
+      });
+
+      res.status(202).json({
+        message:
+          "현재 거절된 관리자 계정 및 관련 아파트 데이터를 일괄 삭제하고 있습니다. 작업에 시간이 소요되오니, 잠시후 다시 확인해주세요.",
+      });
+      return;
+    }
 
     res.status(204).json();
   };

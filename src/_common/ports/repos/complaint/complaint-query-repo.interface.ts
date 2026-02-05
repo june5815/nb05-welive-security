@@ -8,11 +8,19 @@ export interface ComplaintListResult {
 export interface IComplaintQueryRepo {
   findById(id: string): Promise<Complaint | null>;
 
-  findMany(apartmentId: string): Promise<Complaint[]>;
+  findDetailForUser(params: {
+    complaintId: string;
+    requesterId: string;
+    isAdmin: boolean;
+  }): Promise<Complaint | null>;
 
-  findList(params: {
+  findListForUser(params: {
     apartmentId: string;
+    requesterId: string;
+    isAdmin: boolean;
     page: number;
     limit: number;
   }): Promise<ComplaintListResult>;
+
+  increaseViews(id: string): Promise<void>;
 }

@@ -1,13 +1,13 @@
-export class PollView {
-  constructor(
-    readonly id: string,
-    readonly title: string,
-    readonly status: string,
-    readonly startAt: Date,
-    readonly endAt: Date,
-  ) {}
+import { Poll } from "../domain/poll.entity";
 
-  static from(row: any) {
-    return new PollView(row.id, row.title, row.status, row.startAt, row.endAt);
+export class PollView {
+  static from(poll: Poll) {
+    return {
+      id: poll.id,
+      title: poll.title,
+      status: poll.status,
+      startAt: poll.createdAt,
+      endAt: poll.endAt,
+    };
   }
 }

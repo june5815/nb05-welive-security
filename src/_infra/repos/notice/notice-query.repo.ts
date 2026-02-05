@@ -2,6 +2,7 @@ import {
   CommentResourceType,
   NoticeCategory,
   PrismaClient,
+  Prisma,
 } from "@prisma/client";
 import { BaseQueryRepo } from "../_base/base-query.repo";
 
@@ -42,7 +43,6 @@ export const noticeQueryRepository = (prismaClient: PrismaClient) => {
         : {}),
     };
 
-    // 공지 목록 + 전체 개수
     const [notices, totalCount] = await Promise.all([
       prisma.notice.findMany({
         where,
@@ -56,7 +56,6 @@ export const noticeQueryRepository = (prismaClient: PrismaClient) => {
       prisma.notice.count({ where }),
     ]);
 
-    // 댓글수 합
     const noticeIds = notices.map((n) => n.id);
 
     const commentCounts =
@@ -82,43 +81,42 @@ export const noticeQueryRepository = (prismaClient: PrismaClient) => {
 
     const hasNext = page * limit < totalCount;
 
-    return {
-      data,
-      totalCount,
-      page,
-      limit,
-      hasNext,
-    };
+    return { data, totalCount, page, limit, hasNext };
   };
 
   const findDetail = async (noticeId: string) => {
     const prisma = base.getPrismaClient();
 
-    // 조회수
-    const [notice, commentCount] = await Promise.all([
-      prisma.notice.update({
-        where: { id: noticeId },
-        data: { viewCount: { increment: 1 } },
-        include: {
-          user: { select: { id: true, name: true } },
-          event: true,
-        },
-      }),
-      prisma.comment.count({
-        where: {
-          resourceType: CommentResourceType.NOTICE,
-          resourceId: noticeId,
-        },
-      }),
-    ]);
+    try {
+      const [notice, commentCount] = await Promise.all([
+        prisma.notice.update({
+          where: { id: noticeId },
+          data: { viewCount: { increment: 1 } },
+          include: {
+            user: { select: { id: true, name: true } },
+            event: true,
+          },
+        }),
+        prisma.comment.count({
+          where: {
+            resourceType: CommentResourceType.NOTICE,
+            resourceId: noticeId,
+          },
+        }),
+      ]);
 
-    if (!notice) return null;
-
-    return {
-      ...notice,
-      commentCount,
-    };
+      return { ...notice, commentCount };
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        return null;
+      }
+      throw error;
+    }
   };
+
   const findApartmentIdByAdminId = async (
     adminId: string,
   ): Promise<string | null> => {
