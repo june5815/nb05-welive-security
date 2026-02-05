@@ -3,6 +3,7 @@ import { CreatePollDto } from "../dtos/poll-create.dto";
 import { UpdatePollDto } from "../dtos/poll-update.dto";
 import { VotePollDto } from "../dtos/poll-vote.dto";
 import { Poll } from "../domain/poll.entity";
+import { PollOption } from "../domain/poll-option.entity";
 import {
   BusinessException,
   BusinessExceptionType,
@@ -17,18 +18,21 @@ export const PollCommandService = (repo: IPollCommandRepo) => ({
       apartmentId: dto.user.apartmentId,
       title: dto.body.title,
       description: dto.body.content,
-      startAt: new Date(),
       endAt: new Date(dto.body.endDate),
       voterScope: { type: "ALL" },
       createdBy: dto.user.id,
     });
 
-    await repo.save(poll);
+    const options = dto.body.options.map((text, idx) =>
+      PollOption.create(poll.id, text, idx + 1),
+    );
+
+    await repo.saveWithOptions(poll, options);
     return poll.id;
   },
 
   async update(dto: UpdatePollDto) {
-    const poll = await repo.findById(dto.params.pollId, "update");
+    const poll = await repo.findById(dto.params.pollId);
     if (!poll)
       throw new BusinessException({ type: BusinessExceptionType.NOT_FOUND });
     if (!poll.canEdit())
@@ -40,7 +44,6 @@ export const PollCommandService = (repo: IPollCommandRepo) => ({
       dto.body.title ?? poll.title,
       dto.body.content ?? poll.description,
       poll.status,
-      poll.startAt,
       dto.body.endDate ? new Date(dto.body.endDate) : poll.endAt,
       poll.voterScope,
       poll.createdBy,
@@ -52,7 +55,7 @@ export const PollCommandService = (repo: IPollCommandRepo) => ({
   },
 
   async vote(dto: VotePollDto) {
-    const poll = await repo.findById(dto.params.pollId, "update");
+    const poll = await repo.findById(dto.params.pollId);
     if (!poll)
       throw new BusinessException({ type: BusinessExceptionType.NOT_FOUND });
     if (!poll.canVote())
