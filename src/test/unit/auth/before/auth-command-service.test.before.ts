@@ -1,19 +1,22 @@
 import {
   IAuthCommandService,
   AuthCommandService,
-} from "../../../_modules/auth/service/auth-command.service";
-import { AuthEntity } from "../../../_modules/auth/domain/auth.entity";
-import { IUnitOfWork } from "../../../_common/ports/db/u-o-w.interface";
-import { IHashManager } from "../../../_common/ports/managers/bcrypt-hash-manager.interface";
-import { ITokenUtil } from "../../../_common/utils/token.util";
-// import { IAuthCommandRepo } from "../../../_common/ports/repos/auth/auth-command-repo.interface";
-import { IRedisExternal } from "../../../_common/ports/externals/redis-external.interface";
-import { IUserCommandRepo } from "../../../_common/ports/repos/user/user-command-repo.interface";
-import { BusinessExceptionType } from "../../../_common/exceptions/business.exception";
+} from "../../../../_modules/auth/service/auth-command.service";
+import {
+  AuthEntity,
+  RefreshToken,
+} from "../../../../_modules/auth/domain/auth.entity";
+import { IUnitOfWork } from "../../../../_common/ports/db/u-o-w.interface";
+import { IHashManager } from "../../../../_common/ports/managers/bcrypt-hash-manager.interface";
+import { ITokenUtil } from "../../../../_common/utils/token.util";
+import { IAuthCommandRepo } from "../../../../_common/ports/repos/auth/auth-command-repo.interface";
+import { IRedisExternal } from "../../../../_common/ports/externals/redis-external.interface";
+import { IUserCommandRepo } from "../../../../_common/ports/repos/user/user-command-repo.interface";
+import { BusinessExceptionType } from "../../../../_common/exceptions/business.exception";
 import {
   UserRole,
   JoinStatus,
-} from "../../../_modules/users/domain/user.entity";
+} from "../../../../_modules/users/domain/user.entity";
 
 describe("AuthCommandService Unit Test", () => {
   let authService: IAuthCommandService;
@@ -33,6 +36,12 @@ describe("AuthCommandService Unit Test", () => {
     generateCsrfValue: jest.fn(),
     verifyToken: jest.fn(),
   } as jest.Mocked<ITokenUtil>;
+
+  const mockAuthCommandRepo = {
+    upsertRefreshToken: jest.fn(),
+    findByUserId: jest.fn(),
+    deleteRefreshToken: jest.fn(),
+  } as jest.Mocked<IAuthCommandRepo>;
 
   const mockRedisExternal = {
     get: jest.fn(),
@@ -136,8 +145,10 @@ describe("AuthCommandService Unit Test", () => {
     test("성공: 유저가 존재하고 비밀번호가 맞으면 토큰과 유저 정보를 반환해야 한다.", async () => {
       mockUserCommandRepo.findByUsername.mockResolvedValue(mockUser);
       jest.spyOn(AuthEntity, "isPasswordMatched").mockResolvedValue(true);
-
-      mockRedisExternal.set.mockResolvedValue(undefined);
+      jest.spyOn(AuthEntity, "toCreate").mockResolvedValue({
+        userId: "user-1",
+        refreshToken: "hashed_refresh_token",
+      } as RefreshToken);
 
       mockTokenUtil.generateRefreshToken.mockReturnValue("new_refresh_token");
       mockTokenUtil.generateAccessToken.mockReturnValue("new_access_token");
@@ -146,11 +157,7 @@ describe("AuthCommandService Unit Test", () => {
       const result = await authService.login(loginReqDto);
 
       expect(mockUnitOfWork.doTx).toHaveBeenCalled();
-      expect(mockRedisExternal.set).toHaveBeenCalledWith(
-        "user-1",
-        "new_refresh_token",
-        7 * 24 * 60 * 60,
-      );
+      expect(mockAuthCommandRepo.upsertRefreshToken).toHaveBeenCalled();
       expect(result.tokenResDto.accessToken).toBe("new_access_token");
       expect(result.tokenResDto.refreshToken).toBe("new_refresh_token");
       expect(result.tokenResDto.csrfValue).toBe("csrf_value");
@@ -196,11 +203,13 @@ describe("AuthCommandService Unit Test", () => {
   describe("logout 함수 확인", () => {
     const refreshToken = "refresh_token";
 
-    test("토큰 검증 후 Redis에서 리프레시 토큰을 삭제해야 한다.", async () => {
+    test("토큰 검증 후 DB에서 리프레시 토큰을 삭제해야 한다.", async () => {
       mockTokenUtil.verifyToken.mockReturnValue({ userId: "user-1" } as any);
-
-      mockRedisExternal.get.mockResolvedValue(refreshToken);
-      mockRedisExternal.del.mockResolvedValue(1);
+      mockAuthCommandRepo.findByUserId.mockResolvedValue({
+        userId: "user-1",
+        refreshToken: "hashed_refresh_token",
+      });
+      jest.spyOn(AuthEntity, "isRefreshTokenMatched").mockResolvedValue(true);
 
       await authService.logout(refreshToken);
 
@@ -211,17 +220,9 @@ describe("AuthCommandService Unit Test", () => {
           ignoreExpiration: true,
         }),
       );
-      expect(mockRedisExternal.get).toHaveBeenCalledWith("user-1");
-      expect(mockRedisExternal.del).toHaveBeenCalledWith("user-1");
-    });
-
-    test("멱등성 보장: Redis에 저장된 토큰이 없거나 불일치하더라도 logout 시킨다.", async () => {
-      mockTokenUtil.verifyToken.mockReturnValue({ userId: "user-1" } as any);
-
-      mockRedisExternal.get.mockResolvedValue("different_token");
-
-      await expect(authService.logout(refreshToken)).resolves.toBeUndefined();
-      expect(mockRedisExternal.del).not.toHaveBeenCalled();
+      expect(mockAuthCommandRepo.deleteRefreshToken).toHaveBeenCalledWith(
+        "user-1",
+      );
     });
   });
 
@@ -237,9 +238,16 @@ describe("AuthCommandService Unit Test", () => {
     test("성공: 기존 리프레시 토큰이 유효하면 새로운 토큰 세트를 발급해야 한다.", async () => {
       mockTokenUtil.verifyToken.mockReturnValue({ userId: "user-1" } as any);
       mockUserCommandRepo.findById.mockResolvedValue(mockUser);
+      mockAuthCommandRepo.findByUserId.mockResolvedValue({
+        userId: "user-1",
+        refreshToken: "hashed_old_refresh_token",
+      });
 
-      mockRedisExternal.get.mockResolvedValue("old_token");
-      mockRedisExternal.set.mockResolvedValue(undefined);
+      jest.spyOn(AuthEntity, "isRefreshTokenMatched").mockResolvedValue(true);
+      jest.spyOn(AuthEntity, "toCreate").mockResolvedValue({
+        userId: "user-1",
+        refreshToken: "hashed_new_refresh_token",
+      } as RefreshToken);
 
       mockTokenUtil.generateAccessToken.mockReturnValue("new_access_token");
       mockTokenUtil.generateRefreshToken.mockReturnValue("new_refresh_token");
@@ -251,14 +259,7 @@ describe("AuthCommandService Unit Test", () => {
         "user-1",
         "update",
       );
-
-      expect(mockRedisExternal.get).toHaveBeenCalledWith("user-1");
-      expect(mockRedisExternal.set).toHaveBeenCalledWith(
-        "user-1",
-        "new_refresh_token",
-        7 * 24 * 60 * 60,
-      );
-
+      expect(mockAuthCommandRepo.upsertRefreshToken).toHaveBeenCalled();
       expect(result.newAccessToken).toBe("new_access_token");
       expect(result.newRefreshToken).toBe("new_refresh_token");
       expect(result.newCsrfValue).toBe("new_csrf_value");
@@ -270,17 +271,6 @@ describe("AuthCommandService Unit Test", () => {
 
       await expect(authService.refreshToken(dto)).rejects.toMatchObject({
         type: BusinessExceptionType.INVALID_AUTH,
-      });
-    });
-
-    test("실패: Redis 토큰과 일치하지 않으면 UNAUTHORIZED 에러를 던져야 한다.", async () => {
-      mockTokenUtil.verifyToken.mockReturnValue({ userId: "user-1" } as any);
-      mockUserCommandRepo.findById.mockResolvedValue(mockUser);
-
-      mockRedisExternal.get.mockResolvedValue("hacking_token");
-
-      await expect(authService.refreshToken(dto)).rejects.toMatchObject({
-        type: BusinessExceptionType.UNAUTHORIZED_REQUEST,
       });
     });
 

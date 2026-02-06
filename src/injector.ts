@@ -25,7 +25,7 @@ import { NotificationQueryUsecase } from "./_modules/notification/usecases/notif
 import { NotificationCommandUsecase } from "./_modules/notification/usecases/notification-command.usecase";
 import { SendNotificationUsecase } from "./_modules/notification/usecases/send-notification.usecase";
 
-import { AuthCommandRepo } from "./_infra/repos/auth/auth-command.repo";
+// import { AuthCommandRepo } from "./_infra/repos/auth/auth-command.repo";
 import { BaseCommandRepo } from "./_infra/repos/_base/base-command.repo";
 import { UserCommandRepo } from "./_infra/repos/user/user-command.repo";
 import { BaseQueryRepo } from "./_infra/repos/_base/base-query.repo";
@@ -35,6 +35,7 @@ import { ResidentCommandRepository } from "./_infra/repos/resident/resident-comm
 import { ResidentQueryRepository } from "./_infra/repos/resident/resident-query.repo";
 import { NotificationQueryRepo } from "./_infra/repos/notification/notification-query.repo";
 import { NotificationCommandRepo } from "./_infra/repos/notification/notification-command.repo";
+import { RedisExternal } from "./_infra/externals/redis.external";
 
 import { UOW } from "./_infra/db/unit-of-work";
 import { HashManager } from "./_infra/manager/bcrypt-hash.manager";
@@ -62,7 +63,7 @@ export const Injector = () => {
 
   const prisma = new PrismaClient();
   const baseCommandRepo = BaseCommandRepo(prisma);
-  const authCommandRepo = AuthCommandRepo(baseCommandRepo);
+  // const authCommandRepo = AuthCommandRepo(baseCommandRepo);
   const userCommandRepo = UserCommandRepo(baseCommandRepo);
   const residentCommandRepo = ResidentCommandRepository(baseCommandRepo);
   const baseQueryRepo = BaseQueryRepo(prisma);
@@ -72,6 +73,7 @@ export const Injector = () => {
   const notificationQueryRepo = NotificationQueryRepo(prisma);
   const notificationCommandRepo = NotificationCommandRepo(prisma);
 
+  const redisExternal = RedisExternal(configUtil);
   const unitOfWork = UOW(prisma, configUtil);
   const hashManager = HashManager(configUtil);
 
@@ -85,7 +87,8 @@ export const Injector = () => {
     unitOfWork,
     hashManager,
     tokenUtil,
-    authCommandRepo,
+    // authCommandRepo,
+    redisExternal,
     userCommandRepo,
   );
   const userCommandService = UserCommandService(

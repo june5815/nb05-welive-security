@@ -4,8 +4,9 @@ import {
   TokenResDto,
   NewTokenResDto,
 } from "../dtos/res/auth.response";
-import { AuthEntity } from "../domain/auth.entity";
-import { IAuthCommandRepo } from "../../../_common/ports/repos/auth/auth-command-repo.interface";
+import { AuthEntity, RefreshToken } from "../domain/auth.entity";
+// import { IAuthCommandRepo } from "../../../_common/ports/repos/auth/auth-command-repo.interface";
+import { IRedisExternal } from "../../../_common/ports/externals/redis-external.interface";
 import { IUserCommandRepo } from "../../../_common/ports/repos/user/user-command-repo.interface";
 import { IUnitOfWork } from "../../../_common/ports/db/u-o-w.interface";
 import { IHashManager } from "../../../_common/ports/managers/bcrypt-hash-manager.interface";
@@ -27,7 +28,8 @@ export const AuthCommandService = (
   unitOfWork: IUnitOfWork,
   hashManager: IHashManager,
   tokenUtil: ITokenUtil,
-  authCommandRepo: IAuthCommandRepo,
+  // authCommandRepo: IAuthCommandRepo,
+  redisExternal: IRedisExternal,
   userCommandRepo: IUserCommandRepo,
 ): IAuthCommandService => {
   const login = async (
@@ -72,12 +74,20 @@ export const AuthCommandService = (
           const refreshToken = tokenUtil.generateRefreshToken({
             userId: foundUser.id!,
           });
-          const tokenEntity = await AuthEntity.toCreate(
+          // prisma로 DB에 저장하는 대신에 redis에 저장하는 걸로 대체됨
+          // const tokenEntity = await AuthEntity.toCreate(
+          //   foundUser.id!,
+          //   refreshToken,
+          //   hashManager,
+          // );
+          // await authCommandRepo.upsertRefreshToken(tokenEntity);
+
+          const REFRESH_TOKEN_TTL = 7 * 24 * 60 * 60; // 7일
+          await redisExternal.set(
             foundUser.id!,
             refreshToken,
-            hashManager,
+            REFRESH_TOKEN_TTL,
           );
-          await authCommandRepo.upsertRefreshToken(tokenEntity);
 
           return {
             refreshToken,
@@ -153,20 +163,33 @@ export const AuthCommandService = (
     try {
       return unitOfWork.doTx(
         async () => {
-          const tokenData = await authCommandRepo.findByUserId(userId);
+          // prisma로 DB에서 찾는 로직 대신에
+          // redis에서 찾는 걸로 대체됨
+          // const tokenData = await authCommandRepo.findByUserId(userId);
 
-          await AuthEntity.isRefreshTokenMatched(
-            tokenData,
-            refreshToken,
-            hashManager,
-          );
-
-          await authCommandRepo.deleteRefreshToken(userId);
+          const tokenData = await redisExternal.get(userId);
+          if (!tokenData || tokenData !== refreshToken) {
+            // 이미 로그아웃 되었거나 잘못된 토큰이지만,
+            // 보안상 로그아웃은 성공으로 처리하거나 에러를 던질 수 있습니다.
+            // throw new BusinessException({
+            //   type: BusinessExceptionType.UNAUTHORIZED_REQUEST,
+            // });
+            // 우리는 그냥 성공으로 처리하기로 함
+            return;
+          }
+          // prisma로 DB에서 파기하는 로직 대신에
+          // redis에 저장된 걸 파기하는 형식으로 대체됨
+          // await AuthEntity.isRefreshTokenMatched(
+          //   tokenData,
+          //   refreshToken,
+          //   hashManager,
+          // );
+          // await authCommandRepo.deleteRefreshToken(userId);
+          await redisExternal.del(userId);
         },
         {
           transactionOptions: {
-            useTransaction: true,
-            isolationLevel: "ReadCommitted",
+            useTransaction: false,
           },
           useOptimisticLock: false,
         },
@@ -219,22 +242,38 @@ export const AuthCommandService = (
             });
           }
 
-          const tokenData = await authCommandRepo.findByUserId(userId);
-          await AuthEntity.isRefreshTokenMatched(
-            tokenData,
-            oldRefreshToken,
-            hashManager,
-          );
+          // prisma로 DB에서 찾는 로직 대신에
+          // redis에서 찾는 걸로 대체됨
+          // const tokenData = await authCommandRepo.findByUserId(userId);
+          // await AuthEntity.isRefreshTokenMatched(
+          //   tokenData,
+          //   oldRefreshToken,
+          //   hashManager,
+          // );
+
+          const tokenData = await redisExternal.get(userId);
+          if (!tokenData || tokenData !== oldRefreshToken) {
+            throw new BusinessException({
+              type: BusinessExceptionType.UNAUTHORIZED_REQUEST,
+            });
+          }
 
           const newRefreshToken = tokenUtil.generateRefreshToken({
             userId: foundUser.id!,
           });
-          const tokenEntity = await AuthEntity.toCreate(
+          // prisma로 DB에 저장하는 대신에 redis에 저장하는 걸로 대체됨
+          // const tokenEntity = await AuthEntity.toCreate(
+          //   foundUser.id!,
+          //   newRefreshToken,
+          //   hashManager,
+          // );
+          // await authCommandRepo.upsertRefreshToken(tokenEntity);
+          const REFRESH_TOKEN_TTL = 7 * 24 * 60 * 60; // 7일
+          await redisExternal.set(
             foundUser.id!,
             newRefreshToken,
-            hashManager,
+            REFRESH_TOKEN_TTL,
           );
-          await authCommandRepo.upsertRefreshToken(tokenEntity);
 
           return {
             newRefreshToken,
