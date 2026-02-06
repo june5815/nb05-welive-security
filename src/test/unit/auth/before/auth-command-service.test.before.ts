@@ -85,6 +85,7 @@ describe("AuthCommandService Unit Test", () => {
       // mockAuthCommandRepo,
       mockRedisExternal,
       mockUserCommandRepo,
+      {} as any,
     );
   });
   beforeEach(() => {

@@ -115,6 +115,8 @@ export const NotificationMapper = {
     type: string;
     targetType: string;
     targetId: string;
+    metadata?: any;
+    extraData?: { adminName?: string; userName?: string };
   }): string {
     const typeMessages: Record<string, string> = {
       COMPLAINT_CREATED: "새로운 민원이 접수되었습니다.",
@@ -123,7 +125,16 @@ export const NotificationMapper = {
       POLL_ENDED: "투표가 종료되었습니다.",
       NOTICE_POSTED: "새로운 공지사항이 등록되었습니다.",
       COMMENT_ADDED: "새로운 댓글이 달렸습니다.",
+      ADMIN_SIGNUP_REQUESTED: "새로운 관리자 신청이 있습니다.",
+      RESIDENT_SIGNUP_REQUESTED: "새로운 입주민 신청이 있습니다.",
     };
+
+    if (event.type === "ADMIN_SIGNUP_REQUESTED") {
+      const adminName = event.metadata?.adminName || event.extraData?.adminName;
+      if (adminName) {
+        return `${adminName}님이 로그인하였습니다.`;
+      }
+    }
 
     return typeMessages[event.type] || "새로운 알림이 있습니다.";
   },

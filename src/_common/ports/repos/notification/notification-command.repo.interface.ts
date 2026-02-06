@@ -1,3 +1,3 @@
 export interface INotificationCommandRepo {
-  markAsRead: (notificationReceiptId: string) => Promise<void>;
+  markAsRead: (notificationReceiptId: string, userId: string) => Promise<void>;
 }

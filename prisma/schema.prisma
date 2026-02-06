@@ -43,11 +43,13 @@ model User {
   adminOf      Apartment?
   resident     HouseholdMember?
 
-  notices            Notice[]
-  complaints         Complaint[]
-  polls              Poll[]
-  pollVotes          PollVote[]
-  comments           Comment[]
+  notices              Notice[]
+  complaints           Complaint[]
+  polls                Poll[]
+  pollVotes            PollVote[]
+  comments             Comment[]
+  pendingNotifications PendingNotification[]
+
   residentImportLogs ResidentImportLog[]
 
   notificationReceipts NotificationReceipt[]
@@ -315,6 +317,7 @@ model NotificationEvent {
   version    Int                    @default(1)
   targetType NotificationTargetType
   targetId   String
+  metadata   Json?                  @default("{}")  // ✅ 추가: 관리자 이름 등 메타데이터 저장
   receipts   NotificationReceipt[]
 
   @@index([type, createdAt])
@@ -389,4 +392,22 @@ model Comment {
 
   @@index([userId])
   @@index([resourceType, resourceId])
+}
+
+model PendingNotification {
+  id        String   @id @default(uuid())
+  userId    String
+  model     String // "notice", "poll", "complaint", "comment", "request"
+  type      String // "notification", "alarm", "event"
+  data      Json
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 중복 방지: 같은 사용자, 모델, 데이터는 1개만 저장
+  @@unique([userId, model, data], name: "unique_pending_notification")
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([model])
 }

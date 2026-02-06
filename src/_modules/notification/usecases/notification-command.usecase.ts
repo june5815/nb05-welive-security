@@ -42,7 +42,7 @@ export const NotificationCommandUsecase = (
         validateNotificationId(notificationReceiptId);
 
         // Repository 호출
-        await notificationCommandRepo.markAsRead(notificationReceiptId);
+        await notificationCommandRepo.markAsRead(notificationReceiptId, userId);
       } catch (error) {
         if (error instanceof BusinessException) {
           throw error;

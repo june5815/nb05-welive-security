@@ -49,10 +49,6 @@ export const SendNotificationUsecase = (
         data: receipts,
         skipDuplicates: true,
       });
-
-      console.log(
-        `알림 발송 완료: ${req.notificationType} → ${req.recipientUserIds.length}명`,
-      );
     } catch (error) {
       console.error("알림 발송 실패:", error);
       throw new BusinessException({

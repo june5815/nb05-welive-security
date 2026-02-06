@@ -25,6 +25,7 @@ import {
   TechnicalException,
   TechnicalExceptionType,
 } from "../../../_common/exceptions/technical.exception";
+import { getSSEConnectionManager } from "../../notification/infrastructure/sse";
 
 export interface IUserCommandService {
   signUpSuperAdmin: (dto: createUserReqDTO) => Promise<IUser>;
@@ -193,6 +194,51 @@ export const UserCommandService = (
       });
 
       const savedUser = await userCommandRepo.createResidentUser(createUser);
+
+      // 입주민 회원가입 알림 발송
+      try {
+        const sseManager = getSSEConnectionManager();
+        const apartmentId = resident!.apartmentId;
+        const building = resident!.building;
+        const unit = resident!.unit;
+
+        const notificationData = {
+          event: "RESIDENT_SIGNUP_REQUEST",
+          requestType: "RESIDENT_SIGNUP",
+          residentName: savedUser.name,
+          residentEmail: savedUser.email,
+          residentContact: savedUser.contact,
+          apartmentId: apartmentId,
+          building: building,
+          unit: unit,
+          location: `${building}-${unit}`,
+          message: `신규 입주민이 전입신청하였습니다. (${savedUser.name}, ${building}-${unit})`,
+          residentId: savedUser.id,
+          requestTime: new Date().toISOString(),
+        };
+
+        const notificationMessage = {
+          type: "alarm" as const,
+          model: "request" as const,
+          data: [notificationData],
+          timestamp: new Date(),
+        };
+
+        const sentCount = sseManager.broadcastByRoleAndApartment(
+          "ADMIN",
+          apartmentId,
+          notificationMessage,
+        );
+
+        const dbMessage = {
+          type: "alarm" as const,
+          model: "request" as const,
+          data: notificationData,
+          timestamp: new Date(),
+        };
+      } catch (notificationError) {
+        // Silently handle notification errors
+      }
 
       return savedUser;
     } catch (error) {

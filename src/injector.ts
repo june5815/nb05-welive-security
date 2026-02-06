@@ -7,6 +7,7 @@ import { CommentRouter } from "./_modules/comments/routes";
 import { EventRouter } from "./_modules/events/routes";
 import { ResidentRouter } from "./_modules/residents/resident.router";
 import { NotificationRouter } from "./_modules/notification/notification.router";
+import { createNotificationScheduler } from "./_modules/notification/notification-scheulder";
 
 import { BaseController } from "./_modules/_base/base.controller";
 import { AuthController } from "./_modules/auth/auth.controller";
@@ -77,7 +78,6 @@ export const Injector = () => {
   const unitOfWork = UOW(prisma, configUtil);
   const hashManager = HashManager(configUtil);
 
-  // 알림 발송 서비스 먼저 생성 (DI 순서 중요)
   const sendNotificationUsecase = SendNotificationUsecase(
     prisma,
     notificationCommandRepo,
@@ -90,6 +90,7 @@ export const Injector = () => {
     // authCommandRepo,
     redisExternal,
     userCommandRepo,
+    prisma,
   );
   const userCommandService = UserCommandService(
     unitOfWork,
@@ -140,6 +141,7 @@ export const Injector = () => {
     baseController,
     notificationQueryUsecase,
     notificationCommandUsecase,
+    prisma,
   );
 
   const baseRouter = BaseRouter();
@@ -189,6 +191,8 @@ export const Injector = () => {
     authMiddleware,
   );
 
+  const notificationScheduler = createNotificationScheduler(prisma);
+
   const httpServer: IHttpServer = HttpServer(
     configUtil,
     cookieMiddleware,
@@ -210,5 +214,6 @@ export const Injector = () => {
 
   return {
     httpServer,
+    notificationScheduler,
   };
 };

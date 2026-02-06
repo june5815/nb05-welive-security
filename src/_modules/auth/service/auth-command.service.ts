@@ -15,6 +15,10 @@ import {
   BusinessException,
   BusinessExceptionType,
 } from "../../../_common/exceptions/business.exception";
+import { getSSEConnectionManager } from "../../notification/infrastructure/sse";
+import { NotificationMapper } from "../../../_infra/mappers/notification.mapper";
+import { randomUUID } from "crypto";
+import { PrismaClient } from "@prisma/client";
 
 export interface IAuthCommandService {
   login: (
@@ -31,6 +35,7 @@ export const AuthCommandService = (
   // authCommandRepo: IAuthCommandRepo,
   redisExternal: IRedisExternal,
   userCommandRepo: IUserCommandRepo,
+  prismaClient: PrismaClient,
 ): IAuthCommandService => {
   const login = async (
     dto: LoginReqDto,
@@ -106,7 +111,9 @@ export const AuthCommandService = (
       );
       const resolveApartmentId = (user: any): string | undefined => {
         if (!user) return undefined;
-        if (user.role === "ADMIN") return user.adminOf?.id;
+        if (user.role === "ADMIN") {
+          return user.adminOf?.id;
+        }
         if (user.role === "USER") return user.resident?.household?.apartmentId;
         return undefined;
       };
@@ -146,6 +153,87 @@ export const AuthCommandService = (
             }
           : undefined,
       };
+      // 알람
+      if (role === "ADMIN" && apartmentId) {
+        try {
+          const sseManager = getSSEConnectionManager();
+
+          const notificationReceiptId = randomUUID();
+          const createdAt = new Date().toISOString();
+          const notificationEventType = "ADMIN_SIGNUP_REQUESTED";
+
+          const content = NotificationMapper.generateContent({
+            type: notificationEventType,
+            targetType: "APARTMENT",
+            targetId: apartmentId,
+            extraData: { adminName: foundUser.name },
+          });
+
+          const notificationData = [
+            {
+              id: notificationReceiptId,
+              createdAt: createdAt,
+              content: content,
+              isChecked: false,
+            },
+          ];
+
+          const sseMessage: any = {
+            type: "alarm",
+            model: "request",
+            data: notificationData,
+            timestamp: new Date(),
+          };
+
+          const sentCount = sseManager.sendToUser(userId, sseMessage);
+
+          const notificationEvent = await prismaClient.notificationEvent.create(
+            {
+              data: {
+                type: notificationEventType,
+                targetType: "APARTMENT",
+                targetId: apartmentId,
+                metadata: {
+                  adminName: foundUser.name,
+                },
+              },
+            },
+          );
+
+          try {
+            await prismaClient.notificationReceipt.create({
+              data: {
+                id: notificationReceiptId,
+                userId: userId,
+                eventId: notificationEvent.id,
+                isChecked: false,
+                checkedAt: null,
+                isHidden: false,
+              },
+            });
+          } catch (dbError) {
+            console.error(
+              "[ADMIN_LOGIN] NotificationReceipt 생성 실패:",
+              dbError,
+            );
+          }
+
+          const dbMessage: any = {
+            type: "alarm",
+            model: "request",
+            data: notificationData[0],
+            timestamp: new Date(),
+          };
+
+          await sseManager.savePendingNotification(
+            userId,
+            "request",
+            dbMessage,
+          );
+        } catch (notificationError) {
+          console.error("[ADMIN_LOGIN] 알림 발송 실패:", notificationError);
+        }
+      }
 
       return { loginResDto, tokenResDto };
     } catch (error) {
