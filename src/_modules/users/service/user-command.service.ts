@@ -26,6 +26,9 @@ import {
   TechnicalExceptionType,
 } from "../../../_common/exceptions/technical.exception";
 import { getSSEConnectionManager } from "../../notification/infrastructure/sse";
+import { NotificationMapper } from "../../../_infra/mappers/notification.mapper";
+import { randomUUID } from "crypto";
+import { PrismaClient } from "@prisma/client";
 
 export interface IUserCommandService {
   signUpSuperAdmin: (dto: createUserReqDTO) => Promise<IUser>;
@@ -57,6 +60,7 @@ export const UserCommandService = (
   unitOfWork: IUnitOfWork,
   hashManager: IHashManager,
   userCommandRepo: IUserCommandRepo,
+  prismaClient?: PrismaClient,
 ): IUserCommandService => {
   const handleError = (error: unknown) => {
     if (error instanceof TechnicalException) {
@@ -121,7 +125,7 @@ export const UserCommandService = (
     const timeOut = 120000; // 2 minutes
 
     try {
-      return await unitOfWork.doTx<IUser>(
+      const savedUser = await unitOfWork.doTx<IUser>(
         async () => {
           const { body } = dto;
 
@@ -163,6 +167,90 @@ export const UserCommandService = (
           useOptimisticLock: false,
         },
       );
+
+      // Admin 회원가입 알림 발송: SuperAdmin에게
+      try {
+        const sseManager = getSSEConnectionManager();
+        const notificationReceiptId = randomUUID();
+        const createdAt = new Date().toISOString();
+        const notificationEventType = "ADMIN_SIGNUP_REQUESTED";
+
+        const content = NotificationMapper.generateContent({
+          type: notificationEventType,
+          targetType: "USER",
+          targetId: "SUPERADMIN",
+          extraData: { adminName: savedUser.name },
+        });
+
+        const notificationData = [
+          {
+            id: notificationReceiptId,
+            createdAt: createdAt,
+            content: content,
+            isChecked: false,
+          },
+        ];
+
+        const sseMessage: any = {
+          type: "alarm",
+          model: "request",
+          data: notificationData,
+          timestamp: new Date(),
+        };
+
+        sseManager.broadcastToGlobalRole("SUPER_ADMIN", sseMessage);
+
+        const notificationEvent =
+          prismaClient &&
+          (await prismaClient.notificationEvent.create({
+            data: {
+              type: notificationEventType,
+              targetType: "USER",
+              targetId: "SUPERADMIN",
+              metadata: {
+                adminName: savedUser.name,
+              },
+            },
+          }));
+
+        const superAdmins =
+          prismaClient &&
+          (await prismaClient.user.findMany({
+            where: { role: "SUPER_ADMIN" },
+          }));
+
+        if (notificationEvent && superAdmins && superAdmins.length > 0) {
+          await Promise.all(
+            (superAdmins as any[]).map((admin: any) =>
+              prismaClient!.notificationReceipt.create({
+                data: {
+                  id: randomUUID(),
+                  userId: admin.id,
+                  eventId: notificationEvent.id,
+                  isChecked: false,
+                  checkedAt: null,
+                  isHidden: false,
+                },
+              }),
+            ),
+          );
+        }
+
+        const dbMessage: any = {
+          type: "alarm",
+          model: "request",
+          data: notificationData[0],
+          timestamp: new Date(),
+        };
+
+        await sseManager.savePendingNotification(
+          "SUPERADMIN",
+          "request",
+          dbMessage,
+        );
+      } catch (notificationError) {}
+
+      return savedUser;
     } catch (error) {
       handleError(error);
       throw error;

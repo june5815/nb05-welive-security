@@ -116,7 +116,7 @@ export const NotificationMapper = {
     targetType: string;
     targetId: string;
     metadata?: any;
-    extraData?: { adminName?: string; userName?: string };
+    extraData?: { adminName?: string; userName?: string; isLogin?: boolean };
   }): string {
     const typeMessages: Record<string, string> = {
       COMPLAINT_CREATED: "새로운 민원이 접수되었습니다.",
@@ -131,8 +131,11 @@ export const NotificationMapper = {
 
     if (event.type === "ADMIN_SIGNUP_REQUESTED") {
       const adminName = event.metadata?.adminName || event.extraData?.adminName;
-      if (adminName) {
+      if (adminName && event.extraData?.isLogin) {
         return `${adminName}님이 로그인하였습니다.`;
+      }
+      if (adminName) {
+        return "새로운 관리자가 승인요청을 했습니다.";
       }
     }
 

@@ -166,7 +166,7 @@ export const AuthCommandService = (
             type: notificationEventType,
             targetType: "APARTMENT",
             targetId: apartmentId,
-            extraData: { adminName: foundUser.name },
+            extraData: { adminName: foundUser.name, isLogin: true },
           });
 
           const notificationData = [

@@ -96,6 +96,7 @@ export const Injector = () => {
     unitOfWork,
     hashManager,
     userCommandRepo,
+    prisma,
   );
   const userQueryService = UserQueryService(userQueryRepo);
   const apartmentQueryUsecase = ApartmentQueryUsecase(apartmentQueryRepo);
