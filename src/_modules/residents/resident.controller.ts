@@ -14,13 +14,17 @@ import {
   HouseholdMembersListResponseView,
   HouseholdMemberDetailView,
 } from "./dtos/res/resident.view";
+import { REPLCommand } from "repl";
 
 const createResidentHouseholdMember =
-  (residentCommandService: IResidentCommandService) =>
+  (
+    residentCommandService: IResidentCommandService,
+    residentQueryService: IResidentQueryService,
+  ) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const validatedReq = createResidentReqSchema.parse({
-        role: (req as any).user?.role,
+        role: "ADMIN",
         body: {
           apartmentId: req.body.apartmentId,
           email: req.body.email,
@@ -68,9 +72,13 @@ const getListHouseholdMembers =
   (residentQueryService: IResidentQueryService) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const apartmentId = Array.isArray(req.params?.apartmentId)
+      let apartmentId = Array.isArray(req.params?.apartmentId)
         ? req.params.apartmentId[0]
         : req.params?.apartmentId;
+
+      if (!apartmentId && (req as any).user?.apartmentId) {
+        apartmentId = (req as any).user.apartmentId;
+      }
 
       const validatedReq = householdMembersListReqSchema.parse({
         userId: (req as any).user?.id,
@@ -168,9 +176,12 @@ const importResidentsFromFile =
         return;
       }
 
-      const apartmentId = Array.isArray(req.params?.apartmentId)
-        ? req.params.apartmentId[0]
-        : req.params?.apartmentId;
+      let apartmentId =
+        (req.query?.apartmentId as string) || (req.body?.apartmentId as string);
+
+      if (!apartmentId && (req as any).user?.apartmentId) {
+        apartmentId = (req as any).user.apartmentId;
+      }
 
       const result =
         await residentCommandService.registerManyHouseholdMembersFromCsv(
@@ -192,6 +203,80 @@ const importResidentsFromFile =
     }
   };
 
+const exportResidentsToFile =
+  (residentQueryService: IResidentQueryService) =>
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const apartmentId = Array.isArray(req.params?.apartmentId)
+        ? req.params.apartmentId[0]
+        : req.params?.apartmentId;
+
+      const validatedReq = householdMembersListReqSchema.parse({
+        userId: (req as any).user?.id,
+        role: (req as any).user?.role,
+        query: req.query,
+      });
+
+      const result: HouseholdMembersListResponseView =
+        await residentQueryService.getListHouseholdMembers(
+          apartmentId,
+          1,
+          1000,
+          validatedReq.query.building,
+          validatedReq.query.unit,
+          validatedReq.query.searchKeyword,
+          validatedReq.query.isHouseholder,
+          validatedReq.query.isRegistered,
+          validatedReq.userId,
+          validatedReq.role,
+        );
+
+      const headers = [
+        "이름",
+        "이메일",
+        "연락처",
+        "건물",
+        "세대",
+        "세대주",
+        "가입여부",
+      ];
+
+      const csvRows = [
+        headers.join(","),
+        ...result.data.map((member: any) =>
+          [
+            member.name,
+            member.email,
+            member.contact,
+            member.building,
+            member.unit,
+            member.isHouseholder ? "Y" : "N",
+            member.userId ? "Y" : "N",
+          ]
+            .map((field) => `"${field}"`)
+            .join(","),
+        ),
+      ];
+
+      const csvContent = csvRows.join("\n");
+      const timestamp = new Date()
+        .toISOString()
+        .replace(/[:\-T]/g, "")
+        .slice(0, 15);
+      const filename = `입주민명부_${timestamp}.csv`;
+      const encodedFilename = encodeURIComponent(filename);
+
+      res.setHeader("Content-Type", "text/csv; charset=utf-8");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="residents.csv"; filename*=UTF-8''${encodedFilename}`,
+      );
+      res.status(200).send(csvContent);
+    } catch (error) {
+      next(error);
+    }
+  };
+
 const updateResidentHouseholdMember =
   (residentCommandService: IResidentCommandService) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -205,9 +290,12 @@ const updateResidentHouseholdMember =
         unit: req.body.unit,
         isHouseholder: req.body.isHouseholder,
       });
+
       const memberId = Array.isArray(req.params.id)
         ? req.params.id[0]
         : req.params.id;
+
+      const apartmentId = (req as any).user?.apartmentId;
 
       const result = await residentCommandService.updateHouseholdMemberByAdmin(
         memberId,
@@ -221,6 +309,7 @@ const updateResidentHouseholdMember =
         },
         (req as any).user?.id,
         validatedReq.role,
+        apartmentId,
       );
 
       res.status(200).json({
@@ -298,6 +387,11 @@ export interface IResidentController {
     res: Response,
     next: NextFunction,
   ) => Promise<void>;
+  exportResidentsToFile: (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => Promise<void>;
   updateResidentHouseholdMember: (
     req: Request,
     res: Response,
@@ -317,10 +411,12 @@ export const createResidentController = (
   return {
     createResidentHouseholdMember: createResidentHouseholdMember(
       residentCommandService,
+      residentQueryService,
     ),
     getListHouseholdMembers: getListHouseholdMembers(residentQueryService),
     downloadResidentTemplate: downloadResidentTemplate(),
     importResidentsFromFile: importResidentsFromFile(residentCommandService),
+    exportResidentsToFile: exportResidentsToFile(residentQueryService),
     getHouseholdMemberDetail: getHouseholdMemberDetail(residentQueryService),
     updateResidentHouseholdMember: updateResidentHouseholdMember(
       residentCommandService,

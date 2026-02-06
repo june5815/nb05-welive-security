@@ -50,12 +50,19 @@ export const ResidentCommandRepository = (
 
   const updateHouseholdMember = async (
     entity: HouseholdMember,
+    previousEntity?: HouseholdMember,
   ): Promise<HouseholdMember> => {
     try {
       const prisma = baseCommandRepo.getPrismaClient();
+
+      const updateData = ResidentMapper.toHouseholdMemberUpdateInput(
+        entity,
+        previousEntity,
+      );
+
       const updatedHouseholdMember = await prisma.householdMember.update({
         where: { id: entity.id },
-        data: ResidentMapper.toHouseholdMemberUpdateInput(entity),
+        data: updateData,
         include: householdMemberFullInclude,
       });
 

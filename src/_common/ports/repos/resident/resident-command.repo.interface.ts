@@ -5,7 +5,10 @@ import {
 
 export interface IResidentCommandRepo {
   createHouseholdMember: (entity: HouseholdMember) => Promise<HouseholdMember>;
-  updateHouseholdMember: (entity: HouseholdMember) => Promise<HouseholdMember>;
+  updateHouseholdMember: (
+    entity: HouseholdMember,
+    previousEntity?: HouseholdMember,
+  ) => Promise<HouseholdMember>;
   createManyHouseholdMembers: (
     entities: HouseholdMember[],
   ) => Promise<HouseholdMember[]>;

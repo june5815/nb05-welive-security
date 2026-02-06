@@ -117,11 +117,10 @@ export const updateResidentReqSchema = z.object({
   unit: z.coerce
     .number()
     .int()
-    .min(101, "호수는 101 이상이어야 합니다.")
+    .min(1, "호수는 1 이상이어야 합니다.")
     .max(9999, "호수는 9999 이하여야 합니다.")
-    .transform((val) => val - 100)
     .optional(),
-  isHouseholder: z.boolean().optional(),
+  isHouseholder: z.union([z.boolean()]).optional(),
 });
 
 export type UpdateResidentReqDTO = z.infer<typeof updateResidentReqSchema>;

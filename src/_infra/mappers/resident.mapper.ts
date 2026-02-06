@@ -88,11 +88,9 @@ export const ResidentMapper = {
 
   toHouseholdMemberUpdateInput: (
     member: HouseholdMember,
+    previousMember?: HouseholdMember,
   ): Prisma.HouseholdMemberUpdateInput => {
     const input: Prisma.HouseholdMemberUpdateInput = {
-      household: {
-        connect: { id: member.householdId },
-      },
       isHouseholder: member.isHouseholder,
       movedInAt: member.movedInAt,
       movedOutAt: member.movedOutAt,
@@ -100,6 +98,7 @@ export const ResidentMapper = {
       contact: member.contact,
       name: member.name,
     };
+
     return input;
   },
 
