@@ -289,41 +289,95 @@ export const UserCommandService = (
         const apartmentId = resident!.apartmentId;
         const building = resident!.building;
         const unit = resident!.unit;
+        const notificationReceiptId = randomUUID();
+        const createdAt = new Date().toISOString();
+        const notificationEventType = "RESIDENT_SIGNUP_REQUESTED";
 
-        const notificationData = {
-          event: "RESIDENT_SIGNUP_REQUEST",
-          requestType: "RESIDENT_SIGNUP",
-          residentName: savedUser.name,
-          residentEmail: savedUser.email,
-          residentContact: savedUser.contact,
-          apartmentId: apartmentId,
-          building: building,
-          unit: unit,
-          location: `${building}-${unit}`,
-          message: `신규 입주민이 전입신청하였습니다. (${savedUser.name}, ${building}-${unit})`,
-          residentId: savedUser.id,
-          requestTime: new Date().toISOString(),
-        };
+        const content = NotificationMapper.generateContent({
+          type: notificationEventType,
+          targetType: "APARTMENT",
+          targetId: apartmentId,
+          extraData: { userName: savedUser.name },
+        });
 
-        const notificationMessage = {
-          type: "alarm" as const,
-          model: "request" as const,
-          data: [notificationData],
-          timestamp: new Date(),
-        };
+        const notificationData = [
+          {
+            id: notificationReceiptId,
+            createdAt: createdAt,
+            content: content,
+            isChecked: false,
+          },
+        ];
 
-        const sentCount = sseManager.broadcastByRoleAndApartment(
-          "ADMIN",
-          apartmentId,
-          notificationMessage,
-        );
-
-        const dbMessage = {
-          type: "alarm" as const,
-          model: "request" as const,
+        const sseMessage: any = {
+          type: "alarm",
+          model: "request",
           data: notificationData,
           timestamp: new Date(),
         };
+
+        // 해당 아파트의 ADMIN에게만 전송
+        sseManager.broadcastByRoleAndApartment(
+          "ADMIN",
+          apartmentId,
+          sseMessage,
+        );
+
+        if (prismaClient) {
+          const notificationEvent = await prismaClient.notificationEvent.create(
+            {
+              data: {
+                type: notificationEventType,
+                targetType: "APARTMENT",
+                targetId: apartmentId,
+                metadata: {
+                  userName: savedUser.name,
+                  building: building,
+                  unit: unit,
+                },
+              },
+            },
+          );
+
+          const admins = await prismaClient.user.findMany({
+            where: {
+              role: "ADMIN",
+              adminOf: {
+                id: apartmentId,
+              },
+            },
+          });
+
+          if (admins && notificationEvent) {
+            await Promise.all(
+              admins.map((admin: any) =>
+                prismaClient!.notificationReceipt.create({
+                  data: {
+                    id: randomUUID(),
+                    userId: admin.id,
+                    eventId: notificationEvent.id,
+                    isChecked: false,
+                    checkedAt: null,
+                    isHidden: false,
+                  },
+                }),
+              ),
+            );
+          }
+
+          const dbMessage: any = {
+            type: "alarm",
+            model: "request",
+            data: notificationData[0],
+            timestamp: new Date(),
+          };
+
+          await sseManager.savePendingNotification(
+            apartmentId,
+            "request",
+            dbMessage,
+          );
+        }
       } catch (notificationError) {
         // Silently handle notification errors
       }
