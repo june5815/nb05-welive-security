@@ -29,6 +29,12 @@ export const ResidentRouter = (
     roleMiddleware.hasRole(["ADMIN"]),
     catchError(residentController.createResidentHouseholdMember),
   );
+  router.get(
+    "/",
+    authMiddleware.checkAuth,
+    roleMiddleware.hasRole(["ADMIN"]),
+    catchError(residentController.getListHouseholdMembers),
+  );
 
   router.get(
     "/file/template",
@@ -45,20 +51,13 @@ export const ResidentRouter = (
     catchError(residentController.importResidentsFromFile),
   );
 
-  router.get(
-    "/file/export",
-    authMiddleware.checkAuth,
-    roleMiddleware.hasRole(["ADMIN"]),
-    catchError(residentController.exportResidentsToFile),
-  );
-
+  // household
   router.get(
     "/:id",
     authMiddleware.checkAuth,
     roleMiddleware.hasRole(["ADMIN"]),
     catchError(residentController.getHouseholdMemberDetail),
   );
-
   router.patch(
     "/:id",
     authMiddleware.checkAuth,
@@ -73,15 +72,16 @@ export const ResidentRouter = (
     catchError(residentController.deleteResidentHouseholdMember),
   );
 
-  router.get(
-    "/",
-    authMiddleware.checkAuth,
-    roleMiddleware.hasRole(["ADMIN"]),
-    catchError(residentController.getListHouseholdMembers),
-  );
-
   return {
     router,
     PATH,
   };
 };
+// [-]POST /residents - 입주민등록(관리자)-household member
+// [-]GET /residents - 입주민 목록 조회
+// [-]GET /:id - 입주민 상세조회(관리자)
+// [-]PATCH /:id - 입주민 정보 수정(관리자)
+// [-]DELETE /:id - 입주민 정보 삭제(관리자)
+// [-]GET /file/template - 입주민 업로드 템플릿 다운로드(관리자)
+// [-]POST /file/import - 파일로부터 입주민 리소스 생성(관리자)
+// []GET /file/export - 입주민 목록 파일 다운로드(관리자)
