@@ -11,12 +11,6 @@ export interface HouseholdMembersFilter {
   isRegistered?: boolean;
 }
 
-export interface ApartmentInfo {
-  id: string;
-  name: string;
-  address: string;
-}
-
 export interface IResidentQueryRepo {
   findHouseholdMembers: (
     apartmentId?: string,
@@ -38,10 +32,4 @@ export interface IResidentQueryRepo {
   findHouseholdMemberByEmail: (
     email: string,
   ) => Promise<HouseholdMemberWithRelations | null>;
-
-  findApartmentByAdminInfo: (
-    name: string,
-    address: string,
-    officeNumber: string,
-  ) => Promise<ApartmentInfo | null>;
 }

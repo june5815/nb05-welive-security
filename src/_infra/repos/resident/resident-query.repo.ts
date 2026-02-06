@@ -20,9 +20,7 @@ export const ResidentQueryRepository = (
   }> => {
     const skip = ((page ?? 1) - 1) * (limit ?? 20);
 
-    const whereCondition: any = {
-      movedOutAt: null,
-    };
+    const whereCondition: any = {};
     if (apartmentId) {
       whereCondition.household = { apartmentId };
     } else {
@@ -53,23 +51,10 @@ export const ResidentQueryRepository = (
       whereCondition.isHouseholder = filters.isHouseholder;
     }
     if (filters?.isRegistered !== undefined) {
-      if (filters.isRegistered) {
-        whereCondition.user = {
-          ...whereCondition.user,
-          joinStatus: "APPROVED",
-        };
-      } else {
-        whereCondition.OR = [
-          {
-            user: {
-              joinStatus: "PENDING",
-            },
-          },
-          {
-            userId: null,
-          },
-        ];
-      }
+      whereCondition.user = {
+        ...whereCondition.user,
+        status: filters.isRegistered ? "APPROVED" : "PENDING",
+      };
     }
 
     const total = await prisma.householdMember.count({
@@ -104,11 +89,8 @@ export const ResidentQueryRepository = (
   const findHouseholdMemberById = async (
     householdMemberId: string,
   ): Promise<HouseholdMemberWithRelations | null> => {
-    const member = await prisma.householdMember.findFirst({
-      where: {
-        id: householdMemberId,
-        movedOutAt: null,
-      },
+    const member = await prisma.householdMember.findUnique({
+      where: { id: householdMemberId },
       include: {
         user: {
           select: { id: true, email: true, contact: true, name: true },
@@ -155,11 +137,8 @@ export const ResidentQueryRepository = (
     email: string,
   ): Promise<HouseholdMemberWithRelations | null> => {
     try {
-      const member = await prisma.householdMember.findFirst({
-        where: {
-          email,
-          movedOutAt: null,
-        },
+      const member = await prisma.householdMember.findUnique({
+        where: { email },
         include: {
           user: {
             select: { id: true, email: true, contact: true, name: true },
@@ -180,36 +159,10 @@ export const ResidentQueryRepository = (
     }
   };
 
-  const findApartmentByAdminInfo = async (
-    name: string,
-    address: string,
-    officeNumber: string,
-  ): Promise<{ id: string; name: string; address: string } | null> => {
-    try {
-      const apartment = await prisma.apartment.findFirst({
-        where: {
-          name,
-          address,
-          officeNumber,
-        },
-        select: {
-          id: true,
-          name: true,
-          address: true,
-        },
-      });
-
-      return apartment;
-    } catch (error) {
-      throw error;
-    }
-  };
-
   return {
     findHouseholdMembers,
     findHouseholdMemberById,
     findHouseholdByBuildingAndUnit,
     findHouseholdMemberByEmail,
-    findApartmentByAdminInfo,
   };
 };

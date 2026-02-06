@@ -42,10 +42,7 @@ export interface IResidentCommandService {
     adminId: string,
     apartmentId: string,
     role: string,
-  ): Promise<{
-    results: HouseholdMember[];
-    failedRecords: Array<{ dto: CreateResidentDTO; error: string }>;
-  }>;
+  ): Promise<HouseholdMember[]>;
   registerManyHouseholdMembersFromCsv(
     fileBuffer: Buffer,
     adminId: string,
@@ -57,7 +54,6 @@ export interface IResidentCommandService {
     dto: UpdateResidentDTO,
     adminId: string,
     role: string,
-    apartmentId: string,
   ): Promise<HouseholdMember>;
   deleteHouseholdMemberByAdmin(
     memberId: string,
@@ -125,33 +121,6 @@ export const ResidentCommandService = (
         });
       }
 
-      if (dto.isHouseholder) {
-        console.log("[REGISTER]  세대주가 이미 존재하는 세대입니다: ", {
-          building: dto.building,
-          unit: dto.unit,
-          householdMembers: household.members?.length || 0,
-        });
-
-        const existingHouseholder = household.members?.find(
-          (member) => member.isHouseholder && !member.movedOutAt,
-        );
-        if (existingHouseholder) {
-          console.log(
-            "[REGI.Rejected] 기존 세대주의 거주형태를 먼저 변경해주세요.:",
-            {
-              existingHouseholderId: existingHouseholder.id,
-              existingHouseholderName: existingHouseholder.name,
-            },
-          );
-          throw new BusinessException({
-            type: BusinessExceptionType.FORBIDDEN,
-            error: new Error(
-              `세대주 변경이 거절되었습니다. 등록을 위해 기존 세대주의 거주형태를 먼저 변경해주세요. (기존 세대주: ${existingHouseholder.name})`,
-            ),
-          });
-        }
-      }
-
       const existingMember = await queryRepo.findHouseholdMemberByEmail(
         dto.email,
       );
@@ -193,13 +162,9 @@ export const ResidentCommandService = (
     adminId: string,
     apartmentId: string,
     role: string,
-  ): Promise<{
-    results: HouseholdMember[];
-    failedRecords: Array<{ dto: CreateResidentDTO; error: string }>;
-  }> => {
+  ): Promise<HouseholdMember[]> => {
     try {
       if (role !== UserRole.ADMIN) {
-        console.log("[REGISTER MANY] 권한 없음");
         throw new BusinessException({
           type: BusinessExceptionType.FORBIDDEN,
           error: new Error("입주민 등록은 관리자(ADMIN)만 가능합니다."),
@@ -214,14 +179,8 @@ export const ResidentCommandService = (
       }
 
       const results: HouseholdMember[] = [];
-      const failedRecords: Array<{
-        dto: CreateResidentDTO;
-        error: string;
-      }> = [];
 
-      for (let index = 0; index < dtos.length; index++) {
-        const dto = dtos[index];
-
+      for (const dto of dtos) {
         try {
           const member = await registerHouseholdMemberByAdmin(
             dto,
@@ -229,35 +188,12 @@ export const ResidentCommandService = (
             apartmentId,
             role,
           );
-
           results.push(member);
-        } catch (error) {
-          let errorMessage = "알 수 없는 오류가 발생했습니다.";
-
-          if (error instanceof BusinessException) {
-            errorMessage =
-              error.error?.message ||
-              error.message ||
-              "권한과 관련된 오류입니다.";
-          } else if (error instanceof TechnicalException) {
-            errorMessage =
-              error.error?.message ||
-              error.message ||
-              "알 수 없는 서버 에러가 발생했습니다.";
-          } else if (error instanceof Error) {
-            errorMessage = error.message;
-          }
-
-          failedRecords.push({
-            dto,
-            error: errorMessage,
-          });
-        }
+        } catch (error) {}
       }
 
-      return { results, failedRecords };
+      return results;
     } catch (error) {
-      console.error("[REGISTER MANY] 에러:", error);
       if (error instanceof BusinessException) {
         throw error;
       }
@@ -278,7 +214,6 @@ export const ResidentCommandService = (
     dto: UpdateResidentDTO,
     adminId: string,
     role: string,
-    apartmentId: string,
   ): Promise<HouseholdMember> => {
     try {
       if (role !== UserRole.ADMIN) {
@@ -295,31 +230,12 @@ export const ResidentCommandService = (
         });
       }
 
-      if (!apartmentId) {
-        throw new BusinessException({
-          type: BusinessExceptionType.FORBIDDEN,
-          error: new Error("아파트 정보가 필요합니다."),
-        });
-      }
-
       // 기존 입주민 조회
       const existingMember = await queryRepo.findHouseholdMemberById(memberId);
-
       if (!existingMember) {
         throw new BusinessException({
           type: BusinessExceptionType.FORBIDDEN,
           error: new Error("존재하지 않는 입주민입니다."),
-        });
-      }
-
-      if (existingMember.household.apartmentId !== apartmentId) {
-        console.log("[UPDATE RESIDENT] 권한 없음:", {
-          memberApartmentId: existingMember.household.apartmentId,
-          adminApartmentId: apartmentId,
-        });
-        throw new BusinessException({
-          type: BusinessExceptionType.FORBIDDEN,
-          error: new Error("해당 아파트의 입주민만 수정 가능합니다."),
         });
       }
 
@@ -335,6 +251,7 @@ export const ResidentCommandService = (
         }
       }
 
+      // building과 unit이 변경되는 경우, 해당 household 검증
       let newHouseholdId = existingMember.householdId;
       if (dto.building !== undefined || dto.unit !== undefined) {
         const newBuilding = dto.building ?? existingMember.household.building;
@@ -353,27 +270,6 @@ export const ResidentCommandService = (
           });
         }
 
-        if (dto.isHouseholder && !existingMember.isHouseholder) {
-          const existingHouseholder = newHousehold.members?.find(
-            (member) => member.isHouseholder && !member.movedOutAt,
-          );
-          if (existingHouseholder) {
-            console.log(
-              "[UPDATE] 해당 세대에 이미 세대주가 존재합니다. 세대주 정보:",
-              {
-                householderId: existingHouseholder.id,
-                householderName: existingHouseholder.name,
-              },
-            );
-            throw new BusinessException({
-              type: BusinessExceptionType.FORBIDDEN,
-              error: new Error(
-                `해당 세대의 세대주는 이미 존재합니다. (기존 세대주: ${existingHouseholder.name})`,
-              ),
-            });
-          }
-        }
-
         newHouseholdId = newHousehold.id;
       }
 
@@ -388,64 +284,20 @@ export const ResidentCommandService = (
         },
       );
 
-      if (
-        dto.isHouseholder &&
-        !existingMember.isHouseholder &&
-        newHouseholdId === existingMember.householdId
-      ) {
-        const householdMembers = await queryRepo.findHouseholdMembers(
-          undefined,
-          1,
-          100,
-          {
-            building: existingMember.household.building,
-            unit: existingMember.household.unit,
-          },
-        );
-
-        const currentHouseholder = householdMembers.members.find(
-          (member) =>
-            member.id !== existingMember.id &&
-            member.isHouseholder &&
-            !member.movedOutAt,
-        );
-        if (currentHouseholder) {
-          console.log("[UPDATE] 기존 세대주가 존재합니다:", {
-            householderId: currentHouseholder.id,
-            householderName: currentHouseholder.name,
-          });
-          throw new BusinessException({
-            type: BusinessExceptionType.FORBIDDEN,
-            error: new Error(
-              `이 세대의 세대주는 이미 존재합니다. (기존 세대주: ${currentHouseholder.name})\n기존 세대주를 먼저 세대주 해제한 후 변경해주세요.`,
-            ),
-          });
-        }
-      }
-
+      // household이 변경된 경우
       let finalMember = updatedMember;
       if (newHouseholdId !== existingMember.householdId) {
         finalMember = { ...updatedMember, householdId: newHouseholdId };
       }
 
-      const savedMember = await commandRepo.updateHouseholdMember(
-        finalMember,
-        existingMember,
-      );
-
+      // DB 저장
+      const savedMember = await commandRepo.updateHouseholdMember(finalMember);
       return savedMember;
     } catch (error) {
       if (error instanceof BusinessException) {
-        console.error("[UPDATE RESIDENT] BusinessException :", {
-          errorMessage: error.error?.message,
-        });
         throw error;
       }
       if (error instanceof TechnicalException) {
-        console.error("[UPDATE RESIDENT] TechnicalException :", {
-          type: error.type,
-          errorMessage: error.error?.message,
-        });
         throw error;
       }
 
@@ -509,18 +361,14 @@ export const ResidentCommandService = (
     role: string,
   ): Promise<number> => {
     try {
-      // if (role !== UserRole.ADMIN) {
-      //   console.log("[BATCH REGISTER] 권한 없음 - ADMIN이 아님");
-      //   throw new BusinessException({
-      //     type: BusinessExceptionType.FORBIDDEN,
-      //     error: new Error("입주민 등록은 관리자(ADMIN)만 가능합니다."),
-      //   });
-      // }
+      if (role !== UserRole.ADMIN) {
+        throw new BusinessException({
+          type: BusinessExceptionType.FORBIDDEN,
+          error: new Error("입주민 등록은 관리자(ADMIN)만 가능합니다."),
+        });
+      }
 
       if (!fileBuffer || fileBuffer.length === 0) {
-        console.log(
-          "[BATCH REGISTER] 해당 파일 형식 불가! csv 파일만 업로드해주세요.",
-        );
         throw new BusinessException({
           type: BusinessExceptionType.FORBIDDEN,
           error: new Error("유효한 파일이 필요합니다."),
@@ -529,7 +377,6 @@ export const ResidentCommandService = (
 
       const { parse } = await import("csv-parse/sync");
       const csvContent = fileBuffer.toString("utf-8");
-
       const records = parse(csvContent, {
         columns: true,
         skip_empty_lines: true,
@@ -537,61 +384,46 @@ export const ResidentCommandService = (
       });
 
       if (!Array.isArray(records) || records.length === 0) {
-        console.log("[BATCH REGISTER] CSV 파일이 비어있음");
         throw new BusinessException({
           type: BusinessExceptionType.FORBIDDEN,
           error: new Error("CSV 파일이 비어있습니다."),
         });
       }
 
-      const dtos: CreateResidentDTO[] = records.map((row: any) => {
-        const dto = {
-          email: row.email?.trim(),
-          contact: row.contact?.trim(),
-          name: row.name?.trim(),
-          building: parseInt(row.building, 10),
-          unit: parseInt(row.unit, 10),
-          isHouseholder: row.isHouseholder?.toLowerCase() === "true",
-        };
-
-        return dto;
-      });
+      const dtos: CreateResidentDTO[] = records.map((row: any) => ({
+        email: row.email?.trim(),
+        contact: row.contact?.trim(),
+        name: row.name?.trim(),
+        building: parseInt(row.building, 10),
+        unit: parseInt(row.unit, 10),
+        isHouseholder: row.isHouseholder?.toLowerCase() === "true",
+      }));
 
       const validDtos: CreateResidentDTO[] = [];
       for (const dto of dtos) {
-        if (dto.email && dto.contact && dto.name && dto.building && dto.unit) {
+        if (
+          !dto.email ||
+          !dto.contact ||
+          !dto.name ||
+          !dto.building ||
+          !dto.unit
+        )
           validDtos.push(dto);
-        } else {
-        }
       }
 
       if (validDtos.length === 0) {
-        console.log("[BATCH REGISTER] 유효한 데이터가 없음");
         throw new BusinessException({
           type: BusinessExceptionType.FORBIDDEN,
           error: new Error("유효한 데이터가 없습니다."),
         });
       }
 
-      const { results, failedRecords } = await registerManyHouseholdMembers(
+      const results = await registerManyHouseholdMembers(
         validDtos,
         adminId,
         apartmentId,
         role,
       );
-
-      const failuresByReason: { [key: string]: string[] } = {};
-      failedRecords.forEach((record) => {
-        const reason = record.error;
-        if (!failuresByReason[reason]) {
-          failuresByReason[reason] = [];
-        }
-        failuresByReason[reason].push(record.dto.name);
-      });
-
-      Object.entries(failuresByReason).forEach(([reason, names]) => {
-        console.log(`[BATCH REGISTER] ${reason} - ${names.join(", ")}`);
-      });
 
       return results.length;
     } catch (error) {
