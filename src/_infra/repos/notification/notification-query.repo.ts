@@ -17,9 +17,6 @@ export const NotificationQueryRepo = (
   const { getPrismaClient } = BaseQueryRepo(prismaClient);
 
   return {
-    /**
-     * 읽지않은 알림 수신 (SSE용)
-     */
     async findUnreadNotificationSEE(userId: string): Promise<Notification[]> {
       const prisma = getPrismaClient();
 
@@ -36,9 +33,6 @@ export const NotificationQueryRepo = (
       return NotificationMapper.toNotifications(receipts);
     },
 
-    /**
-     * 알림 목록 조회 (페이징)
-     */
     async findNotificationByUserID(
       userId: string,
       page: number = 1,

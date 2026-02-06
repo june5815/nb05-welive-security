@@ -59,7 +59,6 @@ describe("ResidentCommandService - POST Unit Tests", () => {
       mockQueryRepo,
     );
 
-    // 기본 설정: household 조회 성공, 이메일 중복 없음
     mockQueryRepo.findHouseholdByBuildingAndUnit?.mockResolvedValue(
       mockHousehold as any,
     );

@@ -251,7 +251,6 @@ export const ResidentCommandService = (
         }
       }
 
-      // building과 unit이 변경되는 경우, 해당 household 검증
       let newHouseholdId = existingMember.householdId;
       if (dto.building !== undefined || dto.unit !== undefined) {
         const newBuilding = dto.building ?? existingMember.household.building;
@@ -273,7 +272,6 @@ export const ResidentCommandService = (
         newHouseholdId = newHousehold.id;
       }
 
-      // 기존 입주민 정보 업데이트
       const updatedMember = HouseholdEntity.updateHouseholdMemberInfo(
         existingMember as any,
         {
@@ -284,13 +282,11 @@ export const ResidentCommandService = (
         },
       );
 
-      // household이 변경된 경우
       let finalMember = updatedMember;
       if (newHouseholdId !== existingMember.householdId) {
         finalMember = { ...updatedMember, householdId: newHouseholdId };
       }
 
-      // DB 저장
       const savedMember = await commandRepo.updateHouseholdMember(finalMember);
       return savedMember;
     } catch (error) {
@@ -328,7 +324,6 @@ export const ResidentCommandService = (
         });
       }
 
-      // 기존 입주민 조회
       const existingMember = await queryRepo.findHouseholdMemberById(memberId);
       if (!existingMember) {
         throw new BusinessException({
@@ -337,7 +332,6 @@ export const ResidentCommandService = (
         });
       }
 
-      // movedOutAt
       await commandRepo.deleteHouseholdMember(memberId);
     } catch (error) {
       if (error instanceof BusinessException) {

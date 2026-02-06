@@ -84,9 +84,6 @@ describe("ResidentQueryService - Unit Tests", () => {
   });
 
   describe("GET /api/v2/residents - 입주민 목록 조회", () => {
-    /**
-     * 성공: 정상적인 입주민 목록 조회
-     */
     it("should return list of household members with pagination", async () => {
       const mockResponse = {
         members: [mockHouseholdMember, mockHouseholdMember2],
@@ -144,9 +141,6 @@ describe("ResidentQueryService - Unit Tests", () => {
       );
     });
 
-    /**
-     * 성공: page 필터 - 페이지네이션
-     */
     it("should handle pagination with page parameter", async () => {
       mockRepository.findHouseholdMembers.mockResolvedValue({
         members: [mockHouseholdMember],
@@ -167,12 +161,9 @@ describe("ResidentQueryService - Unit Tests", () => {
       );
 
       expect(result.page).toBe(2);
-      expect(result.hasNext).toBe(true); // 50개 데이터, page 2, limit 20 → hasNext true
+      expect(result.hasNext).toBe(true);
     });
 
-    /**
-     * 성공: limit 필터 - 페이지당 항목 수
-     */
     it("should respect limit parameter", async () => {
       mockRepository.findHouseholdMembers.mockResolvedValue({
         members: [mockHouseholdMember],
@@ -182,7 +173,7 @@ describe("ResidentQueryService - Unit Tests", () => {
       const result = await residentQueryService.getListHouseholdMembers(
         "apartment-1",
         1,
-        5, // limit 5
+        5,
         undefined,
         undefined,
         undefined,
@@ -193,7 +184,7 @@ describe("ResidentQueryService - Unit Tests", () => {
       );
 
       expect(result.limit).toBe(5);
-      expect(result.hasNext).toBe(true); // 100개, limit 5 → hasNext true
+      expect(result.hasNext).toBe(true);
       expect(mockRepository.findHouseholdMembers).toHaveBeenCalledWith(
         "apartment-1",
         1,
@@ -202,9 +193,6 @@ describe("ResidentQueryService - Unit Tests", () => {
       );
     });
 
-    /**
-     * 성공: searchKeyword 필터 - 주민 검색
-     */
     it("should filter by searchKeyword (name, email, contact)", async () => {
       mockRepository.findHouseholdMembers.mockResolvedValue({
         members: [mockHouseholdMember],
@@ -217,7 +205,7 @@ describe("ResidentQueryService - Unit Tests", () => {
         20,
         undefined,
         undefined,
-        "홍길동", // searchKeyword
+        "홍길동",
         undefined,
         undefined,
         "admin-user-1",
@@ -234,9 +222,6 @@ describe("ResidentQueryService - Unit Tests", () => {
       );
     });
 
-    /**
-     * 성공: building 필터 - 동 번호 (1~99)
-     */
     it("should filter by building (1~99)", async () => {
       mockRepository.findHouseholdMembers.mockResolvedValue({
         members: [mockHouseholdMember],
@@ -247,7 +232,7 @@ describe("ResidentQueryService - Unit Tests", () => {
         "apartment-1",
         1,
         20,
-        1, // building 1
+        1,
         undefined,
         undefined,
         undefined,
@@ -266,9 +251,6 @@ describe("ResidentQueryService - Unit Tests", () => {
       );
     });
 
-    /**
-     * 성공: unit 필터 - 호 번호
-     */
     it("should filter by unit", async () => {
       mockRepository.findHouseholdMembers.mockResolvedValue({
         members: [mockHouseholdMember],
@@ -280,7 +262,7 @@ describe("ResidentQueryService - Unit Tests", () => {
         1,
         20,
         1,
-        101, // unit 101
+        101,
         undefined,
         undefined,
         undefined,
@@ -299,9 +281,6 @@ describe("ResidentQueryService - Unit Tests", () => {
       );
     });
 
-    /**
-     * 성공: isHouseholder 필터 - 세대주 여부
-     */
     it("should filter by isHouseholder flag", async () => {
       mockRepository.findHouseholdMembers.mockResolvedValue({
         members: [mockHouseholdMember],
@@ -315,7 +294,7 @@ describe("ResidentQueryService - Unit Tests", () => {
         undefined,
         undefined,
         undefined,
-        true, // isHouseholder only
+        true,
         undefined,
         "admin-user-1",
         "ADMIN",
@@ -331,9 +310,6 @@ describe("ResidentQueryService - Unit Tests", () => {
       );
     });
 
-    /**
-     * 성공: isRegistered 필터 - 등록 여부
-     */
     it("should filter by isRegistered flag", async () => {
       mockRepository.findHouseholdMembers.mockResolvedValue({
         members: [mockHouseholdMember],
@@ -348,7 +324,7 @@ describe("ResidentQueryService - Unit Tests", () => {
         undefined,
         undefined,
         undefined,
-        true, // isRegistered
+        true,
         "admin-user-1",
         "ADMIN",
       );
@@ -363,9 +339,6 @@ describe("ResidentQueryService - Unit Tests", () => {
       );
     });
 
-    /**
-     * 성공: 여러 필터 조합
-     */
     it("should apply multiple filters together", async () => {
       mockRepository.findHouseholdMembers.mockResolvedValue({
         members: [mockHouseholdMember],
@@ -399,9 +372,6 @@ describe("ResidentQueryService - Unit Tests", () => {
       );
     });
 
-    /**
-     * 성공: 빈 목록 반환
-     */
     it("should return empty list when no members found", async () => {
       mockRepository.findHouseholdMembers.mockResolvedValue({
         members: [],
@@ -426,9 +396,6 @@ describe("ResidentQueryService - Unit Tests", () => {
       expect(result.hasNext).toBe(false);
     });
 
-    /**
-     * 성공: limit 자동 조정 (limit > 100 → 100으로 제한)
-     */
     it("should cap limit to 100 maximum", async () => {
       mockRepository.findHouseholdMembers.mockResolvedValue({
         members: [mockHouseholdMember],
@@ -438,7 +405,7 @@ describe("ResidentQueryService - Unit Tests", () => {
       await residentQueryService.getListHouseholdMembers(
         "apartment-1",
         1,
-        200, // limit > 100
+        200,
         undefined,
         undefined,
         undefined,
@@ -451,19 +418,16 @@ describe("ResidentQueryService - Unit Tests", () => {
       expect(mockRepository.findHouseholdMembers).toHaveBeenCalledWith(
         "apartment-1",
         1,
-        100, // capped to 100
+        100,
         expect.any(Object),
       );
     });
 
-    /**
-     * 실패: page < 1
-     */
     it("should throw error when page is less than 1", async () => {
       await expect(
         residentQueryService.getListHouseholdMembers(
           "apartment-1",
-          0, // invalid page
+          0,
           20,
           undefined,
           undefined,
@@ -476,15 +440,12 @@ describe("ResidentQueryService - Unit Tests", () => {
       ).rejects.toThrow("page must be >= 1");
     });
 
-    /**
-     * 실패: limit < 1
-     */
     it("should throw error when limit is less than 1", async () => {
       await expect(
         residentQueryService.getListHouseholdMembers(
           "apartment-1",
           1,
-          0, // invalid limit
+          0,
           undefined,
           undefined,
           undefined,
@@ -496,9 +457,6 @@ describe("ResidentQueryService - Unit Tests", () => {
       ).rejects.toThrow("limit must be >= 1");
     });
 
-    /**
-     * 실패: 권한 없음 - 비ADMIN 역할
-     */
     it("should throw FORBIDDEN when user is not ADMIN", async () => {
       await expect(
         residentQueryService.getListHouseholdMembers(
@@ -511,14 +469,11 @@ describe("ResidentQueryService - Unit Tests", () => {
           undefined,
           undefined,
           "user-1",
-          "USER", // not ADMIN
+          "USER",
         ),
       ).rejects.toThrow(BusinessException);
     });
 
-    /**
-     * 실패: 권한 없음 - userId 없음
-     */
     it("should throw FORBIDDEN when userId is missing", async () => {
       await expect(
         residentQueryService.getListHouseholdMembers(
@@ -530,15 +485,12 @@ describe("ResidentQueryService - Unit Tests", () => {
           undefined,
           undefined,
           undefined,
-          "", // empty userId
+          "",
           "ADMIN",
         ),
       ).rejects.toThrow(BusinessException);
     });
 
-    /**
-     * 실패: 권한 없음 - role 없음
-     */
     it("should throw FORBIDDEN when role is missing", async () => {
       await expect(
         residentQueryService.getListHouseholdMembers(
@@ -556,9 +508,6 @@ describe("ResidentQueryService - Unit Tests", () => {
       ).rejects.toThrow(BusinessException);
     });
 
-    /**
-     * 응답 검증: response body 구조
-     */
     it("should return correct response structure", async () => {
       mockRepository.findHouseholdMembers.mockResolvedValue({
         members: [mockHouseholdMember],
@@ -578,14 +527,12 @@ describe("ResidentQueryService - Unit Tests", () => {
         "ADMIN",
       );
 
-      // Response structure validation
       expect(result).toHaveProperty("data");
       expect(result).toHaveProperty("total");
       expect(result).toHaveProperty("page");
       expect(result).toHaveProperty("limit");
       expect(result).toHaveProperty("hasNext");
 
-      // data array item structure
       expect(result.data[0]).toHaveProperty("id");
       expect(result.data[0]).toHaveProperty("createdAt");
       expect(result.data[0]).toHaveProperty("email");
@@ -599,9 +546,6 @@ describe("ResidentQueryService - Unit Tests", () => {
   });
 
   describe("GET /api/v2/residents/{id} - 입주민 상세 조회", () => {
-    /**
-     * 성공: 입주민 상세 조회
-     */
     it("should return household member detail by id", async () => {
       mockRepository.findHouseholdMemberById.mockResolvedValue(
         mockHouseholdMember,
@@ -635,9 +579,6 @@ describe("ResidentQueryService - Unit Tests", () => {
       );
     });
 
-    /**
-     * 성공: createdAt ISO 형식
-     */
     it("should return createdAt in ISO format", async () => {
       mockRepository.findHouseholdMemberById.mockResolvedValue(
         mockHouseholdMember,
@@ -653,9 +594,6 @@ describe("ResidentQueryService - Unit Tests", () => {
       expect(result.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T/); // ISO 8601 format
     });
 
-    /**
-     * 성공: 응답 검증
-     */
     it("should return correct response structure", async () => {
       mockRepository.findHouseholdMemberById.mockResolvedValue(
         mockHouseholdMember,
@@ -678,9 +616,6 @@ describe("ResidentQueryService - Unit Tests", () => {
       expect(result).toHaveProperty("userId");
     });
 
-    /**
-     * 실패: 존재하지 않는 주민 (404 NOT_FOUND)
-     */
     it("should throw NOT_FOUND when member does not exist", async () => {
       mockRepository.findHouseholdMemberById.mockResolvedValue(null);
 
@@ -693,9 +628,6 @@ describe("ResidentQueryService - Unit Tests", () => {
       ).rejects.toThrow(BusinessException);
     });
 
-    /**
-     * 실패: 빈 ID
-     */
     it("should throw error when id is empty", async () => {
       await expect(
         residentQueryService.getHouseholdMemberDetail(
@@ -706,9 +638,6 @@ describe("ResidentQueryService - Unit Tests", () => {
       ).rejects.toThrow("householdMemberId is required");
     });
 
-    /**
-     * 실패: Whitespace만 있는 ID
-     */
     it("should throw error when id is only whitespace", async () => {
       await expect(
         residentQueryService.getHouseholdMemberDetail(
@@ -719,9 +648,6 @@ describe("ResidentQueryService - Unit Tests", () => {
       ).rejects.toThrow("householdMemberId is required");
     });
 
-    /**
-     * 실패: 권한 없음 - 비ADMIN 역할
-     */
     it("should throw FORBIDDEN when user is not ADMIN", async () => {
       await expect(
         residentQueryService.getHouseholdMemberDetail(
@@ -732,9 +658,6 @@ describe("ResidentQueryService - Unit Tests", () => {
       ).rejects.toThrow(BusinessException);
     });
 
-    /**
-     * 실패: 권한 없음 - userId 없음
-     */
     it("should throw FORBIDDEN when userId is missing", async () => {
       await expect(
         residentQueryService.getHouseholdMemberDetail(
@@ -745,9 +668,6 @@ describe("ResidentQueryService - Unit Tests", () => {
       ).rejects.toThrow(BusinessException);
     });
 
-    /**
-     * 실패: 권한 없음 - role 없음
-     */
     it("should throw FORBIDDEN when role is missing", async () => {
       await expect(
         residentQueryService.getHouseholdMemberDetail(
@@ -758,9 +678,6 @@ describe("ResidentQueryService - Unit Tests", () => {
       ).rejects.toThrow(BusinessException);
     });
 
-    /**
-     * 실패: 다른 역할 (SUPER_ADMIN은 허용 안 됨)
-     */
     it("should throw FORBIDDEN for non-ADMIN roles", async () => {
       await expect(
         residentQueryService.getHouseholdMemberDetail(
@@ -773,9 +690,6 @@ describe("ResidentQueryService - Unit Tests", () => {
   });
 
   describe("Edge Cases & Integration", () => {
-    /**
-     * 페이지 경계값 검증
-     */
     it("should handle page boundaries correctly", async () => {
       mockRepository.findHouseholdMembers.mockResolvedValue({
         members: [mockHouseholdMember],
@@ -799,9 +713,6 @@ describe("ResidentQueryService - Unit Tests", () => {
       expect(result.hasNext).toBe(false); // last page
     });
 
-    /**
-     * 매우 큰 페이지 번호 처리
-     */
     it("should handle very large page numbers", async () => {
       mockRepository.findHouseholdMembers.mockResolvedValue({
         members: [],
@@ -825,9 +736,6 @@ describe("ResidentQueryService - Unit Tests", () => {
       expect(result.hasNext).toBe(false);
     });
 
-    /**
-     * limit = 1인 경우
-     */
     it("should work with limit = 1", async () => {
       mockRepository.findHouseholdMembers.mockResolvedValue({
         members: [mockHouseholdMember],
@@ -851,9 +759,6 @@ describe("ResidentQueryService - Unit Tests", () => {
       expect(result.hasNext).toBe(true);
     });
 
-    /**
-     * 여러 주민의 건물 번호 검증 (1~99 범위)
-     */
     it("should return correct building numbers (1~99)", async () => {
       mockRepository.findHouseholdMembers.mockResolvedValue({
         members: [mockHouseholdMember, mockHouseholdMember2],
@@ -877,9 +782,6 @@ describe("ResidentQueryService - Unit Tests", () => {
       expect(result.data[1].building).toBe(2);
     });
 
-    /**
-     * 한글 검색 필터
-     */
     it("should handle Korean search keyword", async () => {
       mockRepository.findHouseholdMembers.mockResolvedValue({
         members: [mockHouseholdMember],
