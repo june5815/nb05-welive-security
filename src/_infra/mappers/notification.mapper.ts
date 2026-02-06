@@ -128,6 +128,7 @@ export const NotificationMapper = {
       COMPLAINT_UPDATED: "민원이 업데이트되었습니다.",
       POLL_CREATED: "새로운 투표가 시작되었습니다.",
       POLL_ENDED: "투표가 종료되었습니다.",
+      NOTICE_CREATED: "새로운 공지사항이 등록되었습니다.",
       NOTICE_POSTED: "새로운 공지사항이 등록되었습니다.",
       COMMENT_ADDED: "새로운 댓글이 달렸습니다.",
       ADMIN_SIGNUP_REQUESTED: "새로운 관리자 신청이 있습니다.",

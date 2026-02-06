@@ -295,6 +295,7 @@ enum NotificationType {
   COMPLAINT_UPDATED
   POLL_CREATED
   POLL_ENDED
+  NOTICE_CREATED
   NOTICE_POSTED
   COMMENT_ADDED
   ADMIN_SIGNUP_REQUESTED
@@ -317,7 +318,7 @@ model NotificationEvent {
   version    Int                    @default(1)
   targetType NotificationTargetType
   targetId   String
-  metadata   Json?                  @default("{}")  // ✅ 추가: 관리자 이름 등 메타데이터 저장
+  metadata   Json?                  @default("{}") // ✅ 추가: 관리자 이름 등 메타데이터 저장
   receipts   NotificationReceipt[]
 
   @@index([type, createdAt])
