@@ -8,11 +8,9 @@ import {
   createMarkNotificationAsReadReqSchema,
 } from "./dtos/req/notification.request";
 import {
-  getSSEConnectionManager,
+  INotificationSSEManager,
   SSEClientConnection,
-  SSEMessage,
-} from "./infrastructure/sse";
-import { PrismaClient } from "@prisma/client";
+} from "../_common/ports/notification/notification-sse-manager.interface";
 import crypto from "crypto";
 
 export interface INotificationController {
@@ -25,10 +23,9 @@ export const NotificationController = (
   baseController: IBaseController,
   notificationQueryUsecase: INotificationQueryUsecase,
   notificationCommandUsecase: INotificationCommandUsecase,
-  prisma: PrismaClient,
+  sseManager: INotificationSSEManager,
 ): INotificationController => {
   const validate = baseController.validate;
-  const sseManager = getSSEConnectionManager(prisma);
 
   /**
    * deviceId 생성
@@ -74,9 +71,7 @@ export const NotificationController = (
       () => {
         try {
           connection.res.end();
-        } catch (error) {
-          // Silently handle connection termination errors
-        }
+        } catch (error) {}
         cleanup();
       },
       30 * 60 * 1000,
@@ -115,7 +110,9 @@ export const NotificationController = (
       const pendingNotifications =
         await sseManager.getPendingNotifications(userId);
 
-      const notificationArray = pendingNotifications.map((n) => n.data);
+      const notificationArray = pendingNotifications.map(
+        (n: { data: any }) => n.data,
+      );
 
       const sseData = `event: alarm\ndata: ${JSON.stringify(notificationArray)}\n\n`;
       res.write(sseData);

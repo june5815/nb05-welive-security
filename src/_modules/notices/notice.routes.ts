@@ -9,6 +9,7 @@ import { noticeQueryRepository } from "../../_infra/repos/notice/notice-query.re
 import { noticeCommandRepository } from "../../_infra/repos/notice/notice-command.repo";
 import { NoticeQueryService } from "./service/notice-query.service";
 import { NoticeCommandService } from "./service/notice-command.service";
+import { INoticeNotificationUsecase } from "../../_common/ports/notification/notice-notification-usecase.interface";
 
 export interface INoticeRouter {
   router: Router;
@@ -21,6 +22,7 @@ export const NoticeRouter = (
   prismaClient: PrismaClient,
   authMiddleware: IAuthMiddleware,
   roleMiddleware: IRoleMiddleware,
+  noticeNotificationUsecase?: INoticeNotificationUsecase,
 ): INoticeRouter => {
   const router = Router();
   const { catchError } = baseRouter;
@@ -33,6 +35,7 @@ export const NoticeRouter = (
   const commandService = NoticeCommandService({
     prisma: prismaClient,
     noticeCommandRepo: commandRepo,
+    noticeNotificationUsecase,
   });
 
   const controller = NoticeController(

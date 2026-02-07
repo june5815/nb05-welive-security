@@ -15,7 +15,6 @@ import {
   BusinessException,
   BusinessExceptionType,
 } from "../../../_common/exceptions/business.exception";
-import { PrismaClient } from "@prisma/client";
 
 export interface IAuthCommandService {
   login: (

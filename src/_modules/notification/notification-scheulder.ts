@@ -1,8 +1,7 @@
-import { PrismaClient } from "@prisma/client";
-import { getSSEConnectionManager } from "./infrastructure/sse";
-
-// 알림 스케줄러
-export const createNotificationScheduler = (prismaClient: PrismaClient) => {
+import { INotificationSchedulerService } from "../../_common/ports/notification/notification-scheduler-service.interface";
+export const createNotificationScheduler = (
+  notificationSchedulerService: INotificationSchedulerService,
+) => {
   let intervalId: NodeJS.Timeout | null = null;
   const intervalMs: number = parseInt(
     process.env.NOTIFICATION_SCHEDULER_INTERVAL_MS || "5000",
@@ -34,22 +33,14 @@ export const createNotificationScheduler = (prismaClient: PrismaClient) => {
 
   const executeScheduler = async () => {
     try {
-      const sseManager = getSSEConnectionManager();
-
       const pendingNotifications =
-        await prismaClient.pendingNotification.findMany({
-          where: {
-            expiresAt: {
-              gt: new Date(),
-            },
-          },
-          take: 1000,
-        });
+        await notificationSchedulerService.getPendingNotifications();
 
       if (pendingNotifications.length === 0) {
         return;
       }
 
+      // 사용자별로 알림 그룹화
       const notificationsByUser = new Map<
         string,
         typeof pendingNotifications
@@ -61,47 +52,29 @@ export const createNotificationScheduler = (prismaClient: PrismaClient) => {
         notificationsByUser.get(notification.userId)!.push(notification);
       }
 
-      let broadcastCount = 0;
+      // 사용자별로 알림 전송
+      const sentNotificationIds: string[] = [];
       for (const [userId, notifications] of notificationsByUser) {
         try {
-          const userConnections = sseManager.getUserConnections(userId);
-
-          if (userConnections && userConnections.length > 0) {
-            for (const notif of notifications) {
-              const messageType = notif.type as
-                | "alarm"
-                | "notification"
-                | "event";
-              sseManager.sendToUser(userId, {
-                type: messageType,
-                data: notif.data,
-                timestamp: new Date(),
-              });
-            }
-            broadcastCount += notifications.length;
-
-            await prismaClient.pendingNotification.deleteMany({
-              where: {
-                userId,
-                id: {
-                  in: notifications.map((n) => n.id),
-                },
-              },
-            });
+          for (const notif of notifications) {
+            await notificationSchedulerService.sendNotificationToUser(
+              userId,
+              notif,
+            );
+            sentNotificationIds.push(notif.id);
           }
         } catch (error) {
           console.error(`[SSE] 사용자 ${userId}에게 알림 전송 실패:`, error);
         }
       }
 
-      const now = new Date();
-      const deleteResult = await prismaClient.pendingNotification.deleteMany({
-        where: {
-          expiresAt: {
-            lte: now,
-          },
-        },
-      });
+      if (sentNotificationIds.length > 0) {
+        await notificationSchedulerService.deletePendingNotifications(
+          sentNotificationIds,
+        );
+      }
+
+      await notificationSchedulerService.deleteExpiredNotifications();
     } catch (error) {
       console.error("[SSE] 실행 중 예외:", error);
     }

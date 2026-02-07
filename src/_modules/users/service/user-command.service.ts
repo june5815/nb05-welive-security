@@ -25,10 +25,7 @@ import {
   TechnicalException,
   TechnicalExceptionType,
 } from "../../../_common/exceptions/technical.exception";
-import { getSSEConnectionManager } from "../../notification/infrastructure/sse";
-import { NotificationMapper } from "../../../_infra/mappers/notification.mapper";
-import { randomUUID } from "crypto";
-import { PrismaClient } from "@prisma/client";
+import { INotificationCommandUsecase } from "../../../_common/ports/notification/notification-command.usecase.interface";
 
 export interface IUserCommandService {
   signUpSuperAdmin: (dto: createUserReqDTO) => Promise<IUser>;
@@ -60,7 +57,7 @@ export const UserCommandService = (
   unitOfWork: IUnitOfWork,
   hashManager: IHashManager,
   userCommandRepo: IUserCommandRepo,
-  prismaClient?: PrismaClient,
+  notificationCommandUsecase?: INotificationCommandUsecase,
 ): IUserCommandService => {
   const handleError = (error: unknown) => {
     if (error instanceof TechnicalException) {
@@ -170,84 +167,11 @@ export const UserCommandService = (
 
       // Admin 회원가입 알림 발송: SuperAdmin에게
       try {
-        const sseManager = getSSEConnectionManager();
-        const notificationReceiptId = randomUUID();
-        const createdAt = new Date().toISOString();
-        const notificationEventType = "ADMIN_SIGNUP_REQUESTED";
-
-        const content = NotificationMapper.generateContent({
-          type: notificationEventType,
-          targetType: "USER",
-          targetId: "SUPERADMIN",
-          extraData: { adminName: savedUser.name },
-        });
-
-        const notificationData = [
-          {
-            id: notificationReceiptId,
-            createdAt: createdAt,
-            content: content,
-            isChecked: false,
-          },
-        ];
-
-        const sseMessage: any = {
-          type: "alarm",
-          model: "request",
-          data: notificationData,
-          timestamp: new Date(),
-        };
-
-        sseManager.broadcastToGlobalRole("SUPER_ADMIN", sseMessage);
-
-        const notificationEvent =
-          prismaClient &&
-          (await prismaClient.notificationEvent.create({
-            data: {
-              type: notificationEventType,
-              targetType: "USER",
-              targetId: "SUPERADMIN",
-              metadata: {
-                adminName: savedUser.name,
-              },
-            },
-          }));
-
-        const superAdmins =
-          prismaClient &&
-          (await prismaClient.user.findMany({
-            where: { role: "SUPER_ADMIN" },
-          }));
-
-        if (notificationEvent && superAdmins && superAdmins.length > 0) {
-          await Promise.all(
-            (superAdmins as any[]).map((admin: any) =>
-              prismaClient!.notificationReceipt.create({
-                data: {
-                  id: randomUUID(),
-                  userId: admin.id,
-                  eventId: notificationEvent.id,
-                  isChecked: false,
-                  checkedAt: null,
-                  isHidden: false,
-                },
-              }),
-            ),
-          );
+        if (notificationCommandUsecase) {
+          await notificationCommandUsecase.sendAdminSignupNotification({
+            adminName: savedUser.name,
+          });
         }
-
-        const dbMessage: any = {
-          type: "alarm",
-          model: "request",
-          data: notificationData[0],
-          timestamp: new Date(),
-        };
-
-        await sseManager.savePendingNotification(
-          "SUPERADMIN",
-          "request",
-          dbMessage,
-        );
       } catch (notificationError) {}
 
       return savedUser;
@@ -285,102 +209,15 @@ export const UserCommandService = (
 
       // 입주민 회원가입 알림 발송
       try {
-        const sseManager = getSSEConnectionManager();
-        const apartmentId = resident!.apartmentId;
-        const building = resident!.building;
-        const unit = resident!.unit;
-        const notificationReceiptId = randomUUID();
-        const createdAt = new Date().toISOString();
-        const notificationEventType = "RESIDENT_SIGNUP_REQUESTED";
-
-        const content = NotificationMapper.generateContent({
-          type: notificationEventType,
-          targetType: "APARTMENT",
-          targetId: apartmentId,
-          extraData: { userName: savedUser.name },
-        });
-
-        const notificationData = [
-          {
-            id: notificationReceiptId,
-            createdAt: createdAt,
-            content: content,
-            isChecked: false,
-          },
-        ];
-
-        const sseMessage: any = {
-          type: "alarm",
-          model: "request",
-          data: notificationData,
-          timestamp: new Date(),
-        };
-
-        // 해당 아파트의 ADMIN에게만 전송
-        sseManager.broadcastByRoleAndApartment(
-          "ADMIN",
-          apartmentId,
-          sseMessage,
-        );
-
-        if (prismaClient) {
-          const notificationEvent = await prismaClient.notificationEvent.create(
-            {
-              data: {
-                type: notificationEventType,
-                targetType: "APARTMENT",
-                targetId: apartmentId,
-                metadata: {
-                  userName: savedUser.name,
-                  building: building,
-                  unit: unit,
-                },
-              },
-            },
-          );
-
-          const admins = await prismaClient.user.findMany({
-            where: {
-              role: "ADMIN",
-              adminOf: {
-                id: apartmentId,
-              },
-            },
+        if (notificationCommandUsecase) {
+          await notificationCommandUsecase.sendResidentSignupNotification({
+            apartmentId: resident!.apartmentId,
+            userName: savedUser.name,
+            building: resident!.building,
+            unit: resident!.unit,
           });
-
-          if (admins && notificationEvent) {
-            await Promise.all(
-              admins.map((admin: any) =>
-                prismaClient!.notificationReceipt.create({
-                  data: {
-                    id: randomUUID(),
-                    userId: admin.id,
-                    eventId: notificationEvent.id,
-                    isChecked: false,
-                    checkedAt: null,
-                    isHidden: false,
-                  },
-                }),
-              ),
-            );
-          }
-
-          const dbMessage: any = {
-            type: "alarm",
-            model: "request",
-            data: notificationData[0],
-            timestamp: new Date(),
-          };
-
-          await sseManager.savePendingNotification(
-            apartmentId,
-            "request",
-            dbMessage,
-          );
         }
-      } catch (notificationError) {
-        // Silently handle notification errors
-      }
+      } catch (notificationError) {}
 
       return savedUser;
     } catch (error) {
@@ -802,7 +639,7 @@ export const UserCommandService = (
   const deleteRejectedAdmins = async (
     dto: deleteRejectedUsersReqDTO,
   ): Promise<void> => {
-    const timeOut = 120000; // 2 minutes
+    const timeOut = 120000;
 
     try {
       return await unitOfWork.doTx(

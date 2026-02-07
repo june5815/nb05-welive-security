@@ -6,9 +6,7 @@ import {
   UpdateNoticeReqDto,
 } from "../dtos/req/notice.request";
 import { asyncContextStorage } from "../../../_common/utils/async-context-storage";
-import { getSSEConnectionManager } from "../../notification/infrastructure/sse";
-import { NotificationMapper } from "../../../_infra/mappers/notification.mapper";
-import { randomUUID } from "crypto";
+import { INoticeNotificationUsecase } from "../../../_common/ports/notification/notice-notification-usecase.interface";
 
 export interface INoticeCommandService {
   createNotice: (dto: {
@@ -24,8 +22,9 @@ export interface INoticeCommandService {
 export const NoticeCommandService = (deps: {
   prisma: PrismaClient;
   noticeCommandRepo: NoticeCommandRepository;
+  noticeNotificationUsecase?: INoticeNotificationUsecase;
 }): INoticeCommandService => {
-  const { prisma, noticeCommandRepo } = deps;
+  const { prisma, noticeCommandRepo, noticeNotificationUsecase } = deps;
 
   const createNotice = async (dto: {
     userId: string;
@@ -52,93 +51,13 @@ export const NoticeCommandService = (deps: {
             : undefined,
         });
 
-        // 알림 로직
         try {
-          const sseManager = getSSEConnectionManager();
-          const notificationReceiptId = randomUUID();
-          const createdAt = new Date().toISOString();
-          const notificationEventType = "NOTICE_CREATED";
-
-          const content = NotificationMapper.generateContent({
-            type: notificationEventType,
-            targetType: "APARTMENT",
-            targetId: apartmentId,
-            extraData: {},
-          });
-
-          const notificationData = [
-            {
-              id: notificationReceiptId,
-              createdAt: createdAt,
-              content: content,
-              isChecked: false,
-            },
-          ];
-
-          const sseMessage: any = {
-            type: "alarm",
-            model: "notice",
-            data: notificationData,
-            timestamp: new Date(),
-          };
-
-          sseManager.broadcastByRoleAndApartment(
-            "USER",
-            apartmentId,
-            sseMessage,
-          );
-
-          const notificationEvent = await prisma.notificationEvent.create({
-            data: {
-              type: notificationEventType,
-              targetType: "APARTMENT",
-              targetId: apartmentId,
-              metadata: {
-                noticeTitle: notice.title,
-              },
-            },
-          });
-
-          const residents = await prisma.user.findMany({
-            where: {
-              role: "USER",
-              resident: {
-                household: {
-                  apartmentId: apartmentId,
-                },
-              },
-            },
-          });
-
-          if (residents && notificationEvent) {
-            await Promise.all(
-              residents.map((resident: any) =>
-                prisma.notificationReceipt.create({
-                  data: {
-                    id: randomUUID(),
-                    userId: resident.id,
-                    eventId: notificationEvent.id,
-                    isChecked: false,
-                    checkedAt: null,
-                    isHidden: false,
-                  },
-                }),
-              ),
-            );
+          if (noticeNotificationUsecase) {
+            await noticeNotificationUsecase.notifyNewNotice({
+              apartmentId,
+              noticeTitle: notice.title,
+            });
           }
-
-          const dbMessage: any = {
-            type: "alarm",
-            model: "notice",
-            data: notificationData[0],
-            timestamp: new Date(),
-          };
-
-          await sseManager.savePendingNotification(
-            apartmentId,
-            "notice",
-            dbMessage,
-          );
         } catch (notificationError) {}
 
         return notice;
