@@ -61,7 +61,14 @@ export const ResidentQueryService = (
         type: BusinessExceptionType.FORBIDDEN,
       });
     }
-
+    if (!apartmentId) {
+      throw new BusinessException({
+        type: BusinessExceptionType.FORBIDDEN,
+        error: new Error(
+          "관리자는 자신이 관리하는 아파트의 명부만 조회 가능합니다.",
+        ),
+      });
+    }
     const validatedPage = Math.max(1, page);
     const safeLimit = Math.min(Math.max(1, limit), 100);
 

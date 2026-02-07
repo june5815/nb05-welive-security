@@ -77,10 +77,10 @@ const getListHouseholdMembers =
         role: (req as any).user?.role,
         query: req.query,
       });
-
+      const adminApartmentId = (req as any).user?.adminOf?.id;
       const result: HouseholdMembersListResponseView =
         await residentQueryService.getListHouseholdMembers(
-          apartmentId,
+          adminApartmentId,
           validatedReq.query.page,
           validatedReq.query.limit,
           validatedReq.query.building,
