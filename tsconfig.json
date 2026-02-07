@@ -16,7 +16,7 @@
     "typeRoots": ["src/_common/types", "node_modules/@types"]
   },
   "include": ["src", "**/*.test.ts"],
-  "exclude": [],
+  "exclude": ["jest.setup.ts"],
   "ts-node": {
     "files": true
   }

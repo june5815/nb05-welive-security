@@ -15,35 +15,6 @@ import {
 } from "../../../_modules/residents/domain/resident.type";
 import { UserRole } from "../../../_modules/users/domain/user.entity";
 
-/**
- * ResidentCommandService Unit Tests (POST)
- *
- * 테스트 대상: registerHouseholdMemberByAdmin
- * 엔드포인트: POST /api/v2/residents [관리자 권한 필요]
- *
- * Request Body:
- * {
- *   "apartmentId": "string",
- *   "email": "string",
- *   "contact": "string",
- *   "name": "string",
- *   "building": number (1-99),
- *   "unit": number (> 0),
- *   "isHouseholder": boolean
- * }
- *
- * Response Body (201):
- * {
- *   "id": "string",
- *   "createdAt": "ISO 8601 format",
- *   "email": "string",
- *   "contact": "string",
- *   "name": "string",
- *   "isHouseholder": boolean,
- *   "userId": "string"
- * }
- */
-
 describe("ResidentCommandService - POST Unit Tests", () => {
   let residentCommandService: IResidentCommandService;
   let mockCommandRepo: jest.Mocked<IResidentCommandRepo>;
@@ -88,7 +59,6 @@ describe("ResidentCommandService - POST Unit Tests", () => {
       mockQueryRepo,
     );
 
-    // 기본 설정: household 조회 성공, 이메일 중복 없음
     mockQueryRepo.findHouseholdByBuildingAndUnit?.mockResolvedValue(
       mockHousehold as any,
     );

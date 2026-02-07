@@ -7,6 +7,9 @@ import { CommentRouter } from "./_modules/comments/routes";
 import { EventRouter } from "./_modules/events/routes";
 import { ResidentRouter } from "./_modules/residents/resident.router";
 import { NotificationRouter } from "./_modules/notification/notification.router";
+import { createNotificationScheduler } from "./_modules/notification/notification-scheulder";
+import { NotificationSchedulerService } from "./_modules/notification/infrastructure/notification-scheduler.service";
+import { NotificationSSEManagerService } from "./_modules/notification/infrastructure/notification-sse-manager.service";
 
 import { BaseController } from "./_modules/_base/base.controller";
 import { AuthController } from "./_modules/auth/auth.controller";
@@ -24,6 +27,8 @@ import { ResidentQueryService } from "./_modules/residents/usecases/resident-que
 import { NotificationQueryUsecase } from "./_modules/notification/usecases/notification-query.usecase";
 import { NotificationCommandUsecase } from "./_modules/notification/usecases/notification-command.usecase";
 import { SendNotificationUsecase } from "./_modules/notification/usecases/send-notification.usecase";
+import { NoticeNotificationUsecase } from "./_modules/notification/usecases/notice-notification.usecase";
+import { NotificationEventManager } from "./_modules/notification/infrastructure/notification-event-manager";
 
 // import { AuthCommandRepo } from "./_infra/repos/auth/auth-command.repo";
 import { BaseCommandRepo } from "./_infra/repos/_base/base-command.repo";
@@ -43,6 +48,7 @@ import { PrismaClient } from "@prisma/client";
 
 import { ConfigUtil } from "./_common/utils/config.util";
 import { TokenUtil } from "./_common/utils/token.util";
+import { toNoticeResponse } from "./_infra/mappers/notice.mapper";
 
 import { AuthMiddleware } from "./_common/middlewares/auth.middleware";
 import { CookieMiddleware } from "./_common/middlewares/cookie.middleware";
@@ -77,9 +83,7 @@ export const Injector = () => {
   const unitOfWork = UOW(prisma, configUtil);
   const hashManager = HashManager(configUtil);
 
-  // 알림 발송 서비스 먼저 생성 (DI 순서 중요)
   const sendNotificationUsecase = SendNotificationUsecase(
-    prisma,
     notificationCommandRepo,
   );
 
@@ -108,6 +112,10 @@ export const Injector = () => {
   );
   const notificationCommandUsecase = NotificationCommandUsecase(
     notificationCommandRepo,
+  );
+  const notificationEventManager = NotificationEventManager(prisma);
+  const noticeNotificationUsecase = NoticeNotificationUsecase(
+    notificationEventManager,
   );
 
   const authMiddleware = AuthMiddleware(tokenUtil);
@@ -140,6 +148,7 @@ export const Injector = () => {
     baseController,
     notificationQueryUsecase,
     notificationCommandUsecase,
+    NotificationSSEManagerService(prisma),
   );
 
   const baseRouter = BaseRouter();
@@ -165,6 +174,7 @@ export const Injector = () => {
     prisma,
     authMiddleware,
     roleMiddleware,
+    noticeNotificationUsecase,
   );
 
   const commentRouter = CommentRouter(
@@ -189,6 +199,10 @@ export const Injector = () => {
     authMiddleware,
   );
 
+  const notificationScheduler = createNotificationScheduler(
+    NotificationSchedulerService(prisma),
+  );
+
   const httpServer: IHttpServer = HttpServer(
     configUtil,
     cookieMiddleware,
@@ -210,5 +224,6 @@ export const Injector = () => {
 
   return {
     httpServer,
+    notificationScheduler,
   };
 };

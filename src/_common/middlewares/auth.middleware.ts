@@ -38,6 +38,7 @@ export const AuthMiddleware = (tokenUtil: ITokenUtil): IAuthMiddleware => {
 
     req.userId = payload.userId;
     req.userRole = payload.role;
+    req.apartmentId = payload.apartmentId;
 
     req.user = {
       id: payload.userId,

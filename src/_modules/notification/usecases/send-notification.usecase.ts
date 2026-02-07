@@ -1,12 +1,12 @@
-import {
-  PrismaClient,
-  NotificationType,
-  NotificationTargetType,
-} from "@prisma/client";
+import { NotificationType, NotificationTargetType } from "@prisma/client";
 import {
   BusinessException,
   BusinessExceptionType,
 } from "../../../_common/exceptions/business.exception";
+import {
+  TechnicalException,
+  TechnicalExceptionType,
+} from "../../../_common/exceptions/technical.exception";
 import { INotificationCommandRepo } from "../../../_common/ports/repos/notification/notification-command.repo.interface";
 
 export interface SendNotificationReq {
@@ -22,20 +22,17 @@ export interface ISendNotificationUsecase {
 }
 
 export const SendNotificationUsecase = (
-  prismaClient: PrismaClient,
   notificationCommandRepo: INotificationCommandRepo,
 ): ISendNotificationUsecase => {
   const execute = async (req: SendNotificationReq): Promise<void> => {
     try {
-      const notificationEvent = await prismaClient.notificationEvent.create({
-        data: {
-          type: req.notificationType,
-          targetType: req.targetType,
-          targetId: req.targetId,
-          version: 1,
-        },
+      const notificationEvent = await notificationCommandRepo.createEvent({
+        type: req.notificationType,
+        targetType: req.targetType,
+        targetId: req.targetId,
       });
 
+      // 수신자별
       const receipts = req.recipientUserIds.map((userId) => ({
         userId,
         eventId: notificationEvent.id,
@@ -45,19 +42,14 @@ export const SendNotificationUsecase = (
         hiddenAt: null,
       }));
 
-      await prismaClient.notificationReceipt.createMany({
-        data: receipts,
-        skipDuplicates: true,
-      });
-
-      console.log(
-        `알림 발송 완료: ${req.notificationType} → ${req.recipientUserIds.length}명`,
-      );
+      await notificationCommandRepo.createReceipts(receipts);
     } catch (error) {
-      console.error("알림 발송 실패:", error);
-      throw new BusinessException({
-        type: BusinessExceptionType.UNKOWN_SERVER_ERROR,
-        message: "알림 발송에 실패했습니다.",
+      if (error instanceof BusinessException) {
+        throw error;
+      }
+      throw new TechnicalException({
+        type: TechnicalExceptionType.UNKNOWN_SERVER_ERROR,
+        error: error as Error,
       });
     }
   };

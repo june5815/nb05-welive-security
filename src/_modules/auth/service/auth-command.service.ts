@@ -106,7 +106,9 @@ export const AuthCommandService = (
       );
       const resolveApartmentId = (user: any): string | undefined => {
         if (!user) return undefined;
-        if (user.role === "ADMIN") return user.adminOf?.id;
+        if (user.role === "ADMIN") {
+          return user.adminOf?.id;
+        }
         if (user.role === "USER") return user.resident?.household?.apartmentId;
         return undefined;
       };

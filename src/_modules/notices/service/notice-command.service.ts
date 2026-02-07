@@ -6,6 +6,7 @@ import {
   UpdateNoticeReqDto,
 } from "../dtos/req/notice.request";
 import { asyncContextStorage } from "../../../_common/utils/async-context-storage";
+import { INoticeNotificationUsecase } from "../../../_common/ports/notification/notice-notification-usecase.interface";
 
 export interface INoticeCommandService {
   createNotice: (dto: {
@@ -21,8 +22,9 @@ export interface INoticeCommandService {
 export const NoticeCommandService = (deps: {
   prisma: PrismaClient;
   noticeCommandRepo: NoticeCommandRepository;
+  noticeNotificationUsecase?: INoticeNotificationUsecase;
 }): INoticeCommandService => {
-  const { prisma, noticeCommandRepo } = deps;
+  const { prisma, noticeCommandRepo, noticeNotificationUsecase } = deps;
 
   const createNotice = async (dto: {
     userId: string;
@@ -33,7 +35,8 @@ export const NoticeCommandService = (deps: {
 
     return prisma.$transaction(async (tx) => {
       return asyncContextStorage.run(tx as any, async () => {
-        return noticeCommandRepo.create({
+        //알림으로 인해 변경
+        const notice = await noticeCommandRepo.create({
           title: body.title,
           content: body.content,
           category: body.category,
@@ -47,7 +50,17 @@ export const NoticeCommandService = (deps: {
               }
             : undefined,
         });
-        // todo
+
+        try {
+          if (noticeNotificationUsecase) {
+            await noticeNotificationUsecase.notifyNewNotice({
+              apartmentId,
+              noticeTitle: notice.title,
+            });
+          }
+        } catch (notificationError) {}
+
+        return notice;
       });
     });
   };

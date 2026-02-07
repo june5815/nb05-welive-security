@@ -25,6 +25,7 @@ import {
   TechnicalException,
   TechnicalExceptionType,
 } from "../../../_common/exceptions/technical.exception";
+import { INotificationCommandUsecase } from "../../../_common/ports/notification/notification-command.usecase.interface";
 
 export interface IUserCommandService {
   signUpSuperAdmin: (dto: createUserReqDTO) => Promise<IUser>;
@@ -56,6 +57,7 @@ export const UserCommandService = (
   unitOfWork: IUnitOfWork,
   hashManager: IHashManager,
   userCommandRepo: IUserCommandRepo,
+  notificationCommandUsecase?: INotificationCommandUsecase,
 ): IUserCommandService => {
   const handleError = (error: unknown) => {
     if (error instanceof TechnicalException) {
@@ -120,7 +122,7 @@ export const UserCommandService = (
     const timeOut = 120000; // 2 minutes
 
     try {
-      return await unitOfWork.doTx<IUser>(
+      const savedUser = await unitOfWork.doTx<IUser>(
         async () => {
           const { body } = dto;
 
@@ -162,6 +164,17 @@ export const UserCommandService = (
           useOptimisticLock: false,
         },
       );
+
+      // Admin 회원가입 알림 발송: SuperAdmin에게
+      try {
+        if (notificationCommandUsecase) {
+          await notificationCommandUsecase.sendAdminSignupNotification({
+            adminName: savedUser.name,
+          });
+        }
+      } catch (notificationError) {}
+
+      return savedUser;
     } catch (error) {
       handleError(error);
       throw error;
@@ -193,6 +206,18 @@ export const UserCommandService = (
       });
 
       const savedUser = await userCommandRepo.createResidentUser(createUser);
+
+      // 입주민 회원가입 알림 발송
+      try {
+        if (notificationCommandUsecase) {
+          await notificationCommandUsecase.sendResidentSignupNotification({
+            apartmentId: resident!.apartmentId,
+            userName: savedUser.name,
+            building: resident!.building,
+            unit: resident!.unit,
+          });
+        }
+      } catch (notificationError) {}
 
       return savedUser;
     } catch (error) {
@@ -614,7 +639,7 @@ export const UserCommandService = (
   const deleteRejectedAdmins = async (
     dto: deleteRejectedUsersReqDTO,
   ): Promise<void> => {
-    const timeOut = 120000; // 2 minutes
+    const timeOut = 120000;
 
     try {
       return await unitOfWork.doTx(
