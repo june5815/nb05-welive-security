@@ -90,7 +90,6 @@ export const Injector = () => {
     // authCommandRepo,
     redisExternal,
     userCommandRepo,
-    prisma,
   );
   const userCommandService = UserCommandService(
     unitOfWork,

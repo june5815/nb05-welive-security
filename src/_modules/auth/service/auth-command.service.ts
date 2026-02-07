@@ -15,9 +15,6 @@ import {
   BusinessException,
   BusinessExceptionType,
 } from "../../../_common/exceptions/business.exception";
-import { getSSEConnectionManager } from "../../notification/infrastructure/sse";
-import { NotificationMapper } from "../../../_infra/mappers/notification.mapper";
-import { randomUUID } from "crypto";
 import { PrismaClient } from "@prisma/client";
 
 export interface IAuthCommandService {
@@ -35,7 +32,6 @@ export const AuthCommandService = (
   // authCommandRepo: IAuthCommandRepo,
   redisExternal: IRedisExternal,
   userCommandRepo: IUserCommandRepo,
-  prismaClient: PrismaClient,
 ): IAuthCommandService => {
   const login = async (
     dto: LoginReqDto,
