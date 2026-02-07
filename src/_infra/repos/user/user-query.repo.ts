@@ -247,10 +247,52 @@ export const UserQueryRepo = (
     }
   };
 
+  const findAllSuperAdmins = async () => {
+    try {
+      const prismaClient = baseQueryRepo.getPrismaClient();
+      const superAdmins = await prismaClient.user.findMany({
+        where: { role: UserRole.SUPER_ADMIN },
+        select: {
+          id: true,
+          username: true,
+          name: true,
+          email: true,
+        },
+      });
+      return superAdmins;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const findApartmentById = async (apartmentId: string) => {
+    try {
+      const prismaClient = baseQueryRepo.getPrismaClient();
+      const apartment = await prismaClient.apartment.findUnique({
+        where: { id: apartmentId },
+        include: {
+          admin: {
+            select: {
+              id: true,
+              username: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      });
+      return apartment;
+    } catch (error) {
+      throw error;
+    }
+  };
+
   return {
     findAdminById,
     getMyProfile,
     findAdminList,
     findResidentUserList,
+    findAllSuperAdmins,
+    findApartmentById,
   };
 };

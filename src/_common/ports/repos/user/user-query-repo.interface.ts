@@ -18,4 +18,13 @@ export interface IUserQueryRepo {
     query: ResidentUserListReq,
     userId: string,
   ) => Promise<ResidentUserListResView>;
+  findAllSuperAdmins: () => Promise<
+    Array<{
+      id: string;
+      username: string;
+      name: string;
+      email: string;
+    }>
+  >;
+  findApartmentById: (apartmentId: string) => Promise<any>;
 }
