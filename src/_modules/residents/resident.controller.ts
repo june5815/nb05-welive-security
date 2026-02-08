@@ -68,19 +68,15 @@ const getListHouseholdMembers =
   (residentQueryService: IResidentQueryService) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const apartmentId = Array.isArray(req.params?.apartmentId)
-        ? req.params.apartmentId[0]
-        : req.params?.apartmentId;
-
       const validatedReq = householdMembersListReqSchema.parse({
         userId: (req as any).user?.id,
         role: (req as any).user?.role,
         query: req.query,
       });
-
+      const adminApartmentId = (req as any).user?.adminOf?.id;
       const result: HouseholdMembersListResponseView =
         await residentQueryService.getListHouseholdMembers(
-          apartmentId,
+          adminApartmentId,
           validatedReq.query.page,
           validatedReq.query.limit,
           validatedReq.query.building,
