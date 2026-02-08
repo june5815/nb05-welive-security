@@ -26,6 +26,8 @@ describe("UserQueryService Unit Test", () => {
     getMyProfile: jest.fn(),
     findAdminList: jest.fn(),
     findResidentUserList: jest.fn(),
+    findAllSuperAdmins: jest.fn(),
+    findApartmentById: jest.fn(),
   } as jest.Mocked<IUserQueryRepo>;
 
   beforeAll(() => {

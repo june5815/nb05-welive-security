@@ -95,24 +95,28 @@ export const Injector = () => {
     redisExternal,
     userCommandRepo,
   );
+
+  const userQueryService = UserQueryService(userQueryRepo);
+  const notificationQueryUsecase = NotificationQueryUsecase(
+    notificationQueryRepo,
+  );
+  const notificationCommandUsecase = NotificationCommandUsecase(
+    notificationCommandRepo,
+    userQueryRepo,
+  );
+
   const userCommandService = UserCommandService(
     unitOfWork,
     hashManager,
     userCommandRepo,
+    notificationCommandUsecase,
   );
-  const userQueryService = UserQueryService(userQueryRepo);
   const apartmentQueryUsecase = ApartmentQueryUsecase(apartmentQueryRepo);
   const residentCommandService = ResidentCommandService(
     residentCommandRepo,
     residentQueryRepo,
   );
   const residentQueryService = ResidentQueryService(residentQueryRepo);
-  const notificationQueryUsecase = NotificationQueryUsecase(
-    notificationQueryRepo,
-  );
-  const notificationCommandUsecase = NotificationCommandUsecase(
-    notificationCommandRepo,
-  );
   const notificationEventManager = NotificationEventManager(prisma);
   const noticeNotificationUsecase = NoticeNotificationUsecase(
     notificationEventManager,
