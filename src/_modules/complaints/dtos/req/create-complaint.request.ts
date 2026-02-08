@@ -1,10 +1,12 @@
 import { z } from "zod";
 
 export const createComplaintReqSchema = z.object({
+  userId: z.string(),
+  role: z.enum(["USER"]),
   body: z.object({
-    title: z.string().min(1),
-    content: z.string().min(1),
+    title: z.string(),
+    content: z.string(),
     isPublic: z.boolean(),
-    apartmentId: z.string(),
   }),
+  apartmentId: z.string(),
 });
