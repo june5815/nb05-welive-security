@@ -1,13 +1,8 @@
-import { Poll } from "../domain/poll.entity";
-
-export class PollView {
-  static from(poll: Poll) {
-    return {
-      id: poll.id,
-      title: poll.title,
-      status: poll.status,
-      startAt: poll.createdAt,
-      endAt: poll.endAt,
-    };
-  }
-}
+export const PollView = (p: any) => ({
+  id: p.id,
+  title: p.title,
+  status: p.status,
+  startAt: p.startAt,
+  endAt: p.endAt,
+  totalVotes: p.totalVotes,
+});

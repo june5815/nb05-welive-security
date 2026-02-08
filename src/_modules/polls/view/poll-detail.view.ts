@@ -1,17 +1,19 @@
-export class PollDetailView {
-  static from(poll: any, options: any[], myVote?: string) {
-    return {
-      id: poll.id,
-      title: poll.title,
-      status: poll.status,
-      startAt: poll.startAt,
-      endAt: poll.endDate,
-      options: options.map((o) => ({
-        id: o.id,
-        text: o.text,
-        voteCount: o._count.votes,
-        isMine: o.id === myVote,
-      })),
-    };
-  }
-}
+export const PollDetailView = (p: any) => ({
+  id: p.id,
+  title: p.title,
+  content: p.content,
+  status: p.status,
+  startAt: p.startAt,
+  endAt: p.endAt,
+  author: {
+    id: p.author.id,
+    name: p.author.name,
+  },
+  totalVotes: p.totalVotes,
+  options: p.options.map((o: any) => ({
+    id: o.id,
+    text: o.text,
+    voteCount: o.voteCount,
+    isMine: o.isMine,
+  })),
+});

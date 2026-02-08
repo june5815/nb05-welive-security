@@ -13,102 +13,81 @@ import {
 } from "./dtos/req/poll.request";
 
 export const PollController = (
-  baseController: IBaseController,
-  pollQueryService: ReturnType<typeof PollQueryService>,
-  pollCommandService: ReturnType<typeof PollCommandService>,
+  base: IBaseController,
+  query: ReturnType<typeof PollQueryService>,
+  command: ReturnType<typeof PollCommandService>,
 ) => {
-  const validate = baseController.validate;
+  const validate = base.validate;
 
-  /** 투표 생성 */
   const createPoll = async (req: Request, res: Response) => {
-    const reqDto = validate(createPollReqSchema, {
+    const dto = validate(createPollReqSchema, {
       user: req.user,
       body: req.body,
     });
 
-    const pollId = await pollCommandService.create({
-      user: reqDto.user,
-      body: {
-        title: reqDto.body.title,
-        content: reqDto.body.description ?? "",
-        endDate: reqDto.body.endAt,
-        options: reqDto.body.options,
-      },
-    });
-
-    res.status(201).json({ pollId });
+    const poll = await command.create(dto);
+    res.status(201).json(poll);
   };
 
-  /** 투표 목록 */
   const getPollList = async (req: Request, res: Response) => {
     const dto = validate(getPollListReqSchema, {
-      query: {
-        ...req.query,
-        apartmentId: req.user!.apartmentId,
-      },
+      query: req.query,
+      user: req.user,
     });
 
-    const result = await pollQueryService.getList(dto);
+    const result = await query.getList(dto);
     res.status(200).json(result);
   };
 
-  /** 투표 상세 */
   const getPollDetail = async (req: Request, res: Response) => {
     const dto = validate(getPollDetailReqSchema, {
       params: req.params,
+      user: req.user,
     });
 
-    const result = await pollQueryService.getDetail(dto.params.pollId);
+    const result = await query.getDetail(dto);
     res.status(200).json(result);
   };
 
-  /** 투표 수정 */
   const updatePoll = async (req: Request, res: Response) => {
-    const reqDto = validate(updatePollReqSchema, {
+    const dto = validate(updatePollReqSchema, {
       params: req.params,
       body: req.body,
       user: req.user,
     });
 
-    await pollCommandService.update({
-      params: reqDto.params,
-      user: reqDto.user,
-      body: {
-        title: reqDto.body.title,
-        content: reqDto.body.description,
-        endDate: reqDto.body.endAt,
-      },
-    });
-
+    await command.update(dto);
     res.status(204).json();
   };
 
-  /** 투표 */
+  const deletePoll = async (req: Request, res: Response) => {
+    const dto = validate(getPollDetailReqSchema, {
+      params: req.params,
+      user: req.user,
+    });
+
+    await command.delete(dto.params.pollId);
+    res.status(204).json();
+  };
+
   const vote = async (req: Request, res: Response) => {
     const dto = validate(votePollReqSchema, {
       params: req.params,
-      user: {
-        ...req.user,
-        role: "USER",
-      },
+      user: req.user,
     });
 
-    await pollCommandService.vote(dto);
-    res.status(200).json();
+    await command.vote(dto);
+    res.status(204).json();
   };
 
-  /** 투표 취소 */
   const cancelVote = async (req: Request, res: Response) => {
     const dto = validate(cancelVotePollReqSchema, {
       params: req.params,
-      user: {
-        ...req.user,
-        role: "USER",
-      },
+      user: req.user,
     });
 
-    await pollCommandService.cancelVote(dto);
-    res.status(200).json();
+    await command.cancelVote(dto);
+    res.status(204).json();
   };
 
   return {
@@ -116,6 +95,7 @@ export const PollController = (
     getPollList,
     getPollDetail,
     updatePoll,
+    deletePoll,
     vote,
     cancelVote,
   };
