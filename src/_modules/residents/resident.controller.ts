@@ -78,9 +78,8 @@ const getListHouseholdMembers =
         query: req.query,
       });
 
-      const adminApartmentId = validatedReq.role === "ADMIN" 
-        ? (req as any).user?.apartmentId 
-        : null;
+      const adminApartmentId =
+        validatedReq.role === "ADMIN" ? (req as any).user?.apartmentId : null;
       const result: HouseholdMembersListResponseView =
         await residentQueryService.getListHouseholdMembers(
           adminApartmentId,
@@ -208,7 +207,6 @@ const updateResidentHouseholdMember =
         unit: req.body.unit,
         isHouseholder: req.body.isHouseholder,
       });
-      
 
       if (validatedReq.role !== "ADMIN") {
         throw new BusinessException({
@@ -216,7 +214,7 @@ const updateResidentHouseholdMember =
           error: new Error("입주민 정보 수정은 관리자(ADMIN)만 가능합니다."),
         });
       }
-      
+
       const memberId = Array.isArray(req.params.id)
         ? req.params.id[0]
         : req.params.id;
