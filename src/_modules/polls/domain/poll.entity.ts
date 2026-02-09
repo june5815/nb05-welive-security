@@ -1,56 +1,42 @@
-import { PollStatus } from "@prisma/client";
-
 export class Poll {
   constructor(
-    readonly id: string,
-    readonly apartmentId: string,
-    readonly title: string,
-    readonly description: string,
-    readonly status: PollStatus,
-    readonly endAt: Date,
-    readonly voterScope: { type: "ALL" },
-    readonly createdBy: string,
-    readonly createdAt: Date,
-    readonly updatedAt: Date,
+    public readonly id: string,
+    public title: string,
+    public description: string,
+    public readonly creatorId: string,
+    public readonly creatorName: string | undefined,
+    public startAt: Date,
+    public endAt: Date,
+    public status: string,
+    public options: {
+      id: string;
+      text: string;
+      voteCount: number;
+    }[],
   ) {}
 
-  static create(props: {
-    apartmentId: string;
+  static create(data: {
     title: string;
     description: string;
+    startAt: Date;
     endAt: Date;
-    voterScope: { type: "ALL" };
-    createdBy: string;
+    creatorId: string;
+    options: { text: string }[];
   }) {
-    const now = new Date();
-
     return new Poll(
       crypto.randomUUID(),
-      props.apartmentId,
-      props.title,
-      props.description,
+      data.title,
+      data.description,
+      data.creatorId,
+      undefined,
+      data.startAt,
+      data.endAt,
       "PENDING",
-      props.endAt,
-      props.voterScope,
-      props.createdBy,
-      now,
-      now,
+      data.options.map((o) => ({
+        id: crypto.randomUUID(),
+        text: o.text,
+        voteCount: 0,
+      })),
     );
-  }
-
-  canEdit() {
-    return this.status === "PENDING";
-  }
-
-  canVote() {
-    return this.status === "IN_PROGRESS";
-  }
-
-  shouldStart() {
-    return this.status === "PENDING";
-  }
-
-  shouldClose() {
-    return this.status === "IN_PROGRESS" && new Date() >= this.endAt;
   }
 }
