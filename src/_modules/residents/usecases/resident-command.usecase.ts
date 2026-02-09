@@ -189,7 +189,14 @@ export const ResidentCommandService = (
             role,
           );
           results.push(member);
-        } catch (error) {}
+        } catch (error) {
+          // 실패한 입주민
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
+          console.log(
+            ` 입주민 등록 실패 - 이메일: ${dto.email}, 이름: ${dto.name}, 사유: ${errorMessage}`,
+          );
+        }
       }
 
       return results;
@@ -420,6 +427,13 @@ export const ResidentCommandService = (
         apartmentId,
         role,
       );
+
+      const successCount = results.length;
+      const failureCount = validDtos.length - successCount;
+
+      console.log(`\n📊 CSV 입주민 등록 결과`);
+      console.log(`   ✓ 성공: ${successCount}명`);
+      console.log(`   ❌ 실패: ${failureCount}명\n`);
 
       return results.length;
     } catch (error) {
