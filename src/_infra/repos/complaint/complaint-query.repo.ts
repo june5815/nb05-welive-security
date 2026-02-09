@@ -57,6 +57,7 @@ export const ComplaintQueryRepo = (
     page,
     limit,
     status,
+    isPublic,
   }: {
     apartmentId: string;
     requesterId: string;
@@ -64,16 +65,42 @@ export const ComplaintQueryRepo = (
     page: number;
     limit: number;
     status?: "PENDING" | "IN_PROGRESS" | "RESOLVED";
+    isPublic?: boolean;
   }): Promise<ComplaintListResult> => {
     const skip = (page - 1) * limit;
 
-    const where = isAdmin
-      ? { apartmentId, ...(status && { status }) }
-      : {
+    let where: any;
+
+    if (isAdmin) {
+      where = {
+        apartmentId,
+        ...(status && { status }),
+        ...(isPublic !== undefined && { isPublic }),
+      };
+    } else {
+      if (isPublic !== undefined) {
+        if (isPublic) {
+          where = {
+            apartmentId,
+            isPublic: true,
+            ...(status && { status }),
+          };
+        } else {
+          where = {
+            apartmentId,
+            isPublic: false,
+            userId: requesterId,
+            ...(status && { status }),
+          };
+        }
+      } else {
+        where = {
           apartmentId,
           ...(status && { status }),
           OR: [{ isPublic: true }, { userId: requesterId }],
         };
+      }
+    }
 
     const [data, totalCount] = await Promise.all([
       prisma.complaint.findMany({

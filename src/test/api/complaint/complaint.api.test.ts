@@ -73,4 +73,35 @@ describe("Complaint API", () => {
 
     expect(true).toBe(true);
   });
+
+  it("filters complaints by isPublic", async () => {
+    const res = await queryService.getList({
+      query: {
+        apartmentId: "A1",
+        page: 1,
+        limit: 10,
+        isPublic: true,
+      },
+      userId: "u1",
+      role: "USER",
+    });
+
+    expect(res.data).toHaveLength(1);
+    expect(res.isPublic).toBe(true);
+  });
+
+  it("returns all complaints when isPublic is not provided", async () => {
+    const res = await queryService.getList({
+      query: {
+        apartmentId: "A1",
+        page: 1,
+        limit: 10,
+      },
+      userId: "u1",
+      role: "USER",
+    });
+
+    expect(res.data).toHaveLength(1);
+    expect(res.isPublic).toBe(null);
+  });
 });
