@@ -431,9 +431,8 @@ export const ResidentCommandService = (
       const successCount = results.length;
       const failureCount = validDtos.length - successCount;
 
-      console.log(`\n📊 CSV 입주민 등록 결과`);
-      console.log(`   ✓ 성공: ${successCount}명`);
-      console.log(`   ❌ 실패: ${failureCount}명\n`);
+      console.log(`\n CSV 입주민 등록 결과`);
+      console.log(` 실패: ${failureCount}명\n`);
 
       return results.length;
     } catch (error) {
