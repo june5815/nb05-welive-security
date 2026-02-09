@@ -23,6 +23,7 @@ services:
       - "443:443"
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./.docker/nginx/conf.d/custom.conf:/etc/nginx/conf.d/custom.conf:ro
       # - certs:/etc/nginx/certs
       # - html:/usr/share/nginx/html
       # - vhost:/etc/nginx/vhost.d
