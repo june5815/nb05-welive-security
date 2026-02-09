@@ -21,22 +21,31 @@ export const ComplaintController = (
 ): IComplaintController => {
   const validate = baseController.validate;
 
-  /** 민원 생성 */
   const create = async (req: Request, res: Response) => {
     const dto = validate(createComplaintReqSchema, {
       body: req.body,
       userId: req.user!.id,
       role: req.user!.role,
+      apartmentId: req.user!.apartmentId,
     });
 
-    await complaintCommandService.create(dto);
+    await complaintCommandService.create({
+      ...dto,
+      body: {
+        ...dto.body,
+        apartmentId: dto.apartmentId,
+      },
+    });
+
     res.status(201).json();
   };
 
-  /** 민원 목록 */
   const list = async (req: Request, res: Response) => {
     const dto = validate(getComplaintListReqSchema, {
-      query: req.query,
+      query: {
+        ...req.query,
+        apartmentId: req.user!.apartmentId,
+      },
       userId: req.user!.id,
       role: req.user!.role,
     });
@@ -45,7 +54,6 @@ export const ComplaintController = (
     res.status(200).json(result);
   };
 
-  /** 민원 상세 */
   const detail = async (req: Request, res: Response) => {
     const dto = validate(complaintIdParamSchema, {
       params: req.params,

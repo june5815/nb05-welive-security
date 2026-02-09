@@ -1,9 +1,11 @@
 import { z } from "zod";
 
 export const getComplaintListReqSchema = z.object({
+  userId: z.string(),
+  role: z.enum(["USER", "ADMIN"]),
   query: z.object({
     apartmentId: z.string(),
-    page: z.string().optional(),
-    limit: z.string().optional(),
+    page: z.coerce.number().default(1),
+    limit: z.coerce.number().default(10),
   }),
 });

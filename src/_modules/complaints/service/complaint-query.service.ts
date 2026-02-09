@@ -25,10 +25,7 @@ export const ComplaintQueryService = (
 
     await complaintQueryRepo.increaseViews(complaint.id!);
 
-    return ComplaintView.from({
-      ...complaint,
-      viewsCount: (complaint.viewsCount ?? 0) + 1,
-    });
+    return ComplaintView.from(complaint);
   };
 
   const getList = async (dto: any) => {
@@ -52,8 +49,5 @@ export const ComplaintQueryService = (
     };
   };
 
-  return {
-    getDetail,
-    getList,
-  };
+  return { getDetail, getList };
 };
