@@ -28,7 +28,7 @@ export const AuthController = (
     const isProduction = process.env.NODE_ENV === "production";
     const options = {
       httpOnly: true,
-      secure: isProduction,
+      secure: false,
       signed: true,
       sameSite: "lax" as const,
     };
