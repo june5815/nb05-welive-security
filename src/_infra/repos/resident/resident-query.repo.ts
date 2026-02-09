@@ -8,11 +8,10 @@ export const ResidentQueryRepository = (
 ): IResidentQueryRepo => {
   const prisma = baseQueryRepo.getPrismaClient() as any;
 
-
   const buildWhereCondition = (apartmentId?: string, filters?: any): any => {
     const whereCondition: any = {
       household: apartmentId ? { apartmentId } : {},
-      movedOutAt: null, 
+      movedOutAt: null,
     };
 
     // 건물 및 호수 필터
@@ -23,15 +22,15 @@ export const ResidentQueryRepository = (
       whereCondition.household.unit = filters.unit;
     }
 
-    // 가입 상태 
+    // 가입 상태
     if (filters?.isRegistered !== undefined) {
       if (filters.isRegistered === true) {
-              whereCondition.AND = [
+        whereCondition.AND = [
           { userId: { not: null } },
           { user: { is: { joinStatus: "APPROVED" } } },
         ];
       } else {
-              whereCondition.OR = [
+        whereCondition.OR = [
           { userId: null },
           { user: { is: { joinStatus: "PENDING" } } },
         ];
@@ -53,22 +52,27 @@ export const ResidentQueryRepository = (
         },
       ];
 
-   
       if (filters?.isRegistered !== undefined) {
         const registrationFilter =
           filters.isRegistered === true
-            ? { AND: [{ userId: { not: null } }, { user: { is: { joinStatus: "APPROVED" } } }] }
-            : { OR: [{ userId: null }, { user: { is: { joinStatus: "PENDING" } } }] };
+            ? {
+                AND: [
+                  { userId: { not: null } },
+                  { user: { is: { joinStatus: "APPROVED" } } },
+                ],
+              }
+            : {
+                OR: [
+                  { userId: null },
+                  { user: { is: { joinStatus: "PENDING" } } },
+                ],
+              };
 
-        whereCondition.AND = [
-          registrationFilter,
-          { OR: searchCondition },
-        ];
+        whereCondition.AND = [registrationFilter, { OR: searchCondition }];
       } else {
         whereCondition.OR = searchCondition;
       }
     }
-
 
     if (filters?.isHouseholder !== undefined) {
       whereCondition.isHouseholder = filters.isHouseholder;
@@ -77,7 +81,6 @@ export const ResidentQueryRepository = (
     return whereCondition;
   };
 
- 
   const findHouseholdMembers = async (
     apartmentId?: string,
     page?: number,
@@ -131,7 +134,7 @@ export const ResidentQueryRepository = (
     return await prisma.householdMember.findFirst({
       where: {
         id: householdMemberId,
-        movedOutAt: null,  
+        movedOutAt: null,
       },
       include: {
         user: {
@@ -180,7 +183,7 @@ export const ResidentQueryRepository = (
     return await prisma.householdMember.findFirst({
       where: {
         email,
-        movedOutAt: null,  // ✅ 삭제되지 않은 입주민만
+        movedOutAt: null, // ✅ 삭제되지 않은 입주민만
       },
       include: {
         user: {

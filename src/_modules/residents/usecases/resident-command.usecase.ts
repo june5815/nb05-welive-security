@@ -131,8 +131,6 @@ export const ResidentCommandService = (
         });
       }
 
- 
-
       const householdMember = HouseholdEntity.createHouseholdMemberByAdmin({
         householdId: household.id,
         email: dto.email,

@@ -314,8 +314,7 @@ const exportResidentList =
       );
 
       // CSV 생성
-      const csvHeader =
-        "이메일,연락처,이름,건물,호수,세대주,가입상태,등록일자";
+      const csvHeader = "이메일,연락처,이름,건물,호수,세대주,가입상태,등록일자";
       const csvRows = result.data.map(
         (member: any) =>
           `"${member.email}","${member.contact}","${member.name}",${member.building},${member.unit},"${member.isHouseholder ? "예" : "아니오"}","${member.userId ? "가입함" : "미가입"}",${member.createdAt}`,
