@@ -76,7 +76,6 @@ export const MulterMiddleware = (
     key: (req: any, file: any, callback: any) => {
       callback(null, getFileName(file.originalname));
     },
-    acl: "public-read",
   });
 
   const storage = isProduction ? s3Storage : diskStorage;
