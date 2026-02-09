@@ -86,17 +86,21 @@ jobs:
 
       - name: run docker-compose.yml on ec2
         uses: appleboy/ssh-action@master
+        env:
+          AWS_REGION: ${{secrets.AWS_REGION}}
+          ECR_SERVER_URI: ${{secrets.ECR_SERVER_URI}}
+          SERVER_IMAGE_NAME: ${{secrets.ECR_SERVER_URI}}:latest
+          MIGRATOR_IMAGE_NAME: ${{secrets.ECR_SERVER_URI}}:migrator
         with:
           host: ${{secrets.EC2_HOST}}
           username: ${{secrets.EC2_USERNAME}}
           key: ${{secrets.EC2_SSH_PRIVATE_KEY}}
+          envs: AWS_REGION,ECR_SERVER_URI,SERVER_IMAGE_NAME,MIGRATOR_IMAGE_NAME
           script: |
-            export SERVER_IMAGE_NAME=${{secrets.ECR_SERVER_URI}}:latest
-            export MIGRATOR_IMAGE_NAME=${{secrets.ECR_SERVER_URI}}:migrator
-            aws ecr get-login-password --region ${{secrets.AWS_REGION}} | docker login --username AWS --password-stdin ${{secrets.ECR_SERVER_URI}}
+            aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_SERVER_URI}
             docker-compose -f docker-compose.yml pull
             docker-compose -f docker-compose.yml run --rm migrator
             docker-compose -f docker-compose.yml up -d
             docker image prune -f
-            docker logout ${{secrets.ECR_SERVER_URI}}
+            docker logout ${ECR_SERVER_URI}
             rm -f .env.prod
