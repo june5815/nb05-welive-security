@@ -390,19 +390,21 @@ export const ResidentCommandService = (
         name: row.name?.trim(),
         building: parseInt(row.building, 10),
         unit: parseInt(row.unit, 10),
-        isHouseholder: row.isHouseholder?.toLowerCase() === "true",
+        isHouseholder:
+          row.isHouseholder?.trim?.().toLowerCase() === "true" || false,
       }));
 
       const validDtos: CreateResidentDTO[] = [];
       for (const dto of dtos) {
         if (
-          !dto.email ||
-          !dto.contact ||
-          !dto.name ||
-          !dto.building ||
-          !dto.unit
-        )
+          dto.email &&
+          dto.contact &&
+          dto.name &&
+          !isNaN(dto.building) &&
+          !isNaN(dto.unit)
+        ) {
           validDtos.push(dto);
+        }
       }
 
       if (validDtos.length === 0) {
