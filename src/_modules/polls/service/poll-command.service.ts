@@ -1,70 +1,27 @@
-import { IPollCommandRepo } from "../ports/poll-command.repo";
-import { CreatePollDto } from "../dtos/poll-create.dto";
-import { UpdatePollDto } from "../dtos/poll-update.dto";
-import { VotePollDto } from "../dtos/poll-vote.dto";
-import { Poll } from "../domain/poll.entity";
-import { PollOption } from "../domain/poll-option.entity";
-import {
-  BusinessException,
-  BusinessExceptionType,
-} from "../../../_common/exceptions/business.exception";
-
-export const PollCommandService = (repo: IPollCommandRepo) => ({
-  async create(dto: CreatePollDto) {
-    if (dto.user.role !== "ADMIN" && dto.user.role !== "SUPER_ADMIN")
-      throw new BusinessException({ type: BusinessExceptionType.FORBIDDEN });
-
-    const poll = Poll.create({
-      apartmentId: dto.user.apartmentId,
-      title: dto.body.title,
-      description: dto.body.content,
-      endAt: new Date(dto.body.endDate),
-      voterScope: { type: "ALL" },
-      createdBy: dto.user.id,
+export const PollCommandService = (repo: any, queryRepo: any) => ({
+  async create({ user, body }: any) {
+    const pollId = await repo.createPoll({
+      ...body,
+      authorId: user.id,
+      apartmentId: user.apartmentId,
     });
 
-    const options = dto.body.options.map((text, idx) =>
-      PollOption.create(poll.id, text, idx + 1),
-    );
-
-    await repo.saveWithOptions(poll, options);
-    return poll.id;
+    return queryRepo.findDetail(pollId, user.id);
   },
 
-  async update(dto: UpdatePollDto) {
-    const poll = await repo.findById(dto.params.pollId);
-    if (!poll)
-      throw new BusinessException({ type: BusinessExceptionType.NOT_FOUND });
-    if (!poll.canEdit())
-      throw new BusinessException({ type: BusinessExceptionType.FORBIDDEN });
-
-    const updated = new Poll(
-      poll.id,
-      poll.apartmentId,
-      dto.body.title ?? poll.title,
-      dto.body.content ?? poll.description,
-      poll.status,
-      dto.body.endDate ? new Date(dto.body.endDate) : poll.endAt,
-      poll.voterScope,
-      poll.createdBy,
-      poll.createdAt,
-      new Date(),
-    );
-
-    await repo.update(updated);
+  async update({ params, body }: any) {
+    await repo.updatePoll(params.pollId, body);
   },
 
-  async vote(dto: VotePollDto) {
-    const poll = await repo.findById(dto.params.pollId);
-    if (!poll)
-      throw new BusinessException({ type: BusinessExceptionType.NOT_FOUND });
-    if (!poll.canVote())
-      throw new BusinessException({ type: BusinessExceptionType.FORBIDDEN });
-
-    await repo.vote(poll.id, dto.params.optionId, dto.user.id);
+  async delete(pollId: string) {
+    await repo.deletePoll(pollId);
   },
 
-  async cancelVote(dto: VotePollDto) {
-    await repo.cancelVote(dto.params.pollId, dto.user.id);
+  async vote({ params, user }: any) {
+    await repo.vote(params.pollId, params.optionId, user.id);
+  },
+
+  async cancelVote({ params, user }: any) {
+    await repo.cancelVote(params.pollId, params.optionId, user.id);
   },
 });
