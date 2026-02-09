@@ -32,8 +32,9 @@ export const CorsMiddleware = (configUtil: IConfigUtil): ICorsMiddleware => {
   };
   options.credentials = true;
 
+  // 나중에 options 설정이 더 필요하면 여기에 추가
   const corsHandler = () => {
-    return cors(options);
+    return cors();
   };
 
   return {
