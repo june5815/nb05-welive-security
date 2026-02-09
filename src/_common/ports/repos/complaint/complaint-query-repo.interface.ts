@@ -22,6 +22,7 @@ export interface IComplaintQueryRepo {
     page: number;
     limit: number;
     status?: "PENDING" | "IN_PROGRESS" | "RESOLVED";
+    isPublic?: boolean;
   }): Promise<ComplaintListResult>;
 
   increaseViews(id: string): Promise<void>;

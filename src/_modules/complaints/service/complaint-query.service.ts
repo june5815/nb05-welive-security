@@ -31,7 +31,7 @@ export const ComplaintQueryService = (
   };
 
   const getList = async (dto: any) => {
-    const { apartmentId, page, limit, status } = dto.query;
+    const { apartmentId, page, limit, status, isPublic } = dto.query;
     const isAdmin = dto.role === "ADMIN" || dto.role === "SUPER_ADMIN";
 
     const result = await complaintQueryRepo.findListForUser({
@@ -41,6 +41,7 @@ export const ComplaintQueryService = (
       page,
       limit,
       status,
+      isPublic,
     });
 
     return {
@@ -49,6 +50,7 @@ export const ComplaintQueryService = (
       page,
       limit,
       status: status || null,
+      isPublic: isPublic !== undefined ? isPublic : null,
       hasNext: page * limit < result.totalCount,
     };
   };

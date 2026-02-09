@@ -8,33 +8,38 @@ export const ResidentQueryRepository = (
 ): IResidentQueryRepo => {
   const prisma = baseQueryRepo.getPrismaClient() as any;
 
-  // 목록조회
-  const findHouseholdMembers = async (
-    apartmentId?: string,
-    page?: number,
-    limit?: number,
-    filters?: any,
-  ): Promise<{
-    members: HouseholdMemberWithRelations[];
-    total: number;
-  }> => {
-    const skip = ((page ?? 1) - 1) * (limit ?? 20);
+  const buildWhereCondition = (apartmentId?: string, filters?: any): any => {
+    const whereCondition: any = {
+      household: apartmentId ? { apartmentId } : {},
+      movedOutAt: null,
+    };
 
-    const whereCondition: any = {};
-    if (apartmentId) {
-      whereCondition.household = { apartmentId };
-    } else {
-      whereCondition.household = {};
-    }
-
+    // 건물 및 호수 필터
     if (filters?.building !== undefined) {
       whereCondition.household.building = filters.building;
     }
     if (filters?.unit !== undefined) {
       whereCondition.household.unit = filters.unit;
     }
+
+    // 가입 상태
+    if (filters?.isRegistered !== undefined) {
+      if (filters.isRegistered === true) {
+        whereCondition.AND = [
+          { userId: { not: null } },
+          { user: { is: { joinStatus: "APPROVED" } } },
+        ];
+      } else {
+        whereCondition.OR = [
+          { userId: null },
+          { user: { is: { joinStatus: "PENDING" } } },
+        ];
+      }
+    }
+
+    // 키워드별 (이름, 이메일)
     if (filters?.searchKeyword) {
-      whereCondition.OR = [
+      const searchCondition = [
         {
           user: {
             name: { contains: filters.searchKeyword, mode: "insensitive" },
@@ -46,16 +51,50 @@ export const ResidentQueryRepository = (
           },
         },
       ];
+
+      if (filters?.isRegistered !== undefined) {
+        const registrationFilter =
+          filters.isRegistered === true
+            ? {
+                AND: [
+                  { userId: { not: null } },
+                  { user: { is: { joinStatus: "APPROVED" } } },
+                ],
+              }
+            : {
+                OR: [
+                  { userId: null },
+                  { user: { is: { joinStatus: "PENDING" } } },
+                ],
+              };
+
+        whereCondition.AND = [registrationFilter, { OR: searchCondition }];
+      } else {
+        whereCondition.OR = searchCondition;
+      }
     }
+
     if (filters?.isHouseholder !== undefined) {
       whereCondition.isHouseholder = filters.isHouseholder;
     }
-    if (filters?.isRegistered !== undefined) {
-      whereCondition.user = {
-        ...whereCondition.user,
-        status: filters.isRegistered ? "APPROVED" : "PENDING",
-      };
-    }
+
+    return whereCondition;
+  };
+
+  const findHouseholdMembers = async (
+    apartmentId?: string,
+    page?: number,
+    limit?: number,
+    filters?: any,
+  ): Promise<{
+    members: HouseholdMemberWithRelations[];
+    total: number;
+  }> => {
+    const pageNum = page ?? 1;
+    const pageLimit = limit ?? 20;
+    const skip = (pageNum - 1) * pageLimit;
+
+    const whereCondition = buildWhereCondition(apartmentId, filters);
 
     const total = await prisma.householdMember.count({
       where: whereCondition,
@@ -65,7 +104,13 @@ export const ResidentQueryRepository = (
       where: whereCondition,
       include: {
         user: {
-          select: { id: true, email: true, contact: true, name: true },
+          select: {
+            id: true,
+            email: true,
+            contact: true,
+            name: true,
+            joinStatus: true,
+          },
         },
         household: {
           include: {
@@ -76,24 +121,29 @@ export const ResidentQueryRepository = (
         },
       },
       skip,
-      take: limit ?? 20,
+      take: pageLimit,
       orderBy: { createdAt: "desc" },
     });
 
-    return {
-      members,
-      total,
-    };
+    return { members, total };
   };
   // 입주민 상세조회
   const findHouseholdMemberById = async (
     householdMemberId: string,
   ): Promise<HouseholdMemberWithRelations | null> => {
-    const member = await prisma.householdMember.findUnique({
-      where: { id: householdMemberId },
+    return await prisma.householdMember.findFirst({
+      where: {
+        id: householdMemberId,
+        movedOutAt: null,
+      },
       include: {
         user: {
-          select: { id: true, email: true, contact: true, name: true },
+          select: {
+            id: true,
+            email: true,
+            contact: true,
+            name: true,
+          },
         },
         household: {
           include: {
@@ -104,59 +154,55 @@ export const ResidentQueryRepository = (
         },
       },
     });
-
-    return member;
   };
 
+  // 건물과 호수로 세대 조회
   const findHouseholdByBuildingAndUnit = async (
     apartmentId: string,
     building: number,
     unit: number,
   ): Promise<any | null> => {
-    try {
-      const household = await prisma.household.findUnique({
-        where: {
-          apartmentId_building_unit: {
-            apartmentId,
-            building,
-            unit,
-          },
+    return await prisma.household.findUnique({
+      where: {
+        apartmentId_building_unit: {
+          apartmentId,
+          building,
+          unit,
         },
-        include: {
-          members: true,
-        },
-      });
-
-      return household;
-    } catch (error) {
-      throw error;
-    }
+      },
+      include: {
+        members: true,
+      },
+    });
   };
 
+  // 이메일로 입주민 조회
   const findHouseholdMemberByEmail = async (
     email: string,
   ): Promise<HouseholdMemberWithRelations | null> => {
-    try {
-      const member = await prisma.householdMember.findUnique({
-        where: { email },
-        include: {
-          user: {
-            select: { id: true, email: true, contact: true, name: true },
+    return await prisma.householdMember.findFirst({
+      where: {
+        email,
+        movedOutAt: null, // ✅ 삭제되지 않은 입주민만
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            contact: true,
+            name: true,
           },
-          household: {
-            include: {
-              apartment: {
-                select: { id: true, name: true, address: true },
-              },
+        },
+        household: {
+          include: {
+            apartment: {
+              select: { id: true, name: true, address: true },
             },
           },
         },
-      });
-
-      return member;
-    } catch (error) {
-      throw error;
-    }
+      },
+    });
   };
 
   return {
