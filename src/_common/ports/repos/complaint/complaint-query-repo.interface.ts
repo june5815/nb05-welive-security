@@ -1,7 +1,7 @@
 import { Complaint } from "../../../../_modules/complaints/domain/complaints.entity";
 
 export interface ComplaintListResult {
-  data: Complaint[];
+  data: any[];
   totalCount: number;
 }
 
@@ -12,7 +12,8 @@ export interface IComplaintQueryRepo {
     complaintId: string;
     requesterId: string;
     isAdmin: boolean;
-  }): Promise<Complaint | null>;
+    apartmentId: string;
+  }): Promise<any | null>;
 
   findListForUser(params: {
     apartmentId: string;
@@ -20,6 +21,7 @@ export interface IComplaintQueryRepo {
     isAdmin: boolean;
     page: number;
     limit: number;
+    status?: "PENDING" | "IN_PROGRESS" | "RESOLVED";
   }): Promise<ComplaintListResult>;
 
   increaseViews(id: string): Promise<void>;

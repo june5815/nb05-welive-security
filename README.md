@@ -4,8 +4,8 @@ WeLive Security 프로젝트
 
 ## 프로젝트 정보
 
-- **프로젝트 기간:** 2026.01.05 ~ 2026.02.06
-- **기술 스택:** Express.js, PrismaORM, MongoDB
+- **프로젝트 기간:** 2026.01.05 ~ 현재
+- **기술 스택:** Express.js, PrismaORM, PostgreSQL
 
 ## 팀원 구성
 

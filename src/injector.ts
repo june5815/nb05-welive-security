@@ -7,6 +7,7 @@ import { CommentRouter } from "./_modules/comments/routes";
 import { EventRouter } from "./_modules/events/routes";
 import { ResidentRouter } from "./_modules/residents/resident.router";
 import { NotificationRouter } from "./_modules/notification/notification.router";
+import { ComplaintRouter } from "./_modules/complaints/complaint.router";
 import { createNotificationScheduler } from "./_modules/notification/notification-scheulder";
 import { NotificationSchedulerService } from "./_modules/notification/infrastructure/notification-scheduler.service";
 import { NotificationSSEManagerService } from "./_modules/notification/infrastructure/notification-sse-manager.service";
@@ -17,6 +18,7 @@ import { UserController } from "./_modules/users/user.controller";
 import { ApartmentController } from "./_modules/apartments/apartment.controller";
 import { createResidentController } from "./_modules/residents/resident.controller";
 import { NotificationController } from "./_modules/notification/notification.controller";
+import { ComplaintController } from "./_modules/complaints/complaint.controller";
 
 import { AuthCommandService } from "./_modules/auth/service/auth-command.service";
 import { UserCommandService } from "./_modules/users/service/user-command.service";
@@ -29,6 +31,10 @@ import { NotificationCommandUsecase } from "./_modules/notification/usecases/not
 import { SendNotificationUsecase } from "./_modules/notification/usecases/send-notification.usecase";
 import { NoticeNotificationUsecase } from "./_modules/notification/usecases/notice-notification.usecase";
 import { NotificationEventManager } from "./_modules/notification/infrastructure/notification-event-manager";
+import { ComplaintCommandService } from "./_modules/complaints/service/complaint-command.service";
+import { ComplaintQueryService } from "./_modules/complaints/service/complaint-query.service";
+import { ComplaintCommandRepo } from "./_infra/repos/complaint/complaint-command.repo";
+import { ComplaintQueryRepo } from "./_infra/repos/complaint/complaint-query.repo";
 
 // import { AuthCommandRepo } from "./_infra/repos/auth/auth-command.repo";
 import { BaseCommandRepo } from "./_infra/repos/_base/base-command.repo";
@@ -78,6 +84,8 @@ export const Injector = () => {
   const residentQueryRepo = ResidentQueryRepository(baseQueryRepo);
   const notificationQueryRepo = NotificationQueryRepo(prisma);
   const notificationCommandRepo = NotificationCommandRepo(prisma);
+  const complaintCommandRepo = ComplaintCommandRepo(prisma);
+  const complaintQueryRepo = ComplaintQueryRepo(prisma);
 
   const redisExternal = RedisExternal(configUtil);
   const unitOfWork = UOW(prisma, configUtil);
@@ -155,6 +163,18 @@ export const Injector = () => {
     NotificationSSEManagerService(prisma),
   );
 
+  const complaintCommandService = ComplaintCommandService(
+    complaintCommandRepo,
+    complaintQueryRepo,
+    notificationCommandUsecase,
+  );
+  const complaintQueryService = ComplaintQueryService(complaintQueryRepo);
+  const complaintController = ComplaintController(
+    baseController,
+    complaintCommandService,
+    complaintQueryService,
+  );
+
   const baseRouter = BaseRouter();
   const authRouter = AuthRouter(BaseRouter(), authController);
   const userRouter = UserRouter(
@@ -203,6 +223,13 @@ export const Injector = () => {
     authMiddleware,
   );
 
+  const complaintRouter = ComplaintRouter(
+    BaseRouter(),
+    complaintController,
+    authMiddleware,
+    roleMiddleware,
+  );
+
   const notificationScheduler = createNotificationScheduler(
     NotificationSchedulerService(prisma),
   );
@@ -224,6 +251,7 @@ export const Injector = () => {
     commentRouter,
     eventRouter,
     notificationRouter,
+    complaintRouter,
   );
 
   return {

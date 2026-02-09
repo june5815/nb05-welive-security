@@ -7,43 +7,51 @@ describe("Complaint API", () => {
   let commandService: any;
 
   beforeEach(() => {
-    const fakeRepo = {
-      // query
-      findDetailForUser: jest.fn().mockResolvedValue({
-        id: "1",
-        title: "에어컨 고장",
-        content: "안 나옴",
-        status: ComplaintStatus.PENDING,
-        isPublic: true,
-        viewsCount: 0,
-        apartmentId: "A1",
-        user: { id: "u1", name: "홍길동" },
-      }),
-      increaseViews: jest.fn(),
+    const fakeComplaint = {
+      id: "1",
+      title: "에어컨 고장",
+      content: "안 나옴",
+      status: ComplaintStatus.PENDING,
+      isPublic: true,
+      viewsCount: 0,
+      apartmentId: "A1",
+      userId: "u1",
+      user: { id: "u1", name: "홍길동" },
+    };
+
+    const queryRepo = {
+      findDetailForUser: jest.fn().mockResolvedValue(fakeComplaint),
+      increaseViews: jest.fn().mockResolvedValue(undefined),
       findListForUser: jest.fn().mockResolvedValue({
-        data: [],
-        totalCount: 0,
+        data: [fakeComplaint],
+        totalCount: 1,
       }),
-
-      // command
-      create: jest.fn(),
-      findById: jest.fn().mockResolvedValue({
-        id: "1",
-        status: ComplaintStatus.PENDING,
-        update: jest.fn(),
-        remove: jest.fn(),
-      }),
-      save: jest.fn(),
-      delete: jest.fn(),
+      findById: jest.fn().mockResolvedValue(fakeComplaint),
     };
 
-    const uow = {
-      doTx: async (fn: any) => fn(),
-      getComplaintRepository: () => fakeRepo,
+    const commandRepo = {
+      create: jest.fn().mockResolvedValue(fakeComplaint),
+      update: jest.fn().mockResolvedValue(undefined),
+      delete: jest.fn().mockResolvedValue(undefined),
+      updateStatus: jest.fn().mockResolvedValue(undefined),
     };
 
-    queryService = ComplaintQueryService(fakeRepo as any);
-    commandService = ComplaintCommandService(uow as any);
+    const notificationUsecase = {
+      markAsRead: jest.fn().mockResolvedValue(undefined),
+      sendAdminSignupNotification: jest.fn().mockResolvedValue(undefined),
+      sendResidentSignupNotification: jest.fn().mockResolvedValue(undefined),
+      sendComplaintCreatedNotification: jest.fn().mockResolvedValue(undefined),
+      sendComplaintStatusChangedNotification: jest
+        .fn()
+        .mockResolvedValue(undefined),
+    };
+
+    queryService = ComplaintQueryService(queryRepo as any);
+    commandService = ComplaintCommandService(
+      commandRepo as any,
+      queryRepo as any,
+      notificationUsecase,
+    );
   });
 
   it("gets complaint detail", async () => {

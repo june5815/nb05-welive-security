@@ -14,7 +14,7 @@ on:
   pull_request:
     branches: ["dev", "main"]
   push:
-    branches: ["dev", "main"]
+    branches: ["main", "dev"]
 
 jobs:
   ci:
@@ -42,7 +42,7 @@ jobs:
         run: npm run test:unit
   cd:
     needs: ci
-    # if: github.event_name == 'push'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
     runs-on: ubuntu-latest
     steps:
       - name: configure aws credentials

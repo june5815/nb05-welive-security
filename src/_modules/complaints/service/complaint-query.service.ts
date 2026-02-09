@@ -15,6 +15,7 @@ export const ComplaintQueryService = (
       complaintId: dto.params.complaintId,
       requesterId: dto.userId,
       isAdmin,
+      apartmentId: dto.apartmentId,
     });
 
     if (!complaint) {
@@ -25,11 +26,12 @@ export const ComplaintQueryService = (
 
     await complaintQueryRepo.increaseViews(complaint.id!);
 
-    return ComplaintView.from(complaint);
+    const result = ComplaintView.from(complaint);
+    return result;
   };
 
   const getList = async (dto: any) => {
-    const { apartmentId, page, limit } = dto.query;
+    const { apartmentId, page, limit, status } = dto.query;
     const isAdmin = dto.role === "ADMIN" || dto.role === "SUPER_ADMIN";
 
     const result = await complaintQueryRepo.findListForUser({
@@ -38,6 +40,7 @@ export const ComplaintQueryService = (
       isAdmin,
       page,
       limit,
+      status,
     });
 
     return {
@@ -45,6 +48,7 @@ export const ComplaintQueryService = (
       totalCount: result.totalCount,
       page,
       limit,
+      status: status || null,
       hasNext: page * limit < result.totalCount,
     };
   };
