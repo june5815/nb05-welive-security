@@ -1,15 +1,20 @@
 import { PrismaClient, ComplaintStatus } from "@prisma/client";
 import { IComplaintCommandRepo } from "../../../_common/ports/repos/complaint/complaint-command-repo.interface";
 import { Complaint } from "../../../_modules/complaints/domain/complaints.entity";
-import { ComplaintMapper } from "../../mappers/complaint.mapper";
+import {
+  ComplaintMapper,
+  complaintInclude,
+} from "../../mappers/complaint.mapper";
 
 export const ComplaintCommandRepo = (
   prisma: PrismaClient,
 ): IComplaintCommandRepo => {
-  const create = async (complaint: Complaint) => {
-    await prisma.complaint.create({
+  const create = async (complaint: Complaint): Promise<Complaint> => {
+    const created = await prisma.complaint.create({
       data: ComplaintMapper.toCreate(complaint),
+      include: complaintInclude,
     });
+    return ComplaintMapper.toEntity(created);
   };
 
   const update = async (complaint: Complaint): Promise<boolean> => {

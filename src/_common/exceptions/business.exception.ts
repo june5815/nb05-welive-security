@@ -35,6 +35,7 @@ export enum BusinessExceptionType {
 
   VALIDATION_ERROR,
   UNAUTHORIZED,
+  BAD_REQUEST,
 }
 
 const BusinessExceptionTable: Record<
@@ -44,6 +45,10 @@ const BusinessExceptionTable: Record<
   [BusinessExceptionType.UNAUTHORIZED]: {
     statusCode: 401,
     message: "인증 정보가 유효하지 않습니다.",
+  },
+  [BusinessExceptionType.BAD_REQUEST]: {
+    statusCode: 401,
+    message: "잘못된 요청입니다.",
   },
   [BusinessExceptionType.FORBIDDEN]: {
     statusCode: 401,

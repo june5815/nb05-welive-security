@@ -13,8 +13,8 @@
     "test:api": "export NODE_ENV=test && jest src/test/api --runInBand",
     "test:api:win": "cross-env NODE_ENV=test jest src/test/api --runInBand",
     "build": "npx tsc",
-    "prod": "node ./dist/index.js",
-    "prepare": "husky",
+    "prod": "node ./dist/app.js",
+    "prepare": "husky || true",
     "seed": "prisma db seed"
   },
   "prisma": {
@@ -45,8 +45,7 @@
     "supertest": "^7.1.4",
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3",
-    "uuidv7": "^1.1.0"
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.958.0",
@@ -57,6 +56,7 @@
     "cors": "^2.8.5",
     "cross-env": "^10.1.0",
     "csv-parse": "^6.1.0",
+    "dotenv": "^17.2.4",
     "express": "^5.1.0",
     "express-session": "^1.18.2",
     "ioredis": "^5.9.2",
@@ -66,6 +66,7 @@
     "multer-s3": "^3.0.1",
     "piscina": "^5.1.4",
     "socket.io": "^4.8.1",
+    "uuidv7": "^1.1.0",
     "zod": "^4.1.12"
   },
   "lint-staged": {

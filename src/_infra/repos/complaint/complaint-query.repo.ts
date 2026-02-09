@@ -23,23 +23,31 @@ export const ComplaintQueryRepo = (
     complaintId,
     requesterId,
     isAdmin,
+    apartmentId,
   }: {
     complaintId: string;
     requesterId: string;
     isAdmin: boolean;
+    apartmentId: string;
   }) => {
     const model = await prisma.complaint.findUnique({
       where: { id: complaintId },
       include: complaintInclude,
     });
 
-    if (!model) return null;
+    if (!model) {
+      return null;
+    }
+
+    if (model.apartmentId !== apartmentId) {
+      return null;
+    }
 
     if (!isAdmin && !model.isPublic && model.userId !== requesterId) {
       return null;
     }
 
-    return ComplaintMapper.toEntity(model);
+    return model;
   };
 
   const findListForUser = async ({
@@ -48,19 +56,22 @@ export const ComplaintQueryRepo = (
     isAdmin,
     page,
     limit,
+    status,
   }: {
     apartmentId: string;
     requesterId: string;
     isAdmin: boolean;
     page: number;
     limit: number;
+    status?: "PENDING" | "IN_PROGRESS" | "RESOLVED";
   }): Promise<ComplaintListResult> => {
     const skip = (page - 1) * limit;
 
     const where = isAdmin
-      ? { apartmentId }
+      ? { apartmentId, ...(status && { status }) }
       : {
           apartmentId,
+          ...(status && { status }),
           OR: [{ isPublic: true }, { userId: requesterId }],
         };
 
@@ -76,7 +87,7 @@ export const ComplaintQueryRepo = (
     ]);
 
     return {
-      data: data.map(ComplaintMapper.toEntity),
+      data,
       totalCount,
     };
   };

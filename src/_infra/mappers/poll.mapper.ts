@@ -1,43 +1,52 @@
-import { Poll } from "../../_modules/polls/domain/poll.entity";
-
-export const PollMapper = {
-  toCreate: (p: Poll) => ({
-    id: p.id,
-    title: p.title,
-    description: p.description,
-    startAt: p.startAt,
-    endAt: p.endAt,
-    creatorId: p.creatorId,
-    options: {
-      create: p.options.map((o) => ({
-        id: o.id,
-        text: o.text,
-      })),
-    },
-  }),
-
-  toUpdate: (p: Poll) => ({
-    title: p.title,
-    description: p.description,
-    startAt: p.startAt,
-    endAt: p.endAt,
-  }),
-
-  toDomain: (row: any): Poll => {
-    return new Poll(
-      row.id,
-      row.title,
-      row.description,
-      row.creatorId,
-      row.creator?.name,
-      row.startAt,
-      row.endAt,
-      row.status,
-      row.options.map((o: any) => ({
-        id: o.id,
-        text: o.text,
-        voteCount: o.voteCount,
-      })),
-    );
+export const toPollListItemResponse = (p: any) => ({
+  id: p.id,
+  createdAt: p.createdAt,
+  title: p.title,
+  content: p.content,
+  status: p.status,
+  startDate: p.startDate,
+  endDate: p.endDate,
+  apartmentId: p.apartmentId,
+  building: p.building,
+  author: {
+    id: p.user?.id ?? p.author?.id,
+    name: p.user?.name ?? p.author?.name,
   },
-};
+});
+
+export const toPollListPagedResponse = (page: {
+  data: any[];
+  totalCount: number;
+  page: number;
+  limit: number;
+  hasNext: boolean;
+}) => ({
+  data: page.data.map(toPollListItemResponse),
+  totalCount: page.totalCount,
+  page: page.page,
+  limit: page.limit,
+  hasNext: page.hasNext,
+});
+
+export const toPollDetailResponse = (p: any) => ({
+  id: p.id,
+  createdAt: p.createdAt,
+  title: p.title,
+  content: p.content,
+  status: p.status,
+  startDate: p.startDate,
+  endDate: p.endDate,
+  apartmentId: p.apartmentId,
+  building: p.building,
+  author: {
+    id: p.user?.id ?? p.author?.id,
+    name: p.user?.name ?? p.author?.name,
+  },
+  options: (p.options ?? []).map((o: any) => ({
+    id: o.id,
+    title: o.title,
+    voteCount:
+      typeof o.voteCount === "number" ? o.voteCount : (o._count?.votes ?? 0),
+  })),
+  optionIdVotedByMe: p.optionIdVotedByMe ?? null,
+});

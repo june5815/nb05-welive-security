@@ -7,5 +7,6 @@ export const getComplaintListReqSchema = z.object({
     apartmentId: z.string(),
     page: z.coerce.number().default(1),
     limit: z.coerce.number().default(10),
+    status: z.enum(["PENDING", "IN_PROGRESS", "RESOLVED"]).optional(),
   }),
 });
