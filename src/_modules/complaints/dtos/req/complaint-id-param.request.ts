@@ -5,4 +5,3 @@ export const complaintIdParamSchema = z.object({
     complaintId: z.string(),
   }),
 });
-//ㅏ
