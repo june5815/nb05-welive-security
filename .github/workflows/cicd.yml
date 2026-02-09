@@ -99,7 +99,7 @@ jobs:
           script: |
             aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_SERVER_URI}
             docker-compose -f docker-compose.yml pull
-            docker-compose -f docker-compose.yml run --rm migrator
+            docker-compose -f docker-compose.yml run --rm migrator npx prisma db push
             docker-compose -f docker-compose.yml up -d
             docker image prune -f
             docker logout ${ECR_SERVER_URI}
