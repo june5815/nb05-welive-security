@@ -19,6 +19,17 @@ export interface INotificationCommandUsecase {
     building: number;
     unit: number;
   }) => Promise<void>;
+  sendComplaintCreatedNotification: (data: {
+    apartmentId: string;
+    complaintTitle: string;
+    residentName: string;
+  }) => Promise<void>;
+  sendComplaintStatusChangedNotification: (data: {
+    complaintId: string;
+    complaintTitle: string;
+    residentId: string;
+    newStatus: string;
+  }) => Promise<void>;
 }
 
 export const NotificationCommandUsecase = (
@@ -123,6 +134,81 @@ export const NotificationCommandUsecase = (
     }
   };
 
+  const sendComplaintCreatedNotification = async (data: {
+    apartmentId: string;
+    complaintTitle: string;
+    residentName: string;
+  }): Promise<void> => {
+    try {
+      if (!userQueryRepo) {
+        return;
+      }
+
+      const apartment = await userQueryRepo.findApartmentById(data.apartmentId);
+
+      if (!apartment || !apartment.admin?.id) {
+        return;
+      }
+
+      const notificationEvent = await notificationCommandRepo.createEvent({
+        type: "COMPLAINT_CREATED",
+        targetType: "APARTMENT",
+        targetId: data.apartmentId,
+        metadata: {
+          complaintTitle: data.complaintTitle,
+          residentName: data.residentName,
+        },
+      });
+
+      const receipt = {
+        userId: apartment.admin.id,
+        eventId: notificationEvent.id,
+        isChecked: false,
+        checkedAt: null,
+        isHidden: false,
+        hiddenAt: null,
+      };
+
+      await notificationCommandRepo.createReceipts([receipt]);
+    } catch (error) {
+      console.error("Complaint created notification error:", error);
+    }
+  };
+
+  const sendComplaintStatusChangedNotification = async (data: {
+    complaintId: string;
+    complaintTitle: string;
+    residentId: string;
+    newStatus: string;
+  }): Promise<void> => {
+    try {
+      if (!userQueryRepo) {
+        return;
+      }
+
+      const notificationEvent = await notificationCommandRepo.createEvent({
+        type: "COMPLAINT_UPDATED",
+        targetType: "COMPLAINT",
+        targetId: data.complaintId,
+        metadata: {
+          complaintTitle: data.complaintTitle,
+          newStatus: data.newStatus,
+        },
+      });
+
+      const receipt = {
+        userId: data.residentId,
+        eventId: notificationEvent.id,
+        isChecked: false,
+        checkedAt: null,
+        isHidden: false,
+        hiddenAt: null,
+      };
+
+      await notificationCommandRepo.createReceipts([receipt]);
+    } catch (error) {}
+  };
+
   return {
     async markAsRead(req: MarkNotificationAsReadReq): Promise<void> {
       try {
@@ -130,7 +216,6 @@ export const NotificationCommandUsecase = (
         validateUserId(userId);
         validateNotificationId(notificationReceiptId);
 
-        // Repository 호출
         await notificationCommandRepo.markAsRead(notificationReceiptId, userId);
       } catch (error) {
         if (error instanceof BusinessException) {
@@ -144,6 +229,8 @@ export const NotificationCommandUsecase = (
     },
     sendAdminSignupNotification,
     sendResidentSignupNotification,
+    sendComplaintCreatedNotification,
+    sendComplaintStatusChangedNotification,
   };
 };
 

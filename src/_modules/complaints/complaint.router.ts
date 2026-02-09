@@ -1,19 +1,48 @@
-import { Router, RequestHandler } from "express";
+import { Router } from "express";
+import { IBaseRouter } from "../_base/base.router";
 import { IComplaintController } from "./complaint.controller";
+import { IAuthMiddleware } from "../../_common/ports/middlewares/auth-middleware.interface";
+import { IRoleMiddleware } from "../../_common/ports/middlewares/role-middleware.interface";
+
+export interface IComplaintRouter {
+  router: Router;
+  PATH: string;
+}
 
 export const ComplaintRouter = (
-  baseRouter: Router,
+  baseRouter: IBaseRouter,
   controller: IComplaintController,
-  auth: RequestHandler,
-  role: (roles: string[]) => RequestHandler,
-): Router => {
-  const router = Router();
+  authMiddleware: IAuthMiddleware,
+  roleMiddleware: IRoleMiddleware,
+): IComplaintRouter => {
+  const router = baseRouter.router;
+  const catchError = baseRouter.catchError;
+  const PATH = "/api/v2/complaints";
 
-  router.post("/", auth, role(["USER"]), controller.create);
-  router.get("/", auth, role(["USER", "ADMIN"]), controller.list);
-  router.get("/:complaintId", auth, role(["USER", "ADMIN"]), controller.detail);
+  router.post(
+    "/",
+    authMiddleware.checkAuth,
+    roleMiddleware.hasRole(["USER"]),
+    catchError(controller.create),
+  );
+  router.get(
+    "/",
+    authMiddleware.checkAuth,
+    roleMiddleware.hasRole(["USER", "ADMIN"]),
+    catchError(controller.list),
+  );
+  router.get(
+    "/:complaintId",
+    authMiddleware.checkAuth,
+    roleMiddleware.hasRole(["USER", "ADMIN"]),
+    catchError(controller.detail),
+  );
+  router.patch(
+    "/:complaintId/status",
+    authMiddleware.checkAuth,
+    roleMiddleware.hasRole(["ADMIN"]),
+    catchError(controller.updateStatus),
+  );
 
-  baseRouter.use("/complaints", router);
-
-  return baseRouter;
+  return { router, PATH };
 };
