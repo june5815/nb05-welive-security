@@ -35,8 +35,8 @@ model User {
   avatar     String?
   joinStatus JoinStatus @default(PENDING)
   isActive   Boolean    @default(false)
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+  createdAt  DateTime   @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime   @updatedAt @db.Timestamptz(6)
   version    Int        @default(1)
 
   refreshToken RefreshToken?
@@ -59,7 +59,7 @@ model RefreshToken {
   id           String   @id @default(uuid())
   refreshToken String   @unique
   userId       String   @unique
-  updatedAt    DateTime @updatedAt
+  updatedAt    DateTime @updatedAt @db.Timestamptz(6)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -76,8 +76,8 @@ model Apartment {
   floorCountPerBuilding Int
   unitCountPerFloor     Int
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
   version   Int      @default(1)
 
   admin User? @relation(fields: [adminId], references: [id], onDelete: SetNull)
@@ -109,8 +109,8 @@ model Household {
   apartment Apartment         @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
   members   HouseholdMember[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
   version   Int      @default(1)
 
   @@unique([apartmentId, building, unit])
@@ -129,8 +129,8 @@ model HouseholdMember {
   movedInAt     DateTime?
   movedOutAt    DateTime?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
 
   household Household @relation(fields: [householdId], references: [id])
   user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -146,8 +146,8 @@ model ResidentImportLog {
   failCount    Int
   status       String   @default("pending")
   errorMessage String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(6)
 
   apartmentId String
   apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
@@ -174,8 +174,8 @@ model Complaint {
   isPublic   Boolean         @default(true)
   viewsCount Int             @default(0)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
   version   Int      @default(1)
 
   userId String
@@ -200,9 +200,9 @@ model Poll {
   title     String
   content   String
   status    PollStatus @default(PENDING)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  endDate   DateTime?
+  createdAt DateTime   @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime   @updatedAt @db.Timestamptz(6)
+  endDate   DateTime? @db.Timestamptz(6)
   version   Int        @default(1)
 
   userId String
@@ -235,7 +235,7 @@ model PollOption {
 }
 
 model PollVote {
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -274,8 +274,8 @@ model Notice {
   type     NoticeType     @default(NORMAL)
 
   viewCount Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
   version   Int      @default(1)
 
   userId String
@@ -314,7 +314,7 @@ enum NotificationTargetType {
 model NotificationEvent {
   id         String                 @id @default(uuid())
   type       NotificationType
-  createdAt  DateTime               @default(now())
+  createdAt  DateTime               @default(now()) @db.Timestamptz(6)
   version    Int                    @default(1)
   targetType NotificationTargetType
   targetId   String
@@ -328,7 +328,7 @@ model NotificationEvent {
 
 model NotificationReceipt {
   id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -337,9 +337,9 @@ model NotificationReceipt {
   event   NotificationEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   isChecked Boolean   @default(false)
-  checkedAt DateTime?
+  checkedAt DateTime? @db.Timestamptz(6)
   isHidden  Boolean   @default(false)
-  hiddenAt  DateTime?
+  hiddenAt  DateTime? @db.Timestamptz(6)
 
   @@unique([userId, eventId])
   @@index([userId, isHidden, isChecked, createdAt])
@@ -355,8 +355,8 @@ model Event {
   id    String @id @default(uuid())
   title String
 
-  startDate DateTime
-  endDate   DateTime
+  startDate DateTime @db.Timestamptz(6)
+  endDate   DateTime @db.Timestamptz(6)
 
   noticeId String @unique
   notice   Notice @relation(fields: [noticeId], references: [id], onDelete: Cascade)
@@ -366,8 +366,8 @@ model Event {
   apartmentId String
   apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
   version   Int      @default(1)
 
   @@index([apartmentId, startDate])
@@ -381,8 +381,8 @@ enum CommentResourceType {
 model Comment {
   id        String   @id @default(uuid())
   content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
   version   Int      @default(1)
 
   userId String
@@ -401,8 +401,8 @@ model PendingNotification {
   model     String // "notice", "poll", "complaint", "comment", "request"
   type      String // "notification", "alarm", "event"
   data      Json
-  createdAt DateTime @default(now())
-  expiresAt DateTime
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  expiresAt DateTime @db.Timestamptz(6)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
