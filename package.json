@@ -14,7 +14,7 @@
     "test:api:win": "cross-env NODE_ENV=test jest src/test/api --runInBand",
     "build": "npx tsc",
     "prod": "node ./dist/index.js",
-    "prepare": "husky",
+    "prepare": "husky || true",
     "seed": "prisma db seed"
   },
   "prisma": {
