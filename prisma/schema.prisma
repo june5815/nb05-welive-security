@@ -196,14 +196,18 @@ enum PollStatus {
 }
 
 model Poll {
-  id        String     @id @default(uuid())
-  title     String
-  content   String
-  status    PollStatus @default(PENDING)
-  createdAt DateTime   @default(now()) @db.Timestamptz(6)
-  updatedAt DateTime   @updatedAt @db.Timestamptz(6)
-  endDate   DateTime? @db.Timestamptz(6)
-  version   Int        @default(1)
+  id      String     @id @default(uuid())
+  title   String
+  content String
+  status  PollStatus @default(PENDING)
+
+  startDate DateTime @db.Timestamptz(6)
+  endDate   DateTime @db.Timestamptz(6)
+  building  Int?
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  version   Int      @default(1)
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -214,9 +218,14 @@ model Poll {
   options PollOption[]
   votes   PollVote[]
 
+  noticeId String? @unique
+  notice   Notice? @relation(fields: [noticeId], references: [id], onDelete: SetNull)
+
   @@index([userId])
   @@index([apartmentId])
   @@index([status])
+  @@index([startDate, endDate])
+  @@index([building])
 }
 
 model PollOption {
@@ -285,6 +294,7 @@ model Notice {
   apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
 
   event Event?
+  poll  Poll? 
 
   @@index([apartmentId])
   @@index([category])
@@ -318,7 +328,7 @@ model NotificationEvent {
   version    Int                    @default(1)
   targetType NotificationTargetType
   targetId   String
-  metadata   Json?                  @default("{}") 
+  metadata   Json?                  @default("{}")
   receipts   NotificationReceipt[]
 
   @@index([type, createdAt])

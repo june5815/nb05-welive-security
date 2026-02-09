@@ -1,8 +1,5 @@
 import { z } from "zod";
 
-/**
- * 공통 User 스키마
- */
 const adminUserSchema = z.object({
   id: z.string(),
   role: z.enum(["ADMIN", "SUPER_ADMIN"]),
@@ -16,79 +13,108 @@ const residentUserSchema = z.object({
 });
 
 /**
- * 투표 생성
+ * Swagger: POST /api/v2/polls
+ * body: { title, content, startDate, endDate, apartmentId, building, options[{title}] }
  */
 export const createPollReqSchema = z.object({
   user: adminUserSchema,
   body: z.object({
-    title: z.string(),
-    description: z.string().optional(),
-    options: z.array(z.string()).min(2),
-    startAt: z.string(),
-    endAt: z.string(),
-    targetApartmentId: z.string(),
+    title: z.string().min(1),
+    content: z.string().min(1),
+    startDate: z.string().datetime(),
+    endDate: z.string().datetime(),
+    apartmentId: z.string().uuid(),
+    building: z.number().int().nullable().optional(),
+    options: z.array(z.object({ title: z.string().min(1) })).min(2),
   }),
 });
 
 /**
- * 투표 목록
+ * Swagger: GET /api/v2/polls
+ * query: { page, limit, searchKeyword, status, building }
  */
 export const getPollListReqSchema = z.object({
-  query: z.object({
+  user: z.object({
+    id: z.string(),
+    role: z.enum(["ADMIN", "SUPER_ADMIN", "USER"]),
     apartmentId: z.string(),
+  }),
+  query: z.object({
+    page: z.coerce.number().int().optional().default(1),
+    limit: z.coerce.number().int().optional().default(20),
+    searchKeyword: z.string().optional().default(""),
     status: z.enum(["PENDING", "IN_PROGRESS", "CLOSED"]).optional(),
-    page: z.coerce.number().optional(),
-    limit: z.coerce.number().optional(),
+    building: z.coerce.number().int().optional(),
   }),
 });
 
 /**
- * 투표 상세
+ * Swagger: GET /api/v2/polls/{pollId}
  */
 export const getPollDetailReqSchema = z.object({
+  user: z.object({
+    id: z.string(),
+    role: z.enum(["ADMIN", "SUPER_ADMIN", "USER"]),
+    apartmentId: z.string(),
+  }),
   params: z.object({
-    pollId: z.string(),
+    pollId: z.string().uuid(),
   }),
 });
 
 /**
- * 투표 수정
+ * Swagger: PATCH /api/v2/polls/{pollId}
+ * body: { title, content, startDate, endDate, building, options[{id,title}] }
  */
 export const updatePollReqSchema = z.object({
-  params: z.object({
-    pollId: z.string(),
-  }),
   user: adminUserSchema,
+  params: z.object({
+    pollId: z.string().uuid(),
+  }),
   body: z.object({
-    title: z.string().optional(),
-    description: z.string().optional(),
-    startAt: z.string().optional(),
-    endAt: z.string().optional(),
+    title: z.string().min(1).optional(),
+    content: z.string().min(1).optional(),
+    startDate: z.string().datetime().optional(),
+    endDate: z.string().datetime().optional(),
+    building: z.number().int().nullable().optional(),
+    options: z
+      .array(
+        z.object({
+          id: z.string().uuid(),
+          title: z.string().min(1),
+        }),
+      )
+      .optional(),
   }),
 });
 
 /**
- * 투표 삭제
+ * Swagger: DELETE /api/v2/polls/{pollId}
  */
 export const deletePollReqSchema = z.object({
-  params: z.object({
-    pollId: z.string(),
-  }),
   user: adminUserSchema,
+  params: z.object({
+    pollId: z.string().uuid(),
+  }),
 });
 
 /**
- * 투표
+ * Swagger: POST /api/v2/polls/{pollId}/options/{optionId}/vote
  */
 export const votePollReqSchema = z.object({
-  params: z.object({
-    pollId: z.string(),
-    optionId: z.string(),
-  }),
   user: residentUserSchema,
+  params: z.object({
+    pollId: z.string().uuid(),
+    optionId: z.string().uuid(),
+  }),
 });
 
-/**
- * 투표 취소
- */
 export const cancelVotePollReqSchema = votePollReqSchema;
+
+export type CreatePollReqDto = z.infer<typeof createPollReqSchema>;
+export type GetPollListReqDto = z.infer<typeof getPollListReqSchema>;
+export type GetPollDetailReqDto = z.infer<typeof getPollDetailReqSchema>;
+export type UpdatePollReqDto = z.infer<typeof updatePollReqSchema>;
+export type DeletePollReqDto = z.infer<typeof deletePollReqSchema>;
+export type VotePollReqDto = z.infer<typeof votePollReqSchema>;
+export type CancelVotePollReqDto = z.infer<typeof cancelVotePollReqSchema>;
