@@ -1,16 +1,20 @@
 import { Request, Response } from "express";
 import { IBaseController } from "../_base/base.controller";
-import { PollCommandService } from "./service/poll-command.service";
 import { PollQueryService } from "./service/poll-query.service";
-
 import {
   createPollReqSchema,
   getPollListReqSchema,
   getPollDetailReqSchema,
   updatePollReqSchema,
+  deletePollReqSchema,
   votePollReqSchema,
   cancelVotePollReqSchema,
 } from "./dtos/req/poll.request";
+import {
+  BusinessException,
+  BusinessExceptionType,
+} from "../../_common/exceptions/business.exception";
+import { PollCommandService } from "./service/poll-command.service";
 
 export const PollController = (
   base: IBaseController,
@@ -25,14 +29,14 @@ export const PollController = (
       body: req.body,
     });
 
-    const poll = await command.create(dto);
-    res.status(201).json(poll);
+    const result = await command.create(dto);
+    res.status(201).json(result);
   };
 
   const getPollList = async (req: Request, res: Response) => {
     const dto = validate(getPollListReqSchema, {
-      query: req.query,
       user: req.user,
+      query: req.query,
     });
 
     const result = await query.getList(dto);
@@ -41,53 +45,57 @@ export const PollController = (
 
   const getPollDetail = async (req: Request, res: Response) => {
     const dto = validate(getPollDetailReqSchema, {
-      params: req.params,
       user: req.user,
+      params: req.params,
     });
 
     const result = await query.getDetail(dto);
+    if (!result) {
+      throw new BusinessException({ type: BusinessExceptionType.NOT_FOUND });
+    }
+
     res.status(200).json(result);
   };
 
   const updatePoll = async (req: Request, res: Response) => {
     const dto = validate(updatePollReqSchema, {
+      user: req.user,
       params: req.params,
       body: req.body,
-      user: req.user,
     });
 
     await command.update(dto);
-    res.status(204).json();
+    res.status(204).end();
   };
 
   const deletePoll = async (req: Request, res: Response) => {
-    const dto = validate(getPollDetailReqSchema, {
-      params: req.params,
+    const dto = validate(deletePollReqSchema, {
       user: req.user,
+      params: req.params,
     });
 
-    await command.delete(dto.params.pollId);
-    res.status(204).json();
+    await command.delete(dto);
+    res.status(204).end();
   };
 
   const vote = async (req: Request, res: Response) => {
     const dto = validate(votePollReqSchema, {
-      params: req.params,
       user: req.user,
+      params: req.params,
     });
 
     await command.vote(dto);
-    res.status(204).json();
+    res.status(204).end();
   };
 
   const cancelVote = async (req: Request, res: Response) => {
     const dto = validate(cancelVotePollReqSchema, {
-      params: req.params,
       user: req.user,
+      params: req.params,
     });
 
     await command.cancelVote(dto);
-    res.status(204).json();
+    res.status(204).end();
   };
 
   return {

@@ -68,6 +68,12 @@ import { RoleMiddleware } from "./_common/middlewares/role.middleware";
 import { StaticServeMiddleware } from "./_common/middlewares/static-serve.middleware";
 
 import { HttpServer, IHttpServer } from "./servers/http-server";
+import { PollRoutes } from "./_modules/polls/poll.routes";
+import { PollCommandService } from "./_modules/polls/service/poll-command.service";
+import { PollQueryService } from "./_modules/polls/service/poll-query.service";
+import { PollController } from "./_modules/polls/poll.controller";
+import { PollCommandRepository } from "./_modules/polls/ports/poll-command.repo";
+import { PollQueryRepository } from "./_modules/polls/ports/poll-query.repo";
 
 export const Injector = () => {
   const configUtil = ConfigUtil();
@@ -130,6 +136,12 @@ export const Injector = () => {
     notificationEventManager,
   );
 
+  const pollCommandRepo = PollCommandRepository(prisma);
+  const pollQueryRepo = PollQueryRepository(prisma);
+
+  const pollCommandService = PollCommandService(pollCommandRepo);
+  const pollQueryService = PollQueryService(pollQueryRepo);
+
   const authMiddleware = AuthMiddleware(tokenUtil);
   const cookieMiddleware = CookieMiddleware(configUtil);
   const corsMiddleware = CorsMiddleware(configUtil);
@@ -174,6 +186,11 @@ export const Injector = () => {
     complaintCommandService,
     complaintQueryService,
   );
+  const pollController = PollController(
+    baseController,
+    pollQueryService,
+    pollCommandService,
+  );
 
   const baseRouter = BaseRouter();
   const authRouter = AuthRouter(BaseRouter(), authController);
@@ -200,6 +217,7 @@ export const Injector = () => {
     roleMiddleware,
     noticeNotificationUsecase,
   );
+  const pollRouter = PollRoutes(pollController, authMiddleware, roleMiddleware);
 
   const commentRouter = CommentRouter(
     BaseRouter(),
@@ -248,10 +266,11 @@ export const Injector = () => {
     apartmentRouter,
     residentRouter,
     noticeRouter,
+    pollRouter,
     commentRouter,
     eventRouter,
     notificationRouter,
-    complaintRouter,
+    // complaintRouter,
   );
 
   return {
