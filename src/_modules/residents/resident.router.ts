@@ -51,6 +51,13 @@ export const ResidentRouter = (
     catchError(residentController.importResidentsFromFile),
   );
 
+  router.get(
+    "/file/export",
+    authMiddleware.checkAuth,
+    roleMiddleware.hasRole(["ADMIN"]),
+    catchError(residentController.exportResidentList),
+  );
+
   // household
   router.get(
     "/:id",

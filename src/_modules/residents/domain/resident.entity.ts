@@ -203,6 +203,7 @@ export const HouseholdEntity = {
       name: props.name,
       isHouseholder: props.isHouseholder,
       movedInAt: new Date(),
+      movedOutAt: undefined, 
       createdAt: new Date(),
       updatedAt: new Date(),
     };
