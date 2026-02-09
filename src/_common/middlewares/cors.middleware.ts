@@ -41,8 +41,10 @@ export const CorsMiddleware = (configUtil: IConfigUtil): ICorsMiddleware => {
   options.credentials = true; // 👈 쿠키/인증 헤더 허용 필수
 
   const corsHandler = () => {
-    // 👇 [중요] 아까는 여기가 cors() 였습니다. options를 꼭 넣어주세요!
-    return cors(options);
+    return cors({
+      origin: "*",
+      credentials: true,
+    });
   };
 
   return {
