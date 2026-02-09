@@ -11,6 +11,7 @@ export const CorsMiddleware = (configUtil: IConfigUtil): ICorsMiddleware => {
   const whitelist: string[] = [
     "http://localhost:3000", // 로컬 테스트용
     "http://3.39.195.73:3000", // 👈 [중요] EC2 프론트엔드 주소 (HTTP)
+    "http://ec2-3-39-195-73.ap-northeast-2.compute.amazonaws.com:3000",
   ];
 
   // 환경변수에 CLIENT_DOMAIN이 있다면 그것도 추가 (HTTP/HTTPS 둘 다)
@@ -41,10 +42,7 @@ export const CorsMiddleware = (configUtil: IConfigUtil): ICorsMiddleware => {
   options.credentials = true; // 👈 쿠키/인증 헤더 허용 필수
 
   const corsHandler = () => {
-    return cors({
-      origin: "*",
-      credentials: true,
-    });
+    return cors(options);
   };
 
   return {
