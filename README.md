@@ -98,53 +98,56 @@
 
 ## 📁 프로젝트 파일 구조
 
+```bash
 welive
 ├─ Dockerfile
 ├─ README.md
 ├─ package.json
 ├─ tsconfig.json
 ├─ prisma
-│ └─ schema.prisma
+│  └─ schema.prisma
 └─ src
-├─ \_common # 전역 공통 영역 (Framework / Cross-cutting)
-│ ├─ exceptions # 비즈니스 / 기술 예외 정의
-│ ├─ middlewares # 공통 미들웨어
-│ ├─ http # HTTP 에러/응답 매핑
-│ ├─ ports # 외부/인프라 의존 인터페이스
-│ │ ├─ db
-│ │ ├─ externals
-│ │ ├─ managers
-│ │ ├─ mappers
-│ │ ├─ middlewares
-│ │ └─ repos
-│ ├─ utils # 공통 유틸
-│ ├─ sse # SSE 공통 로직
-│ └─ types # 글로벌 타입 확장
-│
-├─ \_infra # 인프라 구현체 영역
-│ ├─ db # DB / Unit of Work / Transaction
-│ ├─ repos # Repository 구현체
-│ ├─ externals # Redis, S3 등 외부 시스템
-│ ├─ manager # 암호화, 해시 등 매니저
-│ ├─ mappers # Entity ↔ Persistence Mapper
-│ ├─ sse # SSE 인프라 구현
-│ └─ storage # 파일 스토리지
-│
-├─ \_modules # 도메인 중심 기능 모듈
-│ ├─ \_base # 공통 Controller / Router 베이스
-│ ├─ apartments
-│ ├─ auth
-│ ├─ comments
-│ ├─ complaints
-│ ├─ events
-│ ├─ notices
-│ ├─ notification
-│ ├─ polls
-│ ├─ residents
-│ └─ users
-│
-├─ servers # 서버 진입점
-│ └─ http-server.ts
-├─ app.ts # 애플리케이션 설정
-├─ injector.ts # 의존성 주입 설정
-└─ test # API / Unit 테스트
+   ├─ _common               # 전역 공통 영역 (Framework / Cross-cutting)
+   │  ├─ exceptions         # 비즈니스 / 기술 예외 정의
+   │  ├─ middlewares        # 공통 미들웨어
+   │  ├─ http               # HTTP 에러 / 응답 매핑
+   │  ├─ ports              # 외부/인프라 의존 인터페이스
+   │  │  ├─ db
+   │  │  ├─ externals
+   │  │  ├─ managers
+   │  │  ├─ mappers
+   │  │  ├─ middlewares
+   │  │  └─ repos
+   │  ├─ utils              # 공통 유틸
+   │  ├─ sse                # SSE 공통 로직
+   │  └─ types              # 글로벌 타입 확장
+   │
+   ├─ _infra                # 인프라 구현체 영역
+   │  ├─ db                 # DB / Unit of Work / Transaction
+   │  ├─ repos              # Repository 구현체
+   │  ├─ externals           # Redis, S3 등 외부 시스템
+   │  ├─ manager             # 암호화, 해시 매니저
+   │  ├─ mappers             # Entity ↔ Persistence Mapper
+   │  ├─ sse                 # SSE 인프라 구현
+   │  └─ storage             # 파일 스토리지
+   │
+   ├─ _modules              # 도메인 중심 기능 모듈
+   │  ├─ _base              # 공통 Controller / Router 베이스
+   │  ├─ apartments
+   │  ├─ auth
+   │  ├─ comments
+   │  ├─ complaints
+   │  ├─ events
+   │  ├─ notices
+   │  ├─ notification
+   │  ├─ polls
+   │  ├─ residents
+   │  └─ users
+   │
+   ├─ servers               # 서버 진입점
+   │  └─ http-server.ts
+   ├─ app.ts                # 애플리케이션 설정
+   ├─ injector.ts           # 의존성 주입 설정
+   └─ test                  # API / Unit 테스트
+
+```
