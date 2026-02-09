@@ -270,7 +270,7 @@ export const Injector = () => {
     commentRouter,
     eventRouter,
     notificationRouter,
-    // complaintRouter,
+    complaintRouter,
   );
 
   return {

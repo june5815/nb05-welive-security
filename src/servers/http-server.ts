@@ -17,6 +17,7 @@ import { ICommentRouter } from "../_modules/comments/routes";
 import { IEventRouter } from "../_modules/events/routes";
 import { INotificationRouter } from "../_modules/notification/notification.router";
 import { IComplaintRouter } from "../_modules/complaints/complaint.router";
+import { IPollRouter } from "../_modules/polls/poll.routes";
 
 export interface IHttpServer {
   start: () => void;
@@ -37,6 +38,7 @@ export const HttpServer = (
   apartmentRouter: IApartmentRouter,
   residentRouter: IResidentRouter,
   noticeRouter: INoticeRouter,
+  pollRouter: IPollRouter,
   commentRouter: ICommentRouter,
   eventRouter: IEventRouter,
   notificationRouter: INotificationRouter,
@@ -58,6 +60,7 @@ export const HttpServer = (
   app.use(userRouter.PATH, userRouter.router);
   app.use(residentRouter.PATH, residentRouter.router);
   app.use(noticeRouter.PATH, noticeRouter.router);
+  app.use(pollRouter.PATH, pollRouter.router);
   app.use(commentRouter.PATH, commentRouter.router);
   app.use(eventRouter.PATH, eventRouter.router);
   app.use(complaintRouter.PATH, complaintRouter.router);
