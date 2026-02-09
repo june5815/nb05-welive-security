@@ -51,6 +51,17 @@ services:
       #     # /etc/acme.sh: 인증서가 만료되기 전에 자동으로 인증서 재발급
       #     - acme:/etc/acme.sh
 
+  client:
+    image: ${FRONTEND_IMAGE_NAME} # GitHub Actions에서 설정한 변수 사용
+    container_name: ec2-user-client # 컨테이너 이름 고정
+    restart: always
+    networks:
+      - codeit-network
+    ports:
+      - "3000:3000" # EC2 3000번 포트 -> 컨테이너 3000번 포트 연결
+    environment:
+      - NODE_ENV=production
+
   server:
     depends_on:
       - redis
