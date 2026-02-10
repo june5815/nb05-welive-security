@@ -1,0 +1,106 @@
+# Github Secrets
+# AWS_ACCESS_KEY_ID(duplicated in .env.prod)
+# AWS_SECRET_ACCESS_KEY(duplicated in .env.prod)
+# AWS_REGION(duplicated in .env.prod)
+# ECR_SERVER_URI
+# EC2_HOST
+# EC2_USERNAME
+# EC2_SSH_PRIVATE_KEY
+# ENV
+
+name: ci/cd
+
+on:
+  pull_request:
+    branches: ["dev", "main"]
+  push:
+    branches: ["main", "dev"]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout branch
+        uses: actions/checkout@v3
+
+      - name: install node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "lts/*"
+          cache: "npm"
+
+      - name: install dependencies
+        run: npm ci
+
+      - name: check types
+        run: npm run type:check
+
+      - name: check format
+        run: npm run format:check
+
+      - name: run unit test
+        run: npm run test:unit
+  cd:
+    needs: ci
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
+    runs-on: ubuntu-latest
+    steps:
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}
+          aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+          aws-region: ${{secrets.AWS_REGION}}
+
+      - name: login to ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: checkout branch
+        uses: actions/checkout@v3
+
+      - name: build and push docker image to ecr
+        run: |
+          docker build --target runner -t ${{secrets.ECR_SERVER_URI}}:latest -t ${{secrets.ECR_SERVER_URI}}:${{github.sha}} .
+          docker build --target migrator -t ${{secrets.ECR_SERVER_URI}}:migrator .
+          docker push ${{secrets.ECR_SERVER_URI}}:latest
+          docker push ${{secrets.ECR_SERVER_URI}}:${{github.sha}}
+          docker push ${{secrets.ECR_SERVER_URI}}:migrator
+
+      - name: create .env.prod on ec2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{secrets.EC2_HOST}}
+          username: ${{secrets.EC2_USERNAME}}
+          key: ${{secrets.EC2_SSH_PRIVATE_KEY}}
+          script: |
+            echo "${{secrets.ENV}}" > .env.prod
+
+      - name: copy docker-compose.yml to ec2
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{secrets.EC2_HOST}}
+          username: ${{secrets.EC2_USERNAME}}
+          key: ${{secrets.EC2_SSH_PRIVATE_KEY}}
+          source: "docker-compose.yml"
+          target: "/home/${{secrets.EC2_USERNAME}}"
+
+      - name: run docker-compose.yml on ec2
+        uses: appleboy/ssh-action@master
+        env:
+          AWS_REGION: ${{secrets.AWS_REGION}}
+          ECR_SERVER_URI: ${{secrets.ECR_SERVER_URI}}
+          SERVER_IMAGE_NAME: ${{secrets.ECR_SERVER_URI}}:latest
+          MIGRATOR_IMAGE_NAME: ${{secrets.ECR_SERVER_URI}}:migrator
+        with:
+          host: ${{secrets.EC2_HOST}}
+          username: ${{secrets.EC2_USERNAME}}
+          key: ${{secrets.EC2_SSH_PRIVATE_KEY}}
+          envs: AWS_REGION,ECR_SERVER_URI,SERVER_IMAGE_NAME,MIGRATOR_IMAGE_NAME
+          script: |
+            aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_SERVER_URI}
+            docker-compose -f docker-compose.yml pull
+            docker-compose -f docker-compose.yml run --rm migrator npx prisma db push
+            docker-compose -f docker-compose.yml up -d
+            docker image prune -f
+            docker logout ${ECR_SERVER_URI}
+            rm -f .env.prod

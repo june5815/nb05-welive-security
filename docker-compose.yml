@@ -1,0 +1,101 @@
+# Recommended ec2 cpu: 2
+# Recommended ec2 memory: 2GB
+
+networks:
+  codeit-network:
+    driver: bridge
+
+volumes:
+  certs:
+  html:
+  vhost:
+  acme:
+  public:
+
+services:
+  nginx-proxy:
+    image: nginxproxy/nginx-proxy
+    restart: always
+    networks:
+      - codeit-network
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./.docker/nginx/conf.d/custom.conf:/etc/nginx/conf.d/custom.conf:ro
+      # - certs:/etc/nginx/certs
+      # - html:/usr/share/nginx/html
+      # - vhost:/etc/nginx/vhost.d
+
+      # nginx-proxy-acme:
+      #   depends_on:
+      #     - nginx-proxy
+      #   image: nginxproxy/acme-companion
+      #   restart: always
+      #   networks:
+      #     - codeit-network
+      #   volumes:
+      #     # /var/run/docker.sock(도커가 관리) <-> /tmp/docker.sock(컨테이너 내부)(read-only)
+      #     # /var/run/docker.sock: 도커 데몬과 연결해서 도커 컨테이너들의 상태를 감시하고 조회할 수 있음
+      #     - /var/run/docker.sock:/tmp/docker.sock:ro
+      #     # certs 저장소(도커가 관리) <-> /etc/nginx/certs(컨테이너 내부)
+      #     # /etc/nginx/certs: let's encrypt 인증서, 개인키 보관
+      #     - certs:/etc/nginx/certs
+      #     # html 저장소(도커가 관리) <-> /usr/share/nginx/html(컨테이너 내부)
+      #     # /usr/share/nginx/html: 도메인 소유권 확인을 위한 파일 경로
+      #     - html:/usr/share/nginx/html
+      #     # vhost 저장소(도커가 관리) <-> /etc/nginx/vhost.d(컨테이너 내부)
+      #     # /etc/nginx/vhost.d: 설정 파일(https redirect 등등)
+      #     - vhost:/etc/nginx/vhost.d
+      #     # acme 저장소(도커가 관리) <-> /etc/acme.sh(컨테이너 내부)
+      #     # /etc/acme.sh: 인증서가 만료되기 전에 자동으로 인증서 재발급
+      #     - acme:/etc/acme.sh
+
+  client:
+    image: ${FRONTEND_IMAGE_NAME} # 프론트엔드 이미지 주소
+    container_name: ec2-user-client
+    restart: always
+    networks:
+      - codeit-network
+    ports:
+      - "3000:3000" # EC2 3000번 포트로 접속
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_BASE_URL=http://3.39.195.73
+
+  server:
+    depends_on:
+      - redis
+    image: ${SERVER_IMAGE_NAME}
+    restart: always
+    deploy:
+      # replicas: 1
+      replicas: 2 # for distributed server study
+    networks:
+      - codeit-network
+    expose:
+      - "4000"
+    env_file: .env.prod
+    environment:
+      - VIRTUAL_HOST=3.39.195.73
+      # - VIRTUAL_HOST=api.example.com
+      - VIRTUAL_PORT=4000
+      # - LETSENCRYPT_HOST=api.example.com
+      # - LETSENCRYPT_EMAIL=production@example.com
+    volumes:
+      - public:/server/public
+
+  redis:
+    image: redis:alpine
+    restart: "always"
+    networks:
+      - codeit-network
+    expose:
+      - "6379"
+
+  migrator:
+    image: ${MIGRATOR_IMAGE_NAME}
+    networks:
+      - codeit-network
+    env_file: .env.prod

@@ -1,0 +1,424 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  USER
+}
+
+enum JoinStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum UserType {
+  PRE_RESIDENT
+  RESIDENT
+}
+
+model User {
+  id         String     @id @default(uuid())
+  username   String     @unique
+  password   String
+  email      String     @unique
+  contact    String     @unique
+  name       String
+  role       UserRole
+  avatar     String?
+  joinStatus JoinStatus @default(PENDING)
+  isActive   Boolean    @default(false)
+  createdAt  DateTime   @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime   @updatedAt @db.Timestamptz(6)
+  version    Int        @default(1)
+
+  refreshToken RefreshToken?
+  adminOf      Apartment?
+  resident     HouseholdMember?
+
+  notices              Notice[]
+  complaints           Complaint[]
+  polls                Poll[]
+  pollVotes            PollVote[]
+  comments             Comment[]
+  pendingNotifications PendingNotification[]
+
+  residentImportLogs ResidentImportLog[]
+
+  notificationReceipts NotificationReceipt[]
+}
+
+model RefreshToken {
+  id           String   @id @default(uuid())
+  refreshToken String   @unique
+  userId       String   @unique
+  updatedAt    DateTime @updatedAt @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Apartment {
+  id                    String  @id @default(uuid())
+  name                  String
+  address               String
+  description           String
+  officeNumber          String
+  adminId               String? @unique
+  buildingNumberFrom    Int
+  buildingNumberTo      Int
+  floorCountPerBuilding Int
+  unitCountPerFloor     Int
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  version   Int      @default(1)
+
+  admin User? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+
+  household          Household[]
+  complaints         Complaint[]
+  polls              Poll[]
+  notices            Notice[]
+  events             Event[]
+  residentImportLogs ResidentImportLog[]
+
+  @@unique([name, address, officeNumber])
+  @@index([adminId])
+}
+
+enum HouseholdStatus {
+  EMPTY
+  ACTIVE
+  MOVE_OUT
+}
+
+model Household {
+  id              String          @id @default(uuid())
+  apartmentId     String
+  building        Int
+  unit            Int
+  householdStatus HouseholdStatus @default(EMPTY)
+
+  apartment Apartment         @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+  members   HouseholdMember[]
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  version   Int      @default(1)
+
+  @@unique([apartmentId, building, unit])
+  @@index([apartmentId])
+}
+
+model HouseholdMember {
+  id            String    @id @default(uuid())
+  householdId   String
+  userId        String?   @unique
+  email         String    @unique
+  contact       String
+  name          String
+  isHouseholder Boolean   @default(false)
+  userType      UserType  @default(PRE_RESIDENT)
+  movedInAt     DateTime?
+  movedOutAt    DateTime?
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  household Household @relation(fields: [householdId], references: [id])
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model ResidentImportLog {
+  id           String   @id
+  fileName     String
+  totalCount   Int
+  successCount Int
+  failCount    Int
+  status       String   @default("pending")
+  errorMessage String?
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(6)
+
+  apartmentId String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([apartmentId])
+  @@index([userId])
+}
+
+enum ComplaintStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+}
+
+model Complaint {
+  id      String @id @default(uuid())
+  title   String
+  content String
+
+  status     ComplaintStatus @default(PENDING)
+  isPublic   Boolean         @default(true)
+  viewsCount Int             @default(0)
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  version   Int      @default(1)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  apartmentId String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([apartmentId])
+  @@index([status])
+}
+
+enum PollStatus {
+  PENDING
+  IN_PROGRESS
+  CLOSED
+}
+
+model Poll {
+  id      String     @id @default(uuid())
+  title   String
+  content String
+  status  PollStatus @default(PENDING)
+
+  startDate DateTime @db.Timestamptz(6)
+  endDate   DateTime @db.Timestamptz(6)
+  building  Int?
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  version   Int      @default(1)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  apartmentId String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+
+  options PollOption[]
+  votes   PollVote[]
+
+  noticeId String? @unique
+  notice   Notice? @relation(fields: [noticeId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([apartmentId])
+  @@index([status])
+  @@index([startDate, endDate])
+  @@index([building])
+}
+
+model PollOption {
+  id        String @id @default(uuid())
+  text      String
+  order     Int
+  voteCount Int    @default(0)
+
+  pollId String
+  poll   Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
+
+  votes PollVote[]
+
+  @@unique([pollId, order])
+  @@index([pollId])
+}
+
+model PollVote {
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  pollId String
+  poll   Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
+
+  optionId String
+  option   PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, pollId])
+  @@index([userId])
+  @@index([pollId])
+  @@index([optionId])
+}
+
+enum NoticeCategory {
+  MAINTENANCE
+  EMERGENCY
+  COMMUNITY
+  RESIDENT_VOTE
+  RESIDENT_COUNCIL
+  ETC
+}
+
+enum NoticeType {
+  NORMAL
+  IMPORTANT
+}
+
+model Notice {
+  id       String         @id @default(uuid())
+  title    String
+  content  String
+  category NoticeCategory
+  type     NoticeType     @default(NORMAL)
+
+  viewCount Int      @default(0)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  version   Int      @default(1)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  apartmentId String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+
+  event Event?
+  poll  Poll? 
+
+  @@index([apartmentId])
+  @@index([category])
+}
+
+enum NotificationType {
+  COMPLAINT_CREATED
+  COMPLAINT_UPDATED
+  POLL_CREATED
+  POLL_ENDED
+  NOTICE_CREATED
+  NOTICE_POSTED
+  COMMENT_ADDED
+  ADMIN_SIGNUP_REQUESTED
+  RESIDENT_SIGNUP_REQUESTED
+}
+
+enum NotificationTargetType {
+  COMPLAINT
+  POLL
+  NOTICE
+  COMMENT
+  APARTMENT
+  USER
+}
+
+model NotificationEvent {
+  id         String                 @id @default(uuid())
+  type       NotificationType
+  createdAt  DateTime               @default(now()) @db.Timestamptz(6)
+  version    Int                    @default(1)
+  targetType NotificationTargetType
+  targetId   String
+  metadata   Json?                  @default("{}")
+  receipts   NotificationReceipt[]
+
+  @@index([type, createdAt])
+  @@index([targetType, targetId])
+  @@index([createdAt])
+}
+
+model NotificationReceipt {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  eventId String
+  event   NotificationEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  isChecked Boolean   @default(false)
+  checkedAt DateTime? @db.Timestamptz(6)
+  isHidden  Boolean   @default(false)
+  hiddenAt  DateTime? @db.Timestamptz(6)
+
+  @@unique([userId, eventId])
+  @@index([userId, isHidden, isChecked, createdAt])
+  @@index([userId, createdAt])
+}
+
+enum EventResourceType {
+  NOTICE
+  POLL
+}
+
+model Event {
+  id    String @id @default(uuid())
+  title String
+
+  startDate DateTime @db.Timestamptz(6)
+  endDate   DateTime @db.Timestamptz(6)
+
+  noticeId String @unique
+  notice   Notice @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+
+  resourceType EventResourceType @default(NOTICE)
+
+  apartmentId String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  version   Int      @default(1)
+
+  @@index([apartmentId, startDate])
+}
+
+enum CommentResourceType {
+  NOTICE
+  COMPLAINT
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  version   Int      @default(1)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  resourceId   String
+  resourceType CommentResourceType
+
+  @@index([userId])
+  @@index([resourceType, resourceId])
+}
+
+model PendingNotification {
+  id        String   @id @default(uuid())
+  userId    String
+  model     String // "notice", "poll", "complaint", "comment", "request"
+  type      String // "notification", "alarm", "event"
+  data      Json
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  expiresAt DateTime @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 중복 방지: 같은 사용자, 모델, 데이터는 1개만 저장
+  @@unique([userId, model, data], name: "unique_pending_notification")
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([model])
+}
