@@ -1,3 +1,4 @@
+# 🧑‍💻 팀 고급 프로젝트
 # nb05-welive-security
 
 **WeLive Security**  
@@ -6,7 +7,18 @@
 
 ---
 
-## 📌 프로젝트 개요
+## 👥 팀원 구성
+
+| 이름       | 역할        | GitHub                                                       | 개인 개발 블로그                                                   |
+| ---------- | ----------- | ------------------------------------------------------------ | ---------------------------------------------------------------- |
+| **오창섭** | 백엔드 개발 | 🔗 [GitHub](https://github.com/GhostGN95) | 🔗 []() |
+| **양다온** | 백엔드 개발 | 🔗 [GitHub]() | 🔗 []() |
+| **정지원** | 백엔드 개발 | 🔗 [GitHub]() | 🔗 []() |
+| **최지혜** | 백엔드 개발 | 🔗 [GitHub](https://github.com/918-jihye?tab=repositories) | 🔗 [노션](https://www.notion.so/NB-5-303bc88351b7801bbc84eff42856e704?source=copy_link) |
+
+---
+
+## 📘 프로젝트 소개
 
 - **프로젝트 명:** WeLive (위리브)
 - **설명:**  
@@ -14,57 +26,32 @@
   공지, 민원, 투표, 알림 등을 안전하게 관리하고 소통할 수 있도록 지원하는 서비스입니다.
 - **프로젝트 기간:** 2026.01.05 ~ 2026.02.10
 
-### 🔗 프로젝트 계획서
-
-- Notion:  
-  https://www.notion.so/Team-Security-2dfd8a3b973f80c0b429d3868c005826
+- ([팀 협업 문서 링크](https://www.notion.so/Team-Security-2dfd8a3b973f80c0b429d3868c005826?source=copy_link))
 
 ---
 
-## 🛠 기술 스택
+## 🧰 기술 스택
 
-### Backend
-
-- Node.js
-- Express.js
-- TypeScript
-- Prisma ORM
-
-### Database
-
-- PostgreSQL
-
-### Infra / External
-
-- Redis
-- AWS S3
-- Server-Sent Events (SSE)
-
-### 협업 및 공통 도구
-
-- Git & GitHub
-- Discord
-- Notion
-- Notion Timeline (일정 관리)
+| 구분          | 사용 기술                     |
+| ------------- | ----------------------------- |
+| **Backend**   | Node.js, Express.js, PrismaORM, TypeScript |
+| **Database**  | PostgreSQL                    |
+| **공통 Tool** | Git & GitHub, Discord, Notion, Notion Timeline |
+| **Infra / External** | Redis, AWS S3, Server-Sent Events (SSE) |
 
 ---
 
-## 👥 팀 구성
+## 🔧 팀원별 구현 기능
 
-| 이름   | 역할              |
-| ------ | ----------------- |
-| 양다온 | Backend Developer |
-| 오창섭 | Backend Developer |
-| 정지원 | Backend Developer |
-| 최지혜 | Backend Developer |
+### 🟦 양다온
+(자신이 개발한 기능에 대한 사진이나 gif 파일 첨부)
+
+
 
 ---
 
-## 🧩 팀원별 구현 기능
-
-### 양다온
-
-### 오창섭
+### 🟩 오창섭
+(자신이 개발한 기능에 대한 사진이나 gif 파일 첨부)
 
 - Auth
   - 1.로그인
@@ -110,10 +97,10 @@
   - 2. 개인 정보 상세 조회 (슈퍼 관리자 제외)
     - /api/v2/users/me
 
+---
 
-### 최지혜
-
-### 정지원
+### 🟧 정지원
+(자신이 개발한 기능에 대한 사진이나 gif 파일 첨부)
 
 - 민원(Complaints) 도메인
 - 민원 등록 / 민원 수정 / 민원 삭제
@@ -122,6 +109,51 @@
 - 투표(Polls) 도메인
 - 투표 등록 / 투표 목록 조회 / 투표 상세 조회
 - 투표 수정 / 투표 삭제 / 투표 상태 관리
+---
+
+### 🟥 최지혜
+(자신이 개발한 기능에 대한 사진이나 gif 파일 첨부)
+
+- 📌 Notices (공지사항 관리)
+  - 관리자 기능
+    - 공지사항 등록  
+      POST /api/v2/notices  (관리자 권한 필요)
+
+    - 공지사항 수정  
+      PATCH /api/v2/notices/{noticeId}  (관리자 권한 필요)
+
+    - 공지사항 삭제  
+      DELETE /api/v2/notices/{noticeId}  (관리자 권한 필요)
+
+  - 공통 기능
+    - 공지사항 목록 조회  
+      GET /api/v2/notices
+
+    - 공지사항 상세 조회  
+      GET /api/v2/notices/{noticeId}
+
+
+- 💬 Comments (댓글 관리)
+  - 공통 기능
+    - 댓글 생성  
+      POST /api/v2/comments
+
+    - 댓글 목록 조회  
+      GET /api/v2/comments
+
+    - 댓글 수정  
+      PATCH /api/v2/comments/{commentId}
+
+    - 댓글 삭제  
+      DELETE /api/v2/comments/{commentId}
+
+
+- 📅 Events (이벤트 관리)
+  - 공통 기능
+    - 이벤트 목록 조회  
+      GET /api/v2/events
+
+
 
 ---
 
@@ -197,3 +229,16 @@ welive
    └─ test                  # API / Unit 테스트
 
 ```
+
+---
+
+## 🌐 구현 홈페이지
+
+[welive]()
+
+---
+
+## 🪞 프로젝트 회고록
+
+[회고록]()
+
