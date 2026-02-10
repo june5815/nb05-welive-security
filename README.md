@@ -66,6 +66,51 @@
 
 ### 오창섭
 
+- Auth
+  - 1.로그인
+      - /api/v2/auth/login
+  - 2.로그아웃
+      - /api/v2/auth/logout
+  - 3.토큰 갱신
+      - /api/v2/auth/refresh
+- User
+  - 1.슈퍼 관리자 계정 생성
+      - /api/v2/users/super-admins
+  - 2.관리자 계정 생성
+      - /api/v2/users/admins
+  - 3.주민 계정 생성
+      - /api/v2/users/residents
+  - 4.[슈퍼 관리자 권한 필요] 관리자 계정 목록 조회
+      - /api/v2/users/admins
+  - 5.[슈퍼 관리자 권한 필요] 관리자 계정 가입 상태 변경(다건)
+      - /api/v2/users/admins/join-status
+  - 6.[슈퍼 관리자 권한 필요] 관리자 계정 가입 상태 변경(단건)
+      - /api/v2/users/admins/:adminId/join-status
+  - 7.[슈퍼 관리자 권한 필요] 관리자 계정 정보(아파트 정보 포함) 수정
+      - /api/v2/users/admins/:adminId
+  - 8.[슈퍼 관리자 권한 필요] 관리자 계정 삭제
+      - /api/v2/users/admins/:adminId
+  - 9.[슈퍼 관리자 권한 필요] 거절된 관리자 계정(아파트 정보 포함) 일괄 삭제
+      - /api/v2/users/admins/rejected
+  - 10.[관리자 권한 필요] 주민 계정 목록 조회
+      - /api/v2/users/residents
+  - 11.[관리자 권한 필요] 주민 계정 가입 상태 변경(다건)
+      - /api/v2/users/residents/join-status
+  - 12.[관리자 권한 필요] 주민 계정 가입 상태 변경(단건)
+      - /api/v2/users/residents/:residentId/join-status
+  - 13.[관리자 권한 필요] 거절된 주민 계정 일관 삭제
+      - /api/v2/users/residents/rejected
+  - 14.프로필 이미지 수정 (슈퍼 관리자 제외)
+      - /api/v2/users/me/avatar
+  - 15.비밀번호 변경 (슈퍼 관리자 제외)
+      - /api/v2/users/me/password
+- etc
+  - 1. 관리자 정보 수정을 위한 상세조회
+    - /api/v2/users/admins/:adminId
+  - 2. 개인 정보 상세 조회 (슈퍼 관리자 제외)
+    - /api/v2/users/me
+
+
 ### 최지혜
 
 ### 정지원
